@@ -1,0 +1,362 @@
+[
+  {
+    "method": "POST",
+    "path": "/crop/batch",
+    "auth": "No",
+    "request": "body: CropBatch",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/crop/batch",
+    "auth": "No",
+    "request": "body: CropBatch",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/crop/batch/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.plotId, query.currentStage",
+    "response": "R<PageCropBatch> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/crop/batch/{ids}",
+    "auth": "No",
+    "request": "params: path.ids",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/crop/growth-log",
+    "auth": "No",
+    "request": "body: GrowthStageLog",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/crop/growth-log/list/{batchId}",
+    "auth": "No",
+    "request": "params: path.batchId",
+    "response": "R<Array<GrowthStageLog>> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/crop/variety",
+    "auth": "No",
+    "request": "body: BaseCropVariety",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/crop/variety",
+    "auth": "No",
+    "request": "body: BaseCropVariety",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/crop/variety/all",
+    "auth": "No",
+    "request": "none",
+    "response": "R<Array<BaseCropVariety>> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/crop/variety/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.cropName",
+    "response": "R<PageBaseCropVariety> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/crop/variety/{ids}",
+    "auth": "No",
+    "request": "params: path.ids",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/iot/data/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.plotId, query.sensorType",
+    "response": "R<PageIotSensorData> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "POST",
+    "path": "/iot/rule",
+    "auth": "No",
+    "request": "body: AgriTaskRule",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/iot/rule",
+    "auth": "No",
+    "request": "body: AgriTaskRule",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/iot/rule/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize",
+    "response": "R<PageAgriTaskRule> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/iot/rule/{id}",
+    "auth": "No",
+    "request": "params: path.id",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "auth": "No",
+    "request": "body: LoginBody",
+    "response": "R<LoginData> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; Sensitive field exposure risk"
+  },
+  {
+    "method": "POST",
+    "path": "/material/info",
+    "auth": "No",
+    "request": "body: MaterialInfo",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/material/info",
+    "auth": "No",
+    "request": "body: MaterialInfo",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/material/info/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.name, query.category",
+    "response": "R<PageMaterialInfo> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/material/info/{ids}",
+    "auth": "No",
+    "request": "params: path.ids",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/material/log/execute",
+    "auth": "No",
+    "request": "body: MaterialInoutLog",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）; Inventory deduction has concurrency risk"
+  },
+  {
+    "method": "GET",
+    "path": "/material/log/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.materialId",
+    "response": "R<PageMaterialInoutLog> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "POST",
+    "path": "/register",
+    "auth": "No",
+    "request": "body: SysUser",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/report/dashboard",
+    "auth": "No",
+    "request": "none",
+    "response": "R<DashboardData> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/system/menu",
+    "auth": "No",
+    "request": "body: SysMenu",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/system/menu",
+    "auth": "No",
+    "request": "body: SysMenu",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/system/menu/list",
+    "auth": "No",
+    "request": "none",
+    "response": "R<Array<SysMenu>> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/system/menu/{menuId}",
+    "auth": "No",
+    "request": "params: path.menuId",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/system/role",
+    "auth": "No",
+    "request": "body: SysRole",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/system/role",
+    "auth": "No",
+    "request": "body: SysRole",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/system/role/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.roleName",
+    "response": "R<PageSysRole> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/system/role/{roleIds}",
+    "auth": "No",
+    "request": "params: path.roleIds",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "POST",
+    "path": "/system/user",
+    "auth": "No",
+    "request": "body: SysUser",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/system/user",
+    "auth": "No",
+    "request": "body: SysUser",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/system/user/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.username, query.realName, query.status",
+    "response": "R<PageSysUser> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）; Sensitive field exposure risk"
+  },
+  {
+    "method": "DELETE",
+    "path": "/system/user/{userIds}",
+    "auth": "No",
+    "request": "params: path.userIds",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/system/user/{userId}",
+    "auth": "No",
+    "request": "params: path.userId",
+    "response": "R<SysUser> (code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; Sensitive field exposure risk"
+  },
+  {
+    "method": "POST",
+    "path": "/task",
+    "auth": "No",
+    "request": "body: AgriTask",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/task",
+    "auth": "No",
+    "request": "body: AgriTask",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "PUT",
+    "path": "/task/assign",
+    "auth": "No",
+    "request": "body: TaskAssignRequest",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）; taskId and executorId are required"
+  },
+  {
+    "method": "GET",
+    "path": "/task/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.taskName, query.status, query.executorId",
+    "response": "R<PageAgriTask> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "POST",
+    "path": "/task/log",
+    "auth": "No",
+    "request": "body: TaskExecutionLog",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  },
+  {
+    "method": "GET",
+    "path": "/task/log/list",
+    "auth": "No",
+    "request": "params: query.pageNum, query.pageSize, query.taskId",
+    "response": "R<PageTaskExecutionLog> (current/size/total/records; code=200/500)",
+    "notes": "当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）"
+  },
+  {
+    "method": "DELETE",
+    "path": "/task/{ids}",
+    "auth": "No",
+    "request": "params: path.ids",
+    "response": "R<Void> (code=200 success / code=500 error)",
+    "notes": "当前代码未启用鉴权（高风险）"
+  }
+]

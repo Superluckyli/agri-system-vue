@@ -1,0 +1,2209 @@
+openapi: 3.0.3
+info:
+  title: Agri System HTTP API
+  version: 1.0.0
+  description: 'Generated from Spring Boot + MyBatis-Plus controllers in this repository.
+
+    Unified response wrapper: { code, msg, data } from common/domain/R.java.
+
+    Auth baseline: No (Spring Security not enabled in current code).
+
+    '
+servers:
+- url: http://localhost:8080
+tags:
+- name: Auth
+- name: System User
+- name: System Role
+- name: System Menu
+- name: Crop Variety
+- name: Crop Batch
+- name: Crop Growth Log
+- name: Material Info
+- name: Material Log
+- name: IoT Data
+- name: IoT Rule
+- name: Task
+- name: Task Log
+- name: Report
+x-needs-information:
+- JWT token expiration/refresh strategy is not defined in current code.
+- Enum semantics need confirmation: agri_task.status, material_inout_log.type, sys_menu.type,
+    agri_task_rule.isEnable.
+- Comma-separated path-array style (/{ids}) should be validated with API gateway/router.
+- Timezone/date serialization contract is not explicitly configured in Jackson.
+- Long/BigDecimal serialization strategy for Vue3+TS precision is not explicitly configured.
+paths:
+  /crop/batch:
+    post:
+      tags:
+      - Crop Batch
+      summary: Create crop batch
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropBatch'
+            example: &id001
+              batchId: 10
+              varietyId: 1
+              plotId: Plot_A
+              sowingDate: '2026-01-10'
+              expectedHarvestDate: '2026-05-10'
+              currentStage: growth
+              isActive: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - Crop Batch
+      summary: Update crop batch
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropBatch'
+            example: *id001
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/batch/{ids}:
+    delete:
+      tags:
+      - Crop Batch
+      summary: Delete crop batches (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: ids
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 10,11
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/batch/list:
+    get:
+      tags:
+      - Crop Batch
+      summary: List crop batches (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: plotId
+        in: query
+        required: false
+        schema:
+          type: string
+        example: '1'
+      - name: currentStage
+        in: query
+        required: false
+        schema:
+          type: string
+        example: growth
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageCropBatch'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/growth-log:
+    post:
+      tags:
+      - Crop Growth Log
+      summary: Create growth log
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrowthStageLog'
+            example:
+              logId: 100
+              batchId: 10
+              stageName: heading
+              logDate: '2026-02-01T09:30:00'
+              imageUrl: https://example.com/growth/101.jpg
+              description: normal
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/growth-log/list/{batchId}:
+    get:
+      tags:
+      - Crop Growth Log
+      summary: List growth logs by batch ID
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: batchId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GrowthStageLog'
+              example:
+                code: 200
+                msg: success
+                data: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/variety:
+    post:
+      tags:
+      - Crop Variety
+      summary: Create crop variety
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseCropVariety'
+            example: &id002
+              varietyId: 1
+              cropName: wheat
+              growthCycleDays: 120
+              idealHumidityMin: 35.0
+              idealHumidityMax: 75.0
+              idealTempMin: 15.0
+              idealTempMax: 30.0
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - Crop Variety
+      summary: Update crop variety
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseCropVariety'
+            example: *id002
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/variety/{ids}:
+    delete:
+      tags:
+      - Crop Variety
+      summary: Delete crop varieties (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: ids
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 1,2,3
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/variety/all:
+    get:
+      tags:
+      - Crop Variety
+      summary: List all crop varieties
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/BaseCropVariety'
+              example:
+                code: 200
+                msg: success
+                data: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /crop/variety/list:
+    get:
+      tags:
+      - Crop Variety
+      summary: List crop varieties (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: cropName
+        in: query
+        required: false
+        schema:
+          type: string
+        example: wheat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageBaseCropVariety'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /iot/data/list:
+    get:
+      tags:
+      - IoT Data
+      summary: List sensor data (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: plotId
+        in: query
+        required: false
+        schema:
+          type: string
+        example: '1'
+      - name: sensorType
+        in: query
+        required: false
+        schema:
+          type: string
+        example: HUMIDITY
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageIotSensorData'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /iot/rule:
+    post:
+      tags:
+      - IoT Rule
+      summary: Create IoT rule
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTaskRule'
+            example: &id003
+              ruleId: 1
+              ruleName: humidity low
+              sensorType: HUMIDITY
+              minVal: 30.0
+              maxVal: null
+              autoTaskType: irrigation
+              priority: 2
+              isEnable: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - IoT Rule
+      summary: Update IoT rule
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTaskRule'
+            example: *id003
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /iot/rule/{id}:
+    delete:
+      tags:
+      - IoT Rule
+      summary: Delete IoT rule
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /iot/rule/list:
+    get:
+      tags:
+      - IoT Rule
+      summary: List IoT rules (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageAgriTaskRule'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /login:
+    post:
+      tags:
+      - Auth
+      summary: User login
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; Sensitive field exposure risk'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginBody'
+            example:
+              username: admin
+              password: '123456'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/LoginData'
+              example:
+                code: 200
+                msg: success
+                data: {}
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /material/info:
+    post:
+      tags:
+      - Material Info
+      summary: Create material
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInfo'
+            example: &id004
+              materialId: 1
+              name: fertilizer
+              category: chemical
+              price: 120.5
+              stockQuantity: 500.0
+              unit: kg
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - Material Info
+      summary: Update material
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInfo'
+            example: *id004
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /material/info/{ids}:
+    delete:
+      tags:
+      - Material Info
+      summary: Delete materials (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: ids
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 1,2
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /material/info/list:
+    get:
+      tags:
+      - Material Info
+      summary: List materials (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        example: fertilizer
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+        example: chemical
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageMaterialInfo'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /material/log/execute:
+    post:
+      tags:
+      - Material Log
+      summary: Execute in/out transaction
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; Inventory deduction has concurrency risk'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInoutLog'
+            example:
+              logId: 1
+              materialId: 1
+              type: 2
+              quantity: 20.0
+              relatedTaskId: 20
+              remark: task use
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /material/log/list:
+    get:
+      tags:
+      - Material Log
+      summary: List material in/out logs (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: materialId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageMaterialInoutLog'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /register:
+    post:
+      tags:
+      - Auth
+      summary: User register
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysUser'
+            example: &id007
+              userId: 1
+              username: admin
+              password: '123456'
+              realName: admin
+              phone: '13800000000'
+              deptName: dept
+              status: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /report/dashboard:
+    get:
+      tags:
+      - Report
+      summary: Get dashboard data
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DashboardData'
+              example:
+                code: 200
+                msg: success
+                data: {}
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/menu:
+    post:
+      tags:
+      - System Menu
+      summary: Create menu
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysMenu'
+            example: &id005
+              menuId: 1
+              parentId: 0
+              menuName: system
+              path: /system
+              perms: system:view
+              type: 0
+              orderNum: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - System Menu
+      summary: Update menu
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysMenu'
+            example: *id005
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/menu/{menuId}:
+    delete:
+      tags:
+      - System Menu
+      summary: Delete menu
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: menuId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/menu/list:
+    get:
+      tags:
+      - System Menu
+      summary: List menus
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SysMenu'
+              example:
+                code: 200
+                msg: success
+                data: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/role:
+    post:
+      tags:
+      - System Role
+      summary: Create role
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysRole'
+            example: &id006
+              roleId: 1
+              roleName: admin
+              roleKey: admin
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - System Role
+      summary: Update role
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysRole'
+            example: *id006
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/role/{roleIds}:
+    delete:
+      tags:
+      - System Role
+      summary: Delete roles (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: roleIds
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 1,2,3
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/role/list:
+    get:
+      tags:
+      - System Role
+      summary: List roles (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: roleName
+        in: query
+        required: false
+        schema:
+          type: string
+        example: admin
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageSysRole'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/user:
+    post:
+      tags:
+      - System User
+      summary: Create user
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysUser'
+            example: *id007
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - System User
+      summary: Update user
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysUser'
+            example: *id007
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/user/{userId}:
+    get:
+      tags:
+      - System User
+      summary: Get user by ID
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; Sensitive field exposure risk'
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/SysUser'
+              example:
+                code: 200
+                msg: success
+                data: {}
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/user/{userIds}:
+    delete:
+      tags:
+      - System User
+      summary: Delete users (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: userIds
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 1,2,3
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /system/user/list:
+    get:
+      tags:
+      - System User
+      summary: List users (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）; Sensitive field
+        exposure risk'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: username
+        in: query
+        required: false
+        schema:
+          type: string
+        example: admin
+      - name: realName
+        in: query
+        required: false
+        schema:
+          type: string
+        example: zhangsan
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: integer
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageSysUser'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task:
+    post:
+      tags:
+      - Task
+      summary: Create task
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTask'
+            example: &id008
+              taskId: 20
+              batchId: 10
+              taskName: irrigation
+              taskType: irrigation
+              priority: 1
+              planTime: '2026-02-12T16:00:00'
+              status: 1
+              executorId: 2
+              createBy: 1
+              createTime: '2026-02-12T10:00:00'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+    put:
+      tags:
+      - Task
+      summary: Update task
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTask'
+            example: *id008
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task/{ids}:
+    delete:
+      tags:
+      - Task
+      summary: Delete tasks (batch)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      parameters:
+      - name: ids
+        in: path
+        required: true
+        description: Comma-separated IDs, e.g. 20,21
+        schema:
+          type: string
+          pattern: ^\d+(,\d+)*$
+        example: 1,2,3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task/assign:
+    put:
+      tags:
+      - Task
+      summary: Assign task
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; taskId and executorId are required'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAssignRequest'
+            example:
+              taskId: 20
+              executorId: 3
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task/list:
+    get:
+      tags:
+      - Task
+      summary: List tasks (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: taskName
+        in: query
+        required: false
+        schema:
+          type: string
+        example: irrigation
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: integer
+        example: 1
+      - name: executorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageAgriTask'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task/log:
+    post:
+      tags:
+      - Task Log
+      summary: Create task execution log
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskExecutionLog'
+            example:
+              logId: 1000
+              taskId: 20
+              actualStartTime: '2026-02-12T16:10:00'
+              actualEndTime: '2026-02-12T17:00:00'
+              statusSnapshot: 3
+              photoUrl: https://example.com/task/20.jpg
+              materialCostJson: '[{"materialId":1,"qty":20}]'
+              problemDesc: none
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 200
+                msg: success
+                data: null
+        '500':
+          $ref: '#/components/responses/Error5xx'
+  /task/log/list:
+    get:
+      tags:
+      - Task Log
+      summary: List task execution logs (paged)
+      description: 'Auth: No.
+
+        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      parameters:
+      - name: pageNum
+        in: query
+        required: false
+        description: Page number, default 1
+        schema:
+          type: integer
+          default: 1
+        example: 1
+      - name: pageSize
+        in: query
+        required: false
+        description: Page size, default 10
+        schema:
+          type: integer
+          default: 10
+        example: 10
+      - name: taskId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ApiResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/PageTaskExecutionLog'
+              example:
+                code: 200
+                msg: success
+                data:
+                  current: 1
+                  size: 10
+                  total: 0
+                  records: []
+        '500':
+          $ref: '#/components/responses/Error5xx'
+components:
+  responses:
+    Error5xx:
+      description: Business/server error (R.code=500)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 500
+            msg: error
+            data: null
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          enum:
+          - 200
+          - 500
+          description: 'Business code: 200=success, 500=error'
+        msg:
+          type: string
+        data:
+          nullable: true
+      required:
+      - code
+      - msg
+      - data
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - username
+      - password
+    LoginData:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/SysUser'
+    SysUser:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+          description: Sensitive field, marked writeOnly in API doc.
+        realName:
+          type: string
+        phone:
+          type: string
+        deptName:
+          type: string
+        status:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+    SysRole:
+      type: object
+      properties:
+        roleId:
+          type: integer
+          format: int64
+        roleName:
+          type: string
+        roleKey:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    SysMenu:
+      type: object
+      properties:
+        menuId:
+          type: integer
+          format: int64
+        parentId:
+          type: integer
+          format: int64
+        menuName:
+          type: string
+        path:
+          type: string
+        perms:
+          type: string
+        type:
+          type: integer
+        orderNum:
+          type: integer
+    BaseCropVariety:
+      type: object
+      properties:
+        varietyId:
+          type: integer
+          format: int64
+        cropName:
+          type: string
+        growthCycleDays:
+          type: integer
+        idealHumidityMin:
+          type: number
+          format: double
+        idealHumidityMax:
+          type: number
+          format: double
+        idealTempMin:
+          type: number
+          format: double
+        idealTempMax:
+          type: number
+          format: double
+        createTime:
+          type: string
+          format: date-time
+    CropBatch:
+      type: object
+      properties:
+        batchId:
+          type: integer
+          format: int64
+        varietyId:
+          type: integer
+          format: int64
+        plotId:
+          type: string
+        sowingDate:
+          type: string
+          format: date
+        expectedHarvestDate:
+          type: string
+          format: date
+        currentStage:
+          type: string
+        isActive:
+          type: integer
+        cropName:
+          type: string
+    GrowthStageLog:
+      type: object
+      properties:
+        logId:
+          type: integer
+          format: int64
+        batchId:
+          type: integer
+          format: int64
+        stageName:
+          type: string
+        logDate:
+          type: string
+          format: date-time
+        imageUrl:
+          type: string
+        description:
+          type: string
+    MaterialInfo:
+      type: object
+      properties:
+        materialId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: double
+        stockQuantity:
+          type: number
+          format: double
+        unit:
+          type: string
+        updateTime:
+          type: string
+          format: date-time
+    MaterialInoutLog:
+      type: object
+      properties:
+        logId:
+          type: integer
+          format: int64
+        materialId:
+          type: integer
+          format: int64
+        type:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        relatedTaskId:
+          type: integer
+          format: int64
+        remark:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    IotSensorData:
+      type: object
+      properties:
+        dataId:
+          type: integer
+          format: int64
+        plotId:
+          type: string
+        sensorType:
+          type: string
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    AgriTaskRule:
+      type: object
+      properties:
+        ruleId:
+          type: integer
+          format: int64
+        ruleName:
+          type: string
+        sensorType:
+          type: string
+        minVal:
+          type: number
+          format: double
+          nullable: true
+        maxVal:
+          type: number
+          format: double
+          nullable: true
+        autoTaskType:
+          type: string
+        priority:
+          type: integer
+        isEnable:
+          type: integer
+    AgriTask:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        batchId:
+          type: integer
+          format: int64
+        taskName:
+          type: string
+        taskType:
+          type: string
+        priority:
+          type: integer
+        planTime:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        executorId:
+          type: integer
+          format: int64
+        createBy:
+          type: integer
+          format: int64
+        createTime:
+          type: string
+          format: date-time
+    TaskAssignRequest:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        executorId:
+          type: integer
+          format: int64
+      required:
+      - taskId
+      - executorId
+    TaskExecutionLog:
+      type: object
+      properties:
+        logId:
+          type: integer
+          format: int64
+        taskId:
+          type: integer
+          format: int64
+        actualStartTime:
+          type: string
+          format: date-time
+        actualEndTime:
+          type: string
+          format: date-time
+        statusSnapshot:
+          type: integer
+        photoUrl:
+          type: string
+        materialCostJson:
+          type: string
+        problemDesc:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    ChartDataVO:
+      type: object
+      properties:
+        xAxis:
+          type: array
+          items:
+            type: string
+        series:
+          type: array
+          items:
+            type: object
+        title:
+          type: string
+    NameValueItem:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          oneOf:
+          - type: number
+            format: double
+          - type: integer
+          - type: string
+    DashboardData:
+      type: object
+      properties:
+        cropDistribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/NameValueItem'
+        taskTrend:
+          $ref: '#/components/schemas/ChartDataVO'
+        envMonitor:
+          type: array
+          items:
+            $ref: '#/components/schemas/NameValueItem'
+    PageSysUser:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SysUser'
+    PageSysRole:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SysRole'
+    PageBaseCropVariety:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/BaseCropVariety'
+    PageCropBatch:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropBatch'
+    PageMaterialInfo:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialInfo'
+    PageMaterialInoutLog:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialInoutLog'
+    PageIotSensorData:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/IotSensorData'
+    PageAgriTaskRule:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgriTaskRule'
+    PageAgriTask:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgriTask'
+    PageTaskExecutionLog:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskExecutionLog'
