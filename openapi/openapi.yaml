@@ -1,640 +1,43 @@
-openapi: 3.0.3
+﻿openapi: 3.0.3
 info:
-  title: Agri System HTTP API
+  title: Agri System API Contract
   version: 1.0.0
-  description: 'Generated from Spring Boot + MyBatis-Plus controllers in this repository.
+  description: |
+    Frontend integration contract generated from current Spring Boot + MyBatis-Plus controllers/services.
 
-    Unified response wrapper: { code, msg, data } from common/domain/R.java.
+    Unified response wrapper:
+    R<T> = { code:number, msg:string, data:T }
+    - business success: code = 200
+    - business failure: code != 200 (common: 500)
 
-    Auth baseline: No (Spring Security not enabled in current code).
+    Pagination response shape:
+    data = { current:number, size:number, total:number, records:T[] }
 
-    '
+    Authentication:
+    Authorization: Bearer <token>
 servers:
-- url: http://localhost:8080
+  - url: http://localhost:8080
 tags:
-- name: Auth
-- name: System User
-- name: System Role
-- name: System Menu
-- name: Crop Variety
-- name: Crop Batch
-- name: Crop Growth Log
-- name: Material Info
-- name: Material Log
-- name: IoT Data
-- name: IoT Rule
-- name: Task
-- name: Task Log
-- name: Report
-x-needs-information:
-- JWT token expiration/refresh strategy is not defined in current code.
-- Enum semantics need confirmation: agri_task.status, material_inout_log.type, sys_menu.type,
-    agri_task_rule.isEnable.
-- Comma-separated path-array style (/{ids}) should be validated with API gateway/router.
-- Timezone/date serialization contract is not explicitly configured in Jackson.
-- Long/BigDecimal serialization strategy for Vue3+TS precision is not explicitly configured.
+  - name: Auth
+  - name: SystemUser
+  - name: SystemRole
+  - name: SystemMenu
+  - name: CropVariety
+  - name: CropBatch
+  - name: GrowthLog
+  - name: IotRule
+  - name: IotData
+  - name: Task
+  - name: TaskLog
+  - name: MaterialInfo
+  - name: MaterialLog
+  - name: Report
 paths:
-  /crop/batch:
-    post:
-      tags:
-      - Crop Batch
-      summary: Create crop batch
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CropBatch'
-            example: &id001
-              batchId: 10
-              varietyId: 1
-              plotId: Plot_A
-              sowingDate: '2026-01-10'
-              expectedHarvestDate: '2026-05-10'
-              currentStage: growth
-              isActive: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - Crop Batch
-      summary: Update crop batch
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CropBatch'
-            example: *id001
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/batch/{ids}:
-    delete:
-      tags:
-      - Crop Batch
-      summary: Delete crop batches (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: ids
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 10,11
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/batch/list:
-    get:
-      tags:
-      - Crop Batch
-      summary: List crop batches (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: plotId
-        in: query
-        required: false
-        schema:
-          type: string
-        example: '1'
-      - name: currentStage
-        in: query
-        required: false
-        schema:
-          type: string
-        example: growth
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageCropBatch'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/growth-log:
-    post:
-      tags:
-      - Crop Growth Log
-      summary: Create growth log
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GrowthStageLog'
-            example:
-              logId: 100
-              batchId: 10
-              stageName: heading
-              logDate: '2026-02-01T09:30:00'
-              imageUrl: https://example.com/growth/101.jpg
-              description: normal
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/growth-log/list/{batchId}:
-    get:
-      tags:
-      - Crop Growth Log
-      summary: List growth logs by batch ID
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/GrowthStageLog'
-              example:
-                code: 200
-                msg: success
-                data: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/variety:
-    post:
-      tags:
-      - Crop Variety
-      summary: Create crop variety
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BaseCropVariety'
-            example: &id002
-              varietyId: 1
-              cropName: wheat
-              growthCycleDays: 120
-              idealHumidityMin: 35.0
-              idealHumidityMax: 75.0
-              idealTempMin: 15.0
-              idealTempMax: 30.0
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - Crop Variety
-      summary: Update crop variety
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BaseCropVariety'
-            example: *id002
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/variety/{ids}:
-    delete:
-      tags:
-      - Crop Variety
-      summary: Delete crop varieties (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: ids
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 1,2,3
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/variety/all:
-    get:
-      tags:
-      - Crop Variety
-      summary: List all crop varieties
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters: []
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/BaseCropVariety'
-              example:
-                code: 200
-                msg: success
-                data: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /crop/variety/list:
-    get:
-      tags:
-      - Crop Variety
-      summary: List crop varieties (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: cropName
-        in: query
-        required: false
-        schema:
-          type: string
-        example: wheat
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageBaseCropVariety'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /iot/data/list:
-    get:
-      tags:
-      - IoT Data
-      summary: List sensor data (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: plotId
-        in: query
-        required: false
-        schema:
-          type: string
-        example: '1'
-      - name: sensorType
-        in: query
-        required: false
-        schema:
-          type: string
-        example: HUMIDITY
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageIotSensorData'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /iot/rule:
-    post:
-      tags:
-      - IoT Rule
-      summary: Create IoT rule
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgriTaskRule'
-            example: &id003
-              ruleId: 1
-              ruleName: humidity low
-              sensorType: HUMIDITY
-              minVal: 30.0
-              maxVal: null
-              autoTaskType: irrigation
-              priority: 2
-              isEnable: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - IoT Rule
-      summary: Update IoT rule
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgriTaskRule'
-            example: *id003
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /iot/rule/{id}:
-    delete:
-      tags:
-      - IoT Rule
-      summary: Delete IoT rule
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /iot/rule/list:
-    get:
-      tags:
-      - IoT Rule
-      summary: List IoT rules (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageAgriTaskRule'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
   /login:
     post:
-      tags:
-      - Auth
+      tags: [Auth]
       summary: User login
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; Sensitive field exposure risk'
+      operationId: login
       requestBody:
         required: true
         content:
@@ -643,970 +46,1456 @@ paths:
               $ref: '#/components/schemas/LoginBody'
             example:
               username: admin
-              password: '123456'
+              password: "123456"
       responses:
         '200':
-          description: Success
+          description: Login result (R<LoginData>)
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/LoginData'
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginData'
               example:
                 code: 200
-                msg: success
-                data: {}
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /material/info:
-    post:
-      tags:
-      - Material Info
-      summary: Create material
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaterialInfo'
-            example: &id004
-              materialId: 1
-              name: fertilizer
-              category: chemical
-              price: 120.5
-              stockQuantity: 500.0
-              unit: kg
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - Material Info
-      summary: Update material
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaterialInfo'
-            example: *id004
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /material/info/{ids}:
-    delete:
-      tags:
-      - Material Info
-      summary: Delete materials (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: ids
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 1,2
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /material/info/list:
-    get:
-      tags:
-      - Material Info
-      summary: List materials (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: name
-        in: query
-        required: false
-        schema:
-          type: string
-        example: fertilizer
-      - name: category
-        in: query
-        required: false
-        schema:
-          type: string
-        example: chemical
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageMaterialInfo'
-              example:
-                code: 200
-                msg: success
+                msg: Login success
                 data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
+                  token: eyJhbGciOiJIUzI1NiJ9.mock
+                  user:
+                    userId: 1
+                    username: admin
+                    password: "123456"
+                    realName: System Admin
+                    phone: "13800000001"
+                    deptName: IT
+                    status: 1
+                    createTime: "2026-02-28T10:00:00"
         '500':
-          $ref: '#/components/responses/Error5xx'
-  /material/log/execute:
-    post:
-      tags:
-      - Material Log
-      summary: Execute in/out transaction
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; Inventory deduction has concurrency risk'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaterialInoutLog'
-            example:
-              logId: 1
-              materialId: 1
-              type: 2
-              quantity: 20.0
-              relatedTaskId: 20
-              remark: task use
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /material/log/list:
-    get:
-      tags:
-      - Material Log
-      summary: List material in/out logs (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: materialId
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageMaterialInoutLog'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
+          $ref: '#/components/responses/BizFail'
   /register:
     post:
-      tags:
-      - Auth
+      tags: [Auth]
       summary: User register
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
+      operationId: register
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SysUser'
-            example: &id007
-              userId: 1
-              username: admin
-              password: '123456'
-              realName: admin
-              phone: '13800000000'
-              deptName: dept
+            example:
+              username: demo_user
+              password: "123456"
+              realName: Demo User
+              phone: "13800009999"
+              deptName: Demo
               status: 1
       responses:
         '200':
-          description: Success
+          description: Register result (R<Void>)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/RVoid'
               example:
                 code: 200
-                msg: success
+                msg: Register success
                 data: null
         '500':
-          $ref: '#/components/responses/Error5xx'
-  /report/dashboard:
-    get:
-      tags:
-      - Report
-      summary: Get dashboard data
-      description: 'Auth: No.
+          $ref: '#/components/responses/BizFail'
 
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters: []
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/DashboardData'
-              example:
-                code: 200
-                msg: success
-                data: {}
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/menu:
-    post:
-      tags:
-      - System Menu
-      summary: Create menu
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysMenu'
-            example: &id005
-              menuId: 1
-              parentId: 0
-              menuName: system
-              path: /system
-              perms: system:view
-              type: 0
-              orderNum: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - System Menu
-      summary: Update menu
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysMenu'
-            example: *id005
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/menu/{menuId}:
-    delete:
-      tags:
-      - System Menu
-      summary: Delete menu
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: menuId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/menu/list:
-    get:
-      tags:
-      - System Menu
-      summary: List menus
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters: []
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/SysMenu'
-              example:
-                code: 200
-                msg: success
-                data: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/role:
-    post:
-      tags:
-      - System Role
-      summary: Create role
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysRole'
-            example: &id006
-              roleId: 1
-              roleName: admin
-              roleKey: admin
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - System Role
-      summary: Update role
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysRole'
-            example: *id006
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/role/{roleIds}:
-    delete:
-      tags:
-      - System Role
-      summary: Delete roles (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: roleIds
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 1,2,3
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/role/list:
-    get:
-      tags:
-      - System Role
-      summary: List roles (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
-      parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: roleName
-        in: query
-        required: false
-        schema:
-          type: string
-        example: admin
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageSysRole'
-              example:
-                code: 200
-                msg: success
-                data:
-                  current: 1
-                  size: 10
-                  total: 0
-                  records: []
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/user:
-    post:
-      tags:
-      - System User
-      summary: Create user
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysUser'
-            example: *id007
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - System User
-      summary: Update user
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SysUser'
-            example: *id007
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/user/{userId}:
-    get:
-      tags:
-      - System User
-      summary: Get user by ID
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; Sensitive field exposure risk'
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/SysUser'
-              example:
-                code: 200
-                msg: success
-                data: {}
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /system/user/{userIds}:
-    delete:
-      tags:
-      - System User
-      summary: Delete users (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      parameters:
-      - name: userIds
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 1,2,3
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
   /system/user/list:
     get:
-      tags:
-      - System User
+      tags: [SystemUser]
       summary: List users (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）; Sensitive field
-        exposure risk'
+      operationId: listUsers
       parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: username
-        in: query
-        required: false
-        schema:
-          type: string
-        example: admin
-      - name: realName
-        in: query
-        required: false
-        schema:
-          type: string
-        example: zhangsan
-      - name: status
-        in: query
-        required: false
-        schema:
-          type: integer
-        example: 1
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: username
+          schema:
+            type: string
+          example: farmer
+        - in: query
+          name: realName
+          schema:
+            type: string
+          example: Li
+        - in: query
+          name: status
+          schema:
+            type: integer
+          example: 1
       responses:
         '200':
-          description: Success
+          description: R<Page<SysUser>>
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageSysUser'
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageSysUser'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
                 data:
                   current: 1
                   size: 10
-                  total: 0
-                  records: []
+                  total: 1
+                  records:
+                    - userId: 3
+                      username: farmer1
+                      password: "123456"
+                      realName: Farmer One
+                      phone: "13800000003"
+                      deptName: Planting Team
+                      status: 1
+                      createTime: "2026-02-28T09:00:00"
         '500':
-          $ref: '#/components/responses/Error5xx'
-  /task:
-    post:
-      tags:
-      - Task
-      summary: Create task
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgriTask'
-            example: &id008
-              taskId: 20
-              batchId: 10
-              taskName: irrigation
-              taskType: irrigation
-              priority: 1
-              planTime: '2026-02-12T16:00:00'
-              status: 1
-              executorId: 2
-              createBy: 1
-              createTime: '2026-02-12T10:00:00'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-    put:
-      tags:
-      - Task
-      summary: Update task
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgriTask'
-            example: *id008
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 200
-                msg: success
-                data: null
-        '500':
-          $ref: '#/components/responses/Error5xx'
-  /task/{ids}:
-    delete:
-      tags:
-      - Task
-      summary: Delete tasks (batch)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
+          $ref: '#/components/responses/BizFail'
+  /system/user/{userId}:
+    get:
+      tags: [SystemUser]
+      summary: Get user detail
+      operationId: getUserDetail
       parameters:
-      - name: ids
-        in: path
-        required: true
-        description: Comma-separated IDs, e.g. 20,21
-        schema:
-          type: string
-          pattern: ^\d+(,\d+)*$
-        example: 1,2,3
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 3
       responses:
         '200':
-          description: Success
+          description: R<SysUser>
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SysUser'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
+                data:
+                  userId: 3
+                  username: farmer1
+                  password: "123456"
+                  realName: Farmer One
+                  phone: "13800000003"
+                  deptName: Planting Team
+                  status: 1
+                  createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+    delete:
+      tags: [SystemUser]
+      summary: Delete users by CSV ids
+      operationId: deleteUsers
+      parameters:
+        - in: path
+          name: userIds
+          required: true
+          schema:
+            type: string
+          description: Comma-separated ids, e.g. 3,4
+          example: 3,4
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
                 data: null
         '500':
-          $ref: '#/components/responses/Error5xx'
-  /task/assign:
-    put:
-      tags:
-      - Task
-      summary: Assign task
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; taskId and executorId are required'
+          $ref: '#/components/responses/BizFail'
+  /system/user:
+    post:
+      tags: [SystemUser]
+      summary: Create user
+      operationId: createUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskAssignRequest'
+              $ref: '#/components/schemas/SysUser'
             example:
-              taskId: 20
-              executorId: 3
+              username: farmer_new
+              password: "123456"
+              realName: New Farmer
+              phone: "13800001111"
+              deptName: Farm A
+              status: 1
       responses:
         '200':
-          description: Success
+          description: R<Void>
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/RVoid'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
                 data: null
         '500':
-          $ref: '#/components/responses/Error5xx'
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [SystemUser]
+      summary: Update user
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysUser'
+            example:
+              userId: 3
+              realName: Farmer One Updated
+              phone: "13800003333"
+              deptName: Planting Team
+              status: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /system/role/list:
+    get:
+      tags: [SystemRole]
+      summary: List roles (paged)
+      operationId: listRoles
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: roleName
+          schema:
+            type: string
+          example: FARM
+      responses:
+        '200':
+          description: R<Page<SysRole>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageSysRole'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - roleId: 3
+                      roleName: Farmer
+                      roleKey: FARMER
+                      createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /system/role:
+    post:
+      tags: [SystemRole]
+      summary: Create role
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysRole'
+            example:
+              roleName: Agronomist
+              roleKey: AGRONOMIST
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [SystemRole]
+      summary: Update role
+      operationId: updateRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysRole'
+            example:
+              roleId: 6
+              roleName: Demo Role
+              roleKey: DEMO
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /system/role/{roleIds}:
+    delete:
+      tags: [SystemRole]
+      summary: Delete roles by CSV ids
+      description: |
+        Role deletion rule:
+        sys_user_role is many-to-many. Before deleting a role, bound user count must be checked.
+        If bound count > 0, deletion is forbidden and returns code != 200.
+      operationId: deleteRole
+      parameters:
+        - in: path
+          name: roleIds
+          required: true
+          schema:
+            type: string
+          description: Comma-separated role ids, e.g. 3,4
+          example: 6
+      responses:
+        '200':
+          description: R<Void> (success or business-fail in body code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              examples:
+                success:
+                  value:
+                    code: 200
+                    msg: Operation success
+                    data: null
+                boundFail:
+                  value:
+                    code: 500
+                    msg: Role is bound by users, unbind first
+                    data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /system/menu/list:
+    get:
+      tags: [SystemMenu]
+      summary: List menus
+      operationId: listMenus
+      responses:
+        '200':
+          description: R<List<SysMenu>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SysMenu'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  - menuId: 1
+                    parentId: 0
+                    menuName: Dashboard
+                    path: /dashboard
+                    perms: report:view
+                    type: 1
+                    orderNum: 1
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /system/menu:
+    post:
+      tags: [SystemMenu]
+      summary: Create menu
+      operationId: createMenu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysMenu'
+            example:
+              parentId: 0
+              menuName: Tasks
+              path: /task
+              perms: task:view
+              type: 1
+              orderNum: 2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [SystemMenu]
+      summary: Update menu
+      operationId: updateMenu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SysMenu'
+            example:
+              menuId: 2
+              menuName: Task Center
+              path: /task
+              perms: task:manage
+              type: 1
+              orderNum: 2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /system/menu/{menuId}:
+    delete:
+      tags: [SystemMenu]
+      summary: Delete menu
+      operationId: deleteMenu
+      parameters:
+        - in: path
+          name: menuId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /crop/variety/list:
+    get:
+      tags: [CropVariety]
+      summary: List crop varieties (paged)
+      operationId: listCropVarieties
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: cropName
+          schema:
+            type: string
+          example: wheat
+      responses:
+        '200':
+          description: R<Page<BaseCropVariety>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageBaseCropVariety'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - varietyId: 1
+                      cropName: Wheat
+                      growthCycleDays: 120
+                      idealHumidityMin: 40.0
+                      idealHumidityMax: 70.0
+                      idealTempMin: 10.0
+                      idealTempMax: 25.0
+                      createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/variety/all:
+    get:
+      tags: [CropVariety]
+      summary: List all crop varieties
+      operationId: listAllCropVarieties
+      responses:
+        '200':
+          description: R<List<BaseCropVariety>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BaseCropVariety'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  - varietyId: 1
+                    cropName: Wheat
+                    growthCycleDays: 120
+                    idealHumidityMin: 40.0
+                    idealHumidityMax: 70.0
+                    idealTempMin: 10.0
+                    idealTempMax: 25.0
+                    createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/variety:
+    post:
+      tags: [CropVariety]
+      summary: Create crop variety
+      operationId: createCropVariety
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseCropVariety'
+            example:
+              cropName: Rice
+              growthCycleDays: 150
+              idealHumidityMin: 60
+              idealHumidityMax: 90
+              idealTempMin: 15
+              idealTempMax: 30
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [CropVariety]
+      summary: Update crop variety
+      operationId: updateCropVariety
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseCropVariety'
+            example:
+              varietyId: 1
+              cropName: Rice Pro
+              growthCycleDays: 145
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/variety/{ids}:
+    delete:
+      tags: [CropVariety]
+      summary: Delete crop varieties by CSV ids
+      operationId: deleteCropVariety
+      parameters:
+        - in: path
+          name: ids
+          required: true
+          schema:
+            type: string
+          example: 1,2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /crop/batch/list:
+    get:
+      tags: [CropBatch]
+      summary: List crop batches (paged)
+      operationId: listCropBatches
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: plotId
+          schema:
+            type: string
+          example: PLOT-A01
+        - in: query
+          name: currentStage
+          schema:
+            type: string
+          example: Tillering
+      responses:
+        '200':
+          description: R<Page<CropBatch>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageCropBatch'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - batchId: 1
+                      varietyId: 1
+                      plotId: PLOT-A01
+                      sowingDate: "2026-01-10"
+                      expectedHarvestDate: "2026-06-10"
+                      currentStage: Tillering
+                      isActive: 1
+                      cropName: Rice
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/batch:
+    post:
+      tags: [CropBatch]
+      summary: Create crop batch
+      operationId: createCropBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropBatch'
+            example:
+              varietyId: 1
+              plotId: PLOT-D01
+              sowingDate: "2026-03-01"
+              expectedHarvestDate: "2026-07-15"
+              currentStage: Seedling
+              isActive: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [CropBatch]
+      summary: Update crop batch
+      operationId: updateCropBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropBatch'
+            example:
+              batchId: 1
+              currentStage: Jointing
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/batch/{ids}:
+    delete:
+      tags: [CropBatch]
+      summary: Delete crop batches by CSV ids
+      operationId: deleteCropBatch
+      parameters:
+        - in: path
+          name: ids
+          required: true
+          schema:
+            type: string
+          example: 1,2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /crop/growth-log/list/{batchId}:
+    get:
+      tags: [GrowthLog]
+      summary: List growth logs by batch id
+      operationId: listGrowthLogs
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: R<List<GrowthStageLog>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GrowthStageLog'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  - logId: 1
+                    batchId: 1
+                    stageName: Seedling
+                    logDate: "2026-02-28T08:00:00"
+                    imageUrl: ""
+                    description: Healthy growth
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /crop/growth-log:
+    post:
+      tags: [GrowthLog]
+      summary: Create growth log
+      operationId: createGrowthLog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrowthStageLog'
+            example:
+              batchId: 1
+              stageName: Tillering
+              logDate: "2026-02-28T08:00:00"
+              imageUrl: https://example.com/growth.jpg
+              description: Entered tillering stage
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /iot/rule/list:
+    get:
+      tags: [IotRule]
+      summary: List IoT task rules (paged)
+      operationId: listIotRules
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+      responses:
+        '200':
+          description: R<Page<AgriTaskRule>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageAgriTaskRule'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - ruleId: 1
+                      ruleName: Low Temperature Alert
+                      sensorType: temperature
+                      minVal: 0
+                      maxVal: 10
+                      autoTaskType: KeepWarm
+                      priority: 2
+                      isEnable: 1
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /iot/rule:
+    post:
+      tags: [IotRule]
+      summary: Create IoT task rule
+      operationId: createIotRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTaskRule'
+            example:
+              ruleName: Dry Soil Alert
+              sensorType: humidity
+              minVal: 0
+              maxVal: 30
+              autoTaskType: Irrigate
+              priority: 2
+              isEnable: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [IotRule]
+      summary: Update IoT task rule
+      operationId: updateIotRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTaskRule'
+            example:
+              ruleId: 1
+              ruleName: Low Temperature Alert Updated
+              sensorType: temperature
+              minVal: 0
+              maxVal: 8
+              autoTaskType: KeepWarm
+              priority: 1
+              isEnable: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /iot/rule/{id}:
+    delete:
+      tags: [IotRule]
+      summary: Delete IoT task rule
+      operationId: deleteIotRule
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /iot/data/list:
+    get:
+      tags: [IotData]
+      summary: List IoT sensor data (paged)
+      operationId: listIotData
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: plotId
+          schema:
+            type: string
+          example: PLOT-A01
+        - in: query
+          name: sensorType
+          schema:
+            type: string
+          example: temperature
+      responses:
+        '200':
+          description: R<Page<IotSensorData>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageIotSensorData'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - dataId: 1
+                      plotId: PLOT-A01
+                      sensorType: temperature
+                      value: 18.5
+                      unit: C
+                      createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+
   /task/list:
     get:
-      tags:
-      - Task
+      tags: [Task]
       summary: List tasks (paged)
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+      operationId: listTasks
       parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: taskName
-        in: query
-        required: false
-        schema:
-          type: string
-        example: irrigation
-      - name: status
-        in: query
-        required: false
-        schema:
-          type: integer
-        example: 1
-      - name: executorId
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-        example: 1
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: taskName
+          schema:
+            type: string
+          example: Irrigate
+        - in: query
+          name: status
+          schema:
+            type: integer
+            description: 0 pending_assign, 1 pending_accept, 2 accepted, 3 completed, 4 overdue, 5 rejected
+          example: 0
+        - in: query
+          name: executorId
+          schema:
+            type: integer
+            format: int64
+          example: 3
+        - in: query
+          name: assigneeId
+          schema:
+            type: integer
+            format: int64
+          example: 3
       responses:
         '200':
-          description: Success
+          description: R<Page<AgriTask>>
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageAgriTask'
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageAgriTask'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
                 data:
                   current: 1
                   size: 10
-                  total: 0
-                  records: []
+                  total: 1
+                  records:
+                    - taskId: 1
+                      batchId: 1
+                      taskName: Spring Fertilization
+                      taskType: Fertilize
+                      priority: 1
+                      planTime: "2026-03-05T08:00:00"
+                      status: 0
+                      executorId: null
+                      assigneeId: null
+                      assignTime: null
+                      assignBy: null
+                      assignRemark: null
+                      acceptTime: null
+                      acceptBy: null
+                      rejectTime: null
+                      rejectBy: null
+                      rejectReason: null
+                      createBy: 1
+                      createTime: "2026-02-28T09:00:00"
+                      updateBy: null
+                      updateTime: null
+                      version: 0
         '500':
-          $ref: '#/components/responses/Error5xx'
+          $ref: '#/components/responses/BizFail'
+  /task:
+    post:
+      tags: [Task]
+      summary: Create task (status forced to 0)
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgriTaskCreate'
+            example:
+              batchId: 1
+              taskName: New Irrigation Task
+              taskType: Irrigate
+              priority: 2
+              planTime: "2026-03-10T09:00:00"
+              createBy: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [Task]
+      summary: Update task basic info only
+      description: Only basic fields are allowed. Status/assignee fields are not exposed by this endpoint.
+      operationId: updateTaskBasic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateDTO'
+            example:
+              taskId: 1
+              batchId: 1
+              taskName: Updated Task Name
+              taskType: Fertilize
+              priority: 1
+              planTime: "2026-03-06T08:30:00"
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /task/assign:
+    put:
+      tags: [Task]
+      summary: Assign task (ADMIN/FARM_OWNER, 0 -> 1)
+      description: |
+        Closed-loop dispatch endpoint:
+        - role required: ADMIN or FARM_OWNER
+        - status transition: pending_assign(0) -> pending_accept(1)
+        - target user must be FARMER and active
+      operationId: assignTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-Trace-Id
+          schema:
+            type: string
+          required: false
+          example: trace-assign-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAssignDTO'
+            example:
+              taskId: 1
+              farmerUserId: 3
+              remark: Please handle today
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /task/accept:
+    post:
+      tags: [Task]
+      summary: Accept task (FARMER assignee only, 1 -> 2)
+      description: |
+        Closed-loop dispatch endpoint:
+        - role required: FARMER
+        - must be assigned farmer
+        - status transition: pending_accept(1) -> accepted(2)
+      operationId: acceptTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-Trace-Id
+          schema:
+            type: string
+          required: false
+          example: trace-accept-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAcceptDTO'
+            example:
+              taskId: 1
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /task/reject:
+    post:
+      tags: [Task]
+      summary: Reject task (FARMER assignee only, 1 -> 0)
+      description: |
+        Closed-loop dispatch endpoint:
+        - role required: FARMER
+        - must be assigned farmer
+        - status transition: pending_accept(1) -> pending_assign(0)
+      operationId: rejectTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-Trace-Id
+          schema:
+            type: string
+          required: false
+          example: trace-reject-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRejectDTO'
+            example:
+              taskId: 1
+              reason: Cannot finish today
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /task/{ids}:
+    delete:
+      tags: [Task]
+      summary: Delete tasks by CSV ids
+      operationId: deleteTask
+      parameters:
+        - in: path
+          name: ids
+          required: true
+          schema:
+            type: string
+          example: 1,2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /task/log/list:
+    get:
+      tags: [TaskLog]
+      summary: List task execution logs (paged)
+      operationId: listTaskExecutionLogs
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: taskId
+          schema:
+            type: integer
+            format: int64
+          example: 6
+      responses:
+        '200':
+          description: R<Page<TaskExecutionLog>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageTaskExecutionLog'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - logId: 1
+                      taskId: 6
+                      actualStartTime: "2026-03-03T11:30:00"
+                      actualEndTime: null
+                      statusSnapshot: 2
+                      photoUrl: null
+                      materialCostJson: '{"items":[]}'
+                      problemDesc: In progress
+                      createTime: "2026-03-03T11:35:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
   /task/log:
     post:
-      tags:
-      - Task Log
-      summary: Create task execution log
-      description: 'Auth: No.
-
-        Notes: 当前代码未启用鉴权（高风险）'
+      tags: [TaskLog]
+      summary: Submit task execution log
+      description: Task must be accepted or later (status >= 2).
+      operationId: submitTaskExecutionLog
       requestBody:
         required: true
         content:
@@ -1614,111 +1503,457 @@ paths:
             schema:
               $ref: '#/components/schemas/TaskExecutionLog'
             example:
-              logId: 1000
-              taskId: 20
-              actualStartTime: '2026-02-12T16:10:00'
-              actualEndTime: '2026-02-12T17:00:00'
+              taskId: 6
+              actualStartTime: "2026-03-03T11:30:00"
+              actualEndTime: "2026-03-03T16:00:00"
               statusSnapshot: 3
-              photoUrl: https://example.com/task/20.jpg
-              materialCostJson: '[{"materialId":1,"qty":20}]'
-              problemDesc: none
+              photoUrl: https://example.com/photo.jpg
+              materialCostJson: '{"items":[{"materialId":2,"qty":5}]}'
+              problemDesc: Completed normally
       responses:
         '200':
-          description: Success
+          description: R<Void>
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/RVoid'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
                 data: null
         '500':
-          $ref: '#/components/responses/Error5xx'
-  /task/log/list:
-    get:
-      tags:
-      - Task Log
-      summary: List task execution logs (paged)
-      description: 'Auth: No.
+          $ref: '#/components/responses/BizFail'
 
-        Notes: 当前代码未启用鉴权（高风险）; 推荐迁移到 pageNo/pageSize/total/list（可选）'
+  /material/info/list:
+    get:
+      tags: [MaterialInfo]
+      summary: List materials (paged)
+      operationId: listMaterialInfo
       parameters:
-      - name: pageNum
-        in: query
-        required: false
-        description: Page number, default 1
-        schema:
-          type: integer
-          default: 1
-        example: 1
-      - name: pageSize
-        in: query
-        required: false
-        description: Page size, default 10
-        schema:
-          type: integer
-          default: 10
-        example: 10
-      - name: taskId
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-        example: 1
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: name
+          schema:
+            type: string
+          example: Fertilizer
+        - in: query
+          name: category
+          schema:
+            type: string
+          example: Chemical
       responses:
         '200':
-          description: Success
+          description: R<Page<MaterialInfo>>
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/ApiResponse'
-                - type: object
-                  properties:
-                    data:
-                      $ref: '#/components/schemas/PageTaskExecutionLog'
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageMaterialInfo'
               example:
                 code: 200
-                msg: success
+                msg: Operation success
                 data:
                   current: 1
                   size: 10
-                  total: 0
-                  records: []
+                  total: 1
+                  records:
+                    - materialId: 1
+                      name: Compound Fertilizer
+                      category: Fertilizer
+                      price: 120
+                      stockQuantity: 500
+                      unit: kg
+                      updateTime: "2026-02-28T09:00:00"
         '500':
-          $ref: '#/components/responses/Error5xx'
+          $ref: '#/components/responses/BizFail'
+  /material/info:
+    post:
+      tags: [MaterialInfo]
+      summary: Create material
+      operationId: createMaterialInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInfo'
+            example:
+              name: Pesticide A
+              category: Pesticide
+              price: 85
+              stockQuantity: 200
+              unit: L
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+    put:
+      tags: [MaterialInfo]
+      summary: Update material
+      operationId: updateMaterialInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInfo'
+            example:
+              materialId: 1
+              stockQuantity: 450
+              unit: kg
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /material/info/{ids}:
+    delete:
+      tags: [MaterialInfo]
+      summary: Delete materials by CSV ids
+      operationId: deleteMaterialInfo
+      parameters:
+        - in: path
+          name: ids
+          required: true
+          schema:
+            type: string
+          example: 1,2
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              example:
+                code: 200
+                msg: Operation success
+                data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /material/log/list:
+    get:
+      tags: [MaterialLog]
+      summary: List material inout logs (paged)
+      operationId: listMaterialLogs
+      parameters:
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - in: query
+          name: materialId
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: R<Page<MaterialInoutLog>>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageMaterialInoutLog'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  current: 1
+                  size: 10
+                  total: 1
+                  records:
+                    - logId: 10
+                      materialId: 1
+                      type: 2
+                      quantity: 20
+                      relatedTaskId: 6
+                      remark: Task consume
+                      createTime: "2026-02-28T09:00:00"
+        '500':
+          $ref: '#/components/responses/BizFail'
+  /material/log/execute:
+    post:
+      tags: [MaterialLog]
+      summary: Execute material in/out
+      description: type=1 in stock, type=2 out stock; out stock checks inventory.
+      operationId: executeMaterialInout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialInoutLog'
+            example:
+              materialId: 1
+              type: 2
+              quantity: 10
+              relatedTaskId: 6
+              remark: Used in spraying
+      responses:
+        '200':
+          description: R<Void>
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RVoid'
+              examples:
+                success:
+                  value:
+                    code: 200
+                    msg: Operation success
+                    data: null
+                fail:
+                  value:
+                    code: 500
+                    msg: Not enough stock
+                    data: null
+        '500':
+          $ref: '#/components/responses/BizFail'
+
+  /report/dashboard:
+    get:
+      tags: [Report]
+      summary: Dashboard data
+      operationId: getDashboard
+      responses:
+        '200':
+          description: R<DashboardData>
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/R'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DashboardData'
+              example:
+                code: 200
+                msg: Operation success
+                data:
+                  cropDistribution:
+                    - name: Wheat
+                      value: 2
+                  taskTrend:
+                    xAxis: ["2026-02-24", "2026-02-25"]
+                    series: [3, 5]
+                    title: Task Trend
+                  envMonitor:
+                    - name: temperature
+                      value: 20.5
+                    - name: humidity
+                      value: 60.2
+        '500':
+          $ref: '#/components/responses/BizFail'
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   responses:
-    Error5xx:
-      description: Business/server error (R.code=500)
+    BizFail:
+      description: Business failure (R<Void>, code != 200)
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
+            $ref: '#/components/schemas/RVoid'
           example:
             code: 500
-            msg: error
+            msg: Operation failed
+            data: null
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RVoid'
+          example:
+            code: 401
+            msg: Please login first
             data: null
   schemas:
-    ApiResponse:
+    R:
       type: object
       properties:
         code:
           type: integer
-          enum:
-          - 200
-          - 500
-          description: 'Business code: 200=success, 500=error'
+          description: Business code, 200 success, non-200 fail
         msg:
           type: string
         data:
           nullable: true
-      required:
-      - code
-      - msg
-      - data
+      required: [code, msg, data]
+    RVoid:
+      allOf:
+        - $ref: '#/components/schemas/R'
+        - type: object
+          properties:
+            data:
+              nullable: true
+              example: null
+
+    PageBase:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+      required: [current, size, total]
+    PageSysUser:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/SysUser'
+          required: [records]
+    PageSysRole:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/SysRole'
+          required: [records]
+    PageBaseCropVariety:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/BaseCropVariety'
+          required: [records]
+    PageCropBatch:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/CropBatch'
+          required: [records]
+    PageAgriTaskRule:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgriTaskRule'
+          required: [records]
+    PageIotSensorData:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/IotSensorData'
+          required: [records]
+    PageAgriTask:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgriTask'
+          required: [records]
+    PageTaskExecutionLog:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskExecutionLog'
+          required: [records]
+    PageMaterialInfo:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/MaterialInfo'
+          required: [records]
+    PageMaterialInoutLog:
+      allOf:
+        - $ref: '#/components/schemas/PageBase'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/MaterialInoutLog'
+          required: [records]
+
     LoginBody:
       type: object
       properties:
@@ -1726,10 +1961,7 @@ components:
           type: string
         password:
           type: string
-          writeOnly: true
-      required:
-      - username
-      - password
+      required: [username, password]
     LoginData:
       type: object
       properties:
@@ -1737,6 +1969,8 @@ components:
           type: string
         user:
           $ref: '#/components/schemas/SysUser'
+      required: [token, user]
+
     SysUser:
       type: object
       properties:
@@ -1747,8 +1981,6 @@ components:
           type: string
         password:
           type: string
-          writeOnly: true
-          description: Sensitive field, marked writeOnly in API doc.
         realName:
           type: string
         phone:
@@ -1757,6 +1989,7 @@ components:
           type: string
         status:
           type: integer
+          description: 1 enabled, 0 disabled
         createTime:
           type: string
           format: date-time
@@ -1858,6 +2091,224 @@ components:
           type: string
         description:
           type: string
+    AgriTaskRule:
+      type: object
+      properties:
+        ruleId:
+          type: integer
+          format: int64
+        ruleName:
+          type: string
+        sensorType:
+          type: string
+        minVal:
+          type: number
+          format: double
+        maxVal:
+          type: number
+          format: double
+        autoTaskType:
+          type: string
+        priority:
+          type: integer
+        isEnable:
+          type: integer
+    IotSensorData:
+      type: object
+      properties:
+        dataId:
+          type: integer
+          format: int64
+        plotId:
+          type: string
+        sensorType:
+          type: string
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+
+    AgriTask:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        batchId:
+          type: integer
+          format: int64
+        taskName:
+          type: string
+        taskType:
+          type: string
+        priority:
+          type: integer
+        planTime:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          description: 0 pending_assign, 1 pending_accept, 2 accepted, 3 completed, 4 overdue, 5 rejected
+        executorId:
+          type: integer
+          format: int64
+          nullable: true
+        assigneeId:
+          type: integer
+          format: int64
+          nullable: true
+        assignTime:
+          type: string
+          format: date-time
+          nullable: true
+        assignBy:
+          type: integer
+          format: int64
+          nullable: true
+        assignRemark:
+          type: string
+          nullable: true
+        acceptTime:
+          type: string
+          format: date-time
+          nullable: true
+        acceptBy:
+          type: integer
+          format: int64
+          nullable: true
+        rejectTime:
+          type: string
+          format: date-time
+          nullable: true
+        rejectBy:
+          type: integer
+          format: int64
+          nullable: true
+        rejectReason:
+          type: string
+          nullable: true
+        createBy:
+          type: integer
+          format: int64
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+        updateBy:
+          type: integer
+          format: int64
+          nullable: true
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+    AgriTaskCreate:
+      type: object
+      properties:
+        batchId:
+          type: integer
+          format: int64
+        taskName:
+          type: string
+        taskType:
+          type: string
+        priority:
+          type: integer
+        planTime:
+          type: string
+          format: date-time
+        createBy:
+          type: integer
+          format: int64
+      required: [taskName]
+    TaskUpdateDTO:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        batchId:
+          type: integer
+          format: int64
+        taskName:
+          type: string
+        taskType:
+          type: string
+        priority:
+          type: integer
+        planTime:
+          type: string
+          format: date-time
+      required: [taskId]
+    TaskAssignDTO:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        farmerUserId:
+          type: integer
+          format: int64
+        remark:
+          type: string
+      required: [taskId, farmerUserId]
+    TaskAcceptDTO:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+      required: [taskId]
+    TaskRejectDTO:
+      type: object
+      properties:
+        taskId:
+          type: integer
+          format: int64
+        reason:
+          type: string
+      required: [taskId]
+    TaskExecutionLog:
+      type: object
+      properties:
+        logId:
+          type: integer
+          format: int64
+        taskId:
+          type: integer
+          format: int64
+        actualStartTime:
+          type: string
+          format: date-time
+          nullable: true
+        actualEndTime:
+          type: string
+          format: date-time
+          nullable: true
+        statusSnapshot:
+          type: integer
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        materialCostJson:
+          type: string
+          nullable: true
+        problemDesc:
+          type: string
+          nullable: true
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+      required: [taskId]
+
     MaterialInfo:
       type: object
       properties:
@@ -1890,126 +2341,29 @@ components:
           format: int64
         type:
           type: integer
+          description: 1 in-stock, 2 out-stock
         quantity:
           type: number
           format: double
         relatedTaskId:
           type: integer
           format: int64
+          nullable: true
         remark:
           type: string
         createTime:
           type: string
           format: date-time
-    IotSensorData:
+
+    NameValue:
       type: object
       properties:
-        dataId:
-          type: integer
-          format: int64
-        plotId:
-          type: string
-        sensorType:
+        name:
           type: string
         value:
-          type: number
-          format: double
-        unit:
-          type: string
-        createTime:
-          type: string
-          format: date-time
-    AgriTaskRule:
-      type: object
-      properties:
-        ruleId:
-          type: integer
-          format: int64
-        ruleName:
-          type: string
-        sensorType:
-          type: string
-        minVal:
-          type: number
-          format: double
-          nullable: true
-        maxVal:
-          type: number
-          format: double
-          nullable: true
-        autoTaskType:
-          type: string
-        priority:
-          type: integer
-        isEnable:
-          type: integer
-    AgriTask:
-      type: object
-      properties:
-        taskId:
-          type: integer
-          format: int64
-        batchId:
-          type: integer
-          format: int64
-        taskName:
-          type: string
-        taskType:
-          type: string
-        priority:
-          type: integer
-        planTime:
-          type: string
-          format: date-time
-        status:
-          type: integer
-        executorId:
-          type: integer
-          format: int64
-        createBy:
-          type: integer
-          format: int64
-        createTime:
-          type: string
-          format: date-time
-    TaskAssignRequest:
-      type: object
-      properties:
-        taskId:
-          type: integer
-          format: int64
-        executorId:
-          type: integer
-          format: int64
-      required:
-      - taskId
-      - executorId
-    TaskExecutionLog:
-      type: object
-      properties:
-        logId:
-          type: integer
-          format: int64
-        taskId:
-          type: integer
-          format: int64
-        actualStartTime:
-          type: string
-          format: date-time
-        actualEndTime:
-          type: string
-          format: date-time
-        statusSnapshot:
-          type: integer
-        photoUrl:
-          type: string
-        materialCostJson:
-          type: string
-        problemDesc:
-          type: string
-        createTime:
-          type: string
-          format: date-time
+          oneOf:
+            - type: number
+            - type: integer
     ChartDataVO:
       type: object
       properties:
@@ -2019,191 +2373,19 @@ components:
             type: string
         series:
           type: array
-          items:
-            type: object
+          items: {}
         title:
           type: string
-    NameValueItem:
-      type: object
-      properties:
-        name:
-          type: string
-        value:
-          oneOf:
-          - type: number
-            format: double
-          - type: integer
-          - type: string
     DashboardData:
       type: object
       properties:
         cropDistribution:
           type: array
           items:
-            $ref: '#/components/schemas/NameValueItem'
+            $ref: '#/components/schemas/NameValue'
         taskTrend:
           $ref: '#/components/schemas/ChartDataVO'
         envMonitor:
           type: array
           items:
-            $ref: '#/components/schemas/NameValueItem'
-    PageSysUser:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/SysUser'
-    PageSysRole:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/SysRole'
-    PageBaseCropVariety:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/BaseCropVariety'
-    PageCropBatch:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/CropBatch'
-    PageMaterialInfo:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/MaterialInfo'
-    PageMaterialInoutLog:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/MaterialInoutLog'
-    PageIotSensorData:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/IotSensorData'
-    PageAgriTaskRule:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/AgriTaskRule'
-    PageAgriTask:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/AgriTask'
-    PageTaskExecutionLog:
-      type: object
-      properties:
-        current:
-          type: integer
-          format: int64
-        size:
-          type: integer
-          format: int64
-        total:
-          type: integer
-          format: int64
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaskExecutionLog'
+            $ref: '#/components/schemas/NameValue'

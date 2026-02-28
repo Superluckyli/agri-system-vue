@@ -1,64 +1,46 @@
-import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-
-import type { LoginData, SysUser } from '@/api/types/models'
-
-const TOKEN_KEY = 'agri-system-token'
-const USER_KEY = 'agri-system-user'
-
-function loadUserFromStorage(): SysUser | null {
-  const rawUser = localStorage.getItem(USER_KEY)
-  if (!rawUser) {
-    return null
-  }
-
-  try {
-    return JSON.parse(rawUser) as SysUser
-  } catch {
-    localStorage.removeItem(USER_KEY)
-    return null
-  }
-}
+import { ref } from 'vue'
+import http from '@/api/http'
+import router from '@/router'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string>(localStorage.getItem(TOKEN_KEY) ?? '')
-  const user = ref<SysUser | null>(loadUserFromStorage())
+  const token = ref(localStorage.getItem('token') || '')
+  const user = ref<any>(JSON.parse(localStorage.getItem('user') || 'null'))
+  const roles = ref<string[]>(JSON.parse(localStorage.getItem('roles') || '[]'))
 
-  const isAuthenticated = computed(() => Boolean(token.value))
+  const setToken = (t: string) => {
+    token.value = t
+    localStorage.setItem('token', t)
+  }
 
-  function setToken(value: string): void {
-    token.value = value
-    if (value) {
-      localStorage.setItem(TOKEN_KEY, value)
-    } else {
-      localStorage.removeItem(TOKEN_KEY)
+  const setUser = (u: any) => {
+    user.value = u
+    localStorage.setItem('user', JSON.stringify(u))
+  }
+
+  const setRoles = (r: string[]) => {
+    roles.value = r
+    localStorage.setItem('roles', JSON.stringify(r))
+  }
+
+  const login = async (form: any) => {
+    const data: any = await http.post('/login', form)
+    setToken(data.token)
+    setUser(data.user)
+    if (data.roles) {
+      setRoles(data.roles)
     }
   }
 
-  function setUser(value: SysUser | null): void {
-    user.value = value
-    if (value) {
-      localStorage.setItem(USER_KEY, JSON.stringify(value))
-    } else {
-      localStorage.removeItem(USER_KEY)
-    }
+  const logout = () => {
+    token.value = ''
+    user.value = null
+    roles.value = []
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('roles')
+    router.replace('/login')
   }
 
-  function setAuth(payload: LoginData): void {
-    setToken(payload.token)
-    setUser(payload.user ?? null)
-  }
-
-  function logout(): void {
-    setToken('')
-    setUser(null)
-  }
-
-  return {
-    token,
-    user,
-    isAuthenticated,
-    setAuth,
-    logout,
-  }
+  return { token, user, roles, setToken, setUser, setRoles, login, logout }
 })
