@@ -65,4 +65,9 @@ http.interceptors.response.use(
   }
 )
 
+export const get = <T = any>(url: string, config?: any): Promise<T> => http.get(url, config)
+export const post = <T = any>(url: string, data?: any, config?: any): Promise<T> => http.post(url, data, config)
+export const put = <T = any>(url: string, data?: any, config?: any): Promise<T> => http.put(url, data, config)
+export const del = <T = any>(url: string, config?: any): Promise<T> => http.delete(url, config)
+
 export default http

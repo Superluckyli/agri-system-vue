@@ -42,5 +42,11 @@ export const useAuthStore = defineStore('auth', () => {
     router.replace('/login')
   }
 
-  return { token, user, roles, setToken, setUser, setRoles, login, logout }
+  const setAuth = (data: any) => {
+    if (data?.token) setToken(data.token)
+    if (data?.user) setUser(data.user)
+    if (data?.roles) setRoles(data.roles)
+  }
+
+  return { token, user, roles, setToken, setUser, setRoles, setAuth, login, logout }
 })

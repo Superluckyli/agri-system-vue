@@ -1,6 +1,5 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import AppLayout from '@/layout/AppLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,17 +7,27 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/login/index.vue')
+      component: () => import('@/views/auth/LoginView.vue')
     },
     {
       path: '/',
-      component: AppLayout,
+      component: () => import('@/layouts/AppLayout.vue'),
       redirect: '/dashboard',
       children: [
         {
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('@/views/dashboard/index.vue')
+        },
+        {
+          path: '/system/user',
+          name: 'SystemUser',
+          component: () => import('@/views/system/SystemUserView.vue')
+        },
+        {
+          path: '/system/role',
+          name: 'SystemRole',
+          component: () => import('@/views/system/SystemRoleView.vue')
         }
       ]
     }

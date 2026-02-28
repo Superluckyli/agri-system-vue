@@ -38,19 +38,19 @@ export interface SysRole extends UnknownRecord {
   createTime?: string
 }
 
-export interface CropBatch extends UnknownRecord {}
+export interface CropBatch extends UnknownRecord { }
 
-export interface GrowthStageLog extends UnknownRecord {}
+export interface GrowthStageLog extends UnknownRecord { }
 
-export interface BaseCropVariety extends UnknownRecord {}
+export interface BaseCropVariety extends UnknownRecord { }
 
-export interface IotSensorData extends UnknownRecord {}
+export interface IotSensorData extends UnknownRecord { }
 
-export interface AgriTaskRule extends UnknownRecord {}
+export interface AgriTaskRule extends UnknownRecord { }
 
-export interface MaterialInfo extends UnknownRecord {}
+export interface MaterialInfo extends UnknownRecord { }
 
-export interface MaterialInoutLog extends UnknownRecord {}
+export interface MaterialInoutLog extends UnknownRecord { }
 
 export interface AgriTask {
   taskId?: number
@@ -104,3 +104,21 @@ export interface DashboardData {
   taskTrend?: ChartDataVO
   envMonitor?: NameValueItem[]
 }
+
+export interface TaskAcceptDTO {
+  taskId?: number
+  // 根据实际响应调整
+}
+
+export interface TaskRejectDTO {
+  taskId?: number
+  rejectReason?: string
+  // 根据实际响应调整
+}
+
+// 补充类型别名导出
+export type User = SysUser
+export type Role = SysRole
+export type Task = AgriTask
+export type TaskAssignDTO = TaskAssignRequest
+export type DashboardVO = DashboardData
