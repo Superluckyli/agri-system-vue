@@ -6,7 +6,9 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { login } from '@/api/modules'
 import type { LoginBody } from '@/api/types/models'
 import { usePageState } from '@/composables/usePageState'
+import { MENU_ACCESS } from '@/constants/permission'
 import { useAuthStore } from '@/stores/auth'
+import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 
 interface LoginForm {
   username: string
@@ -61,8 +63,15 @@ async function handleSubmit(): Promise<void> {
     const loginResult = await login(payload)
     authStore.setAuth(loginResult)
 
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard'
-    await router.replace(redirect)
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    const roles = resolveUserRoles(authStore.roles, authStore.user)
+    const defaultPath = hasAnyRole(roles, MENU_ACCESS.dashboard)
+      ? '/dashboard'
+      : hasAnyRole(roles, MENU_ACCESS.myTask)
+        ? '/task/my'
+        : '/403'
+    const nextPath = redirect || defaultPath
+    await router.replace(nextPath)
     finish()
   } catch (error) {
     fail(error)

@@ -14,8 +14,12 @@ export function updateTask(body: AgriTask): Promise<void> {
   return put<void>('/task', body)
 }
 
-export function updateTaskAssign(body: TaskAssignRequest): Promise<void> {
+export function assignTask(body: TaskAssignRequest): Promise<void> {
   return put<void>('/task/assign', body)
+}
+
+export function updateTaskAssign(body: TaskAssignRequest): Promise<void> {
+  return assignTask(body)
 }
 
 export function acceptTask(body: TaskAcceptDTO): Promise<void> {

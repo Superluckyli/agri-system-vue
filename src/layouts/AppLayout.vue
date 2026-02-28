@@ -1,20 +1,50 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { MENU_ACCESS, type AppRole } from '@/constants/permission'
+import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 import { useAuthStore } from '@/stores/auth'
+
+interface NavItem {
+  path: string
+  label: string
+  roles: AppRole[]
+}
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const navigationItems = [
-  { path: '/dashboard', label: 'Dashboard' },
-  { path: '/system/user', label: 'System User' },
-  { path: '/system/role', label: 'System Role' },
+const navigationItems: NavItem[] = [
+  { path: '/dashboard', label: '工作台 (Dashboard)', roles: MENU_ACCESS.dashboard },
+  { path: '/system/user', label: '用户管理', roles: MENU_ACCESS.system },
+  { path: '/system/role', label: '角色管理', roles: MENU_ACCESS.system },
+  { path: '/task/list', label: '任务派单', roles: MENU_ACCESS.taskManage },
+  { path: '/task/my', label: '我的任务', roles: MENU_ACCESS.myTask },
+  { path: '/task/log', label: '执行日志', roles: MENU_ACCESS.taskLog },
+  { path: '/crop/variety', label: '作物品种', roles: MENU_ACCESS.crop },
+  { path: '/crop/batch', label: '种植批次', roles: MENU_ACCESS.crop },
+  { path: '/crop/growth-log/1', label: '生长日志', roles: MENU_ACCESS.crop },
+  { path: '/material/inventory', label: '物资库存', roles: MENU_ACCESS.materialInventory },
+  { path: '/material/log', label: '出入库登记', roles: MENU_ACCESS.materialLog },
+  { path: '/iot/monitor', label: '设备监测', roles: MENU_ACCESS.iotMonitor },
+  { path: '/iot/rule', label: '预警规则', roles: MENU_ACCESS.iotRule },
+  { path: '/report/analytics', label: '统计报表', roles: MENU_ACCESS.report },
 ]
 
-const activePath = computed(() => route.path)
+const currentRoles = computed(() => resolveUserRoles(authStore.roles, authStore.user))
+
+const visibleNavigationItems = computed(() => {
+  return navigationItems.filter((item) => hasAnyRole(currentRoles.value, item.roles))
+})
+
+const activePath = computed(() => {
+  if (route.path.startsWith('/crop/growth-log/')) {
+    return '/crop/growth-log/1'
+  }
+  return route.path
+})
 
 async function handleNavigate(path: string): Promise<void> {
   if (route.path === path) {
@@ -24,7 +54,6 @@ async function handleNavigate(path: string): Promise<void> {
   try {
     await router.push(path)
   } catch (error) {
-    // Keep this visible in console for routing diagnosis.
     console.error('Route navigation failed:', error)
   }
 }
@@ -40,7 +69,7 @@ function handleLogout(): void {
       <div class="app-layout__brand">Agri System</div>
       <nav class="app-layout__nav">
         <button
-          v-for="item in navigationItems"
+          v-for="item in visibleNavigationItems"
           :key="item.path"
           type="button"
           class="nav-item"

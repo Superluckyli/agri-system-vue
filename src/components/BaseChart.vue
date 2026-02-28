@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
 import * as echarts from 'echarts'
-import type { EChartsOption } from 'echarts'
+import type { EChartsOption, SetOptionOpts } from 'echarts'
 
 const props = defineProps<{
   options: EChartsOption
@@ -9,82 +9,112 @@ const props = defineProps<{
   width?: string
 }>()
 
-const chartRef = ref<HTMLElement | null>(null)
+const chartRef = ref<HTMLDivElement | null>(null)
 let chartInstance: echarts.ECharts | null = null
+let resizeObserver: ResizeObserver | null = null
 
-const normalizeOption = (option: EChartsOption): EChartsOption => {
+function toPlainObject<T>(value: T): T {
+  const raw = toRaw(value)
+  try {
+    if (typeof structuredClone === 'function') {
+      return structuredClone(raw)
+    }
+  } catch {
+    // Fallback below.
+  }
+  return JSON.parse(JSON.stringify(raw)) as T
+}
+
+function normalizeOption(option: EChartsOption): EChartsOption {
   const source = (option || {}) as Record<string, unknown>
-  const normalized: Record<string, unknown> = { ...source }
+  const normalized: Record<string, unknown> = toPlainObject(source)
 
-  const rawSeries = source.series
+  const rawSeries = normalized.series
   if (Array.isArray(rawSeries)) {
-    normalized.series = rawSeries
-      .filter((item) => !!item && typeof item === 'object' && typeof (item as { type?: unknown }).type === 'string')
-      .map((item) => ({ ...(item as Record<string, unknown>) }))
+    normalized.series = rawSeries.filter(
+      (item) => item && typeof item === 'object' && typeof (item as { type?: unknown }).type === 'string',
+    )
   }
 
-  const rawLegend = source.legend
+  const rawLegend = normalized.legend
   if (rawLegend && typeof rawLegend === 'object' && !Array.isArray(rawLegend)) {
-    const legendObj = { ...(rawLegend as Record<string, unknown>) }
+    const legendObj = rawLegend as Record<string, unknown>
     const legendData = legendObj.data
     if (Array.isArray(legendData)) {
-      legendObj.data = legendData.filter((name) => typeof name === 'string' && name.length > 0)
+      legendObj.data = legendData.filter((name) => typeof name === 'string' && name.trim().length > 0)
     }
-    normalized.legend = legendObj
   }
 
   return normalized as EChartsOption
 }
 
-const safeSetOption = (option: EChartsOption, replaceMerge = false): void => {
-  if (!chartInstance) {
-    return
-  }
+function safeSetOption(option: EChartsOption): void {
+  if (!chartInstance) return
 
   try {
-    chartInstance.setOption(normalizeOption(option), replaceMerge)
+    const sanitized = normalizeOption(option)
+    const setOpts: SetOptionOpts = {
+      notMerge: true,
+      lazyUpdate: true,
+      silent: true,
+    }
+    chartInstance.setOption(sanitized, setOpts)
   } catch (error) {
-    console.error('Chart render failed:', error)
+    console.error('[BaseChart] render failed:', error)
   }
 }
 
-const initChart = () => {
-  if (chartRef.value) {
-    chartInstance = echarts.init(chartRef.value)
-    safeSetOption(props.options)
-  }
+function initChart(): void {
+  if (!chartRef.value) return
+  chartInstance = echarts.init(chartRef.value)
+  safeSetOption(props.options)
 }
 
-const resizeHandler = () => {
+function resizeChart(): void {
   chartInstance?.resize()
 }
 
-watch(
-  () => props.options,
-  (newVal) => {
-    safeSetOption(newVal, true)
-  }
-)
-
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   initChart()
-  window.addEventListener('resize', resizeHandler)
+
+  if (chartRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      resizeChart()
+    })
+    resizeObserver.observe(chartRef.value)
+  } else {
+    window.addEventListener('resize', resizeChart)
+  }
 })
 
+watch(
+  () => props.options,
+  (newOption) => {
+    safeSetOption(newOption)
+  },
+  { deep: true, flush: 'post' },
+)
+
 onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  } else {
+    window.removeEventListener('resize', resizeChart)
+  }
+
   if (chartInstance) {
     try {
       if (!chartInstance.isDisposed()) {
         chartInstance.dispose()
       }
     } catch (error) {
-      // Prevent chart dispose errors from interrupting route navigation.
-      console.warn('Chart dispose failed during unmount:', error)
+      console.warn('[BaseChart] dispose failed:', error)
     } finally {
       chartInstance = null
     }
   }
-  window.removeEventListener('resize', resizeHandler)
 })
 </script>
 

@@ -38,19 +38,76 @@ export interface SysRole extends UnknownRecord {
   createTime?: string
 }
 
-export interface CropBatch extends UnknownRecord { }
+export interface CropBatch extends UnknownRecord {
+  batchId?: number
+  varietyId?: number
+  plotId?: string
+  sowingDate?: string
+  expectedHarvestDate?: string
+  currentStage?: string
+  isActive?: number
+  cropName?: string
+}
 
-export interface GrowthStageLog extends UnknownRecord { }
+export interface GrowthStageLog extends UnknownRecord {
+  logId?: number
+  batchId?: number
+  stageName?: string
+  logDate?: string
+  imageUrl?: string
+  description?: string
+}
 
-export interface BaseCropVariety extends UnknownRecord { }
+export interface BaseCropVariety extends UnknownRecord {
+  varietyId?: number
+  cropName?: string
+  growthCycleDays?: number
+  idealHumidityMin?: number
+  idealHumidityMax?: number
+  idealTempMin?: number
+  idealTempMax?: number
+  createTime?: string
+}
 
-export interface IotSensorData extends UnknownRecord { }
+export interface IotSensorData extends UnknownRecord {
+  dataId?: number
+  plotId?: string
+  sensorType?: string
+  value?: number
+  unit?: string
+  createTime?: string
+}
 
-export interface AgriTaskRule extends UnknownRecord { }
+export interface AgriTaskRule extends UnknownRecord {
+  ruleId?: number
+  ruleName?: string
+  sensorType?: string
+  minVal?: number
+  maxVal?: number
+  autoTaskType?: string
+  priority?: number
+  isEnable?: number
+}
 
-export interface MaterialInfo extends UnknownRecord { }
+export interface MaterialInfo extends UnknownRecord {
+  materialId?: number
+  name?: string
+  category?: string
+  price?: number
+  stockQuantity?: number
+  unit?: string
+  updateTime?: string
+}
 
-export interface MaterialInoutLog extends UnknownRecord { }
+export interface MaterialInoutLog extends UnknownRecord {
+  logId?: number
+  materialId?: number
+  type?: number
+  quantity?: number
+  relatedTaskId?: number
+  remark?: string
+  createTime?: string
+}
 
 export interface AgriTask {
   taskId?: number
@@ -61,6 +118,10 @@ export interface AgriTask {
   planTime?: string
   status?: number
   executorId?: number
+  creatorId?: number
+  assigneeId?: number
+  landId?: number
+  extParams?: string
   createBy?: number
   createTime?: string
 }
@@ -68,6 +129,7 @@ export interface AgriTask {
 export interface TaskAssignRequest {
   taskId: number
   executorId: number
+  remark?: string
 }
 
 export interface TaskExecutionLog extends UnknownRecord {
@@ -107,13 +169,11 @@ export interface DashboardData {
 
 export interface TaskAcceptDTO {
   taskId?: number
-  // 根据实际响应调整
 }
 
 export interface TaskRejectDTO {
   taskId?: number
-  rejectReason?: string
-  // 根据实际响应调整
+  reason?: string
 }
 
 // 补充类型别名导出

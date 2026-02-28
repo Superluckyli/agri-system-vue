@@ -1,0 +1,26 @@
+﻿
+> agri-system-vue@0.0.0 type-check
+> vue-tsc --build
+
+src/views/dashboard/index.vue(85,5): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(86,5): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(87,5): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(93,7): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(93,98): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/views/dashboard/index.vue(212,36): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(213,26): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(220,36): error TS2532: Object is possibly 'undefined'.
+src/views/dashboard/index.vue(221,26): error TS2532: Object is possibly 'undefined'.
+src/views/task/MyTaskView.vue(170,109): error TS2532: Object is possibly 'undefined'.
+src/views/task/MyTaskView.vue(171,18): error TS2532: Object is possibly 'undefined'.
+src/views/task/MyTaskView.vue(177,103): error TS2532: Object is possibly 'undefined'.
+src/views/task/MyTaskView.vue(178,18): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(105,3): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/views/task/TaskListView.vue(166,28): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(167,18): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(176,28): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(177,18): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(224,28): error TS2532: Object is possibly 'undefined'.
+src/views/task/TaskListView.vue(225,18): error TS2532: Object is possibly 'undefined'.

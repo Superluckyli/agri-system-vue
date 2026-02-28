@@ -2,10 +2,12 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import http from '@/api/http'
 import router from '@/router'
+import type { SysUser } from '@/api/types/models'
+import { resolveUserRoles } from '@/utils/permission'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const user = ref<any>(JSON.parse(localStorage.getItem('user') || 'null'))
+  const user = ref<SysUser | null>(JSON.parse(localStorage.getItem('user') || 'null'))
   const roles = ref<string[]>(JSON.parse(localStorage.getItem('roles') || '[]'))
 
   const setToken = (t: string) => {
@@ -13,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('token', t)
   }
 
-  const setUser = (u: any) => {
+  const setUser = (u: SysUser | null) => {
     user.value = u
     localStorage.setItem('user', JSON.stringify(u))
   }
@@ -23,13 +25,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('roles', JSON.stringify(r))
   }
 
+  const syncRoles = (rawRoles?: unknown, currentUser?: SysUser | null) => {
+    const normalizedRoles = resolveUserRoles(rawRoles, currentUser ?? user.value)
+    setRoles(normalizedRoles)
+  }
+
   const login = async (form: any) => {
     const data: any = await http.post('/login', form)
     setToken(data.token)
-    setUser(data.user)
-    if (data.roles) {
-      setRoles(data.roles)
-    }
+    setUser(data.user || null)
+    syncRoles(data.roles, data.user || null)
   }
 
   const logout = () => {
@@ -45,8 +50,12 @@ export const useAuthStore = defineStore('auth', () => {
   const setAuth = (data: any) => {
     if (data?.token) setToken(data.token)
     if (data?.user) setUser(data.user)
-    if (data?.roles) setRoles(data.roles)
+    syncRoles(data?.roles, data?.user || user.value)
   }
 
-  return { token, user, roles, setToken, setUser, setRoles, setAuth, login, logout }
+  if (token.value && roles.value.length === 0) {
+    syncRoles(roles.value, user.value)
+  }
+
+  return { token, user, roles, setToken, setUser, setRoles, setAuth, login, logout, syncRoles }
 })
