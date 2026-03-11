@@ -6,7 +6,7 @@ import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { createIotRule, listIotRule, removeIotRuleById, updateIotRule } from '@/api/modules/iot'
 import { createTask } from '@/api/modules/task'
-import type { AgriTask, AgriTaskRule } from '@/api/types/models'
+import type { AgriTask, AgriTaskRule } from '@/types/entity'
 
 interface QueryParams {
   ruleName: string

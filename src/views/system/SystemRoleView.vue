@@ -10,7 +10,7 @@ import {
   updateSystemRole,
   removeSystemRoleByRoleIds
 } from '@/api/modules/system'
-import type { SysRole } from '@/api/types/models'
+import type { SysRole } from '@/types/entity'
 
 // ==== 查询与列表数据 ====
 const loading = ref(false)

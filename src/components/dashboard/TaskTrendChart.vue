@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import type { EChartsOption, LineSeriesOption } from 'echarts'
 
-import type { ChartDataVO, DashboardSeriesItem } from '@/api/types/models'
+import type { ChartDataVO, DashboardSeriesItem } from '@/types/entity'
 
 const props = defineProps<{
   chartData: ChartDataVO | undefined

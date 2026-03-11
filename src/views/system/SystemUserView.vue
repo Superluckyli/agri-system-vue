@@ -1,16 +1,46 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus, Search, Refresh, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, Edit, Delete, UserFilled } from '@element-plus/icons-vue'
 
 import {
   listSystemUser,
   createSystemUser,
   updateSystemUser,
-  removeSystemUserByUserIds
+  removeSystemUserByUserIds,
+  getUserRoles,
+  assignUserRoles,
+  listAllRoles
 } from '@/api/modules/system'
-import type { SysUser } from '@/api/types/models'
+import type { SysUser, SysRole } from '@/types/entity'
+
+// ==== 角色颜色映射 ====
+const ROLE_TAG_TYPE: Record<string, string> = {
+  ADMIN: 'danger',
+  FARM_OWNER: 'success',
+  MANAGER: 'warning',
+  FARMER: '',
+  WORKER: 'info',
+  DEMO: 'info',
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: '超级管理员',
+  FARM_OWNER: '农场主',
+  MANAGER: '管理员',
+  FARMER: '农户',
+  WORKER: '工人',
+  DEMO: '演示账号',
+}
+
+function getRoleTagType(roleKey: string): string {
+  return ROLE_TAG_TYPE[roleKey] || 'info'
+}
+
+function getRoleLabel(roleKey: string): string {
+  return ROLE_LABEL[roleKey] || roleKey
+}
 
 // ==== 查询与列表数据 ====
 const loading = ref(false)
@@ -113,10 +143,9 @@ const handleAdd = () => {
 const handleUpdate = (row: SysUser) => {
   resetForm()
   dialogTitle.value = '修改用户'
-  // 取消密码校验（编辑时不强制密码参数）
   rules.value.password = []
   form.value = { ...row }
-  form.value.password = '' // 密码置空防止误改
+  form.value.password = ''
   dialogVisible.value = true
 }
 
@@ -126,7 +155,6 @@ const submitForm = async () => {
     if (valid) {
       try {
         if (form.value.userId) {
-          // 修改如果密码为空，则删除以避免覆盖后端
           if (!form.value.password) {
             delete form.value.password
           }
@@ -155,7 +183,6 @@ const handleDelete = (row: SysUser) => {
     try {
       await removeSystemUserByUserIds({ userIds: userIds as number })
       ElMessage.success('删除成功')
-      // 如果当前页只有一条，删完回到上一页
       if (list.value.length === 1 && queryParams.value.pageNum > 1) {
         queryParams.value.pageNum -= 1
       }
@@ -166,8 +193,47 @@ const handleDelete = (row: SysUser) => {
   }).catch(() => {})
 }
 
-onMounted(() => {
+// ==== 角色分配 ====
+const allRoles = ref<SysRole[]>([])
+const roleDialogVisible = ref(false)
+const roleSubmitLoading = ref(false)
+const selectedRoleIds = ref<number[]>([])
+const currentRoleUserId = ref<number | null>(null)
+const currentRoleUsername = ref('')
+
+const handleAssignRole = async (row: SysUser) => {
+  currentRoleUserId.value = row.userId!
+  currentRoleUsername.value = row.realName || row.username || ''
+  try {
+    selectedRoleIds.value = await getUserRoles(row.userId!)
+    roleDialogVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取用户角色失败')
+  }
+}
+
+const submitRoleAssign = async () => {
+  if (currentRoleUserId.value == null) return
+  roleSubmitLoading.value = true
+  try {
+    await assignUserRoles(currentRoleUserId.value, selectedRoleIds.value)
+    ElMessage.success('角色分配成功')
+    roleDialogVisible.value = false
+    getList()
+  } catch (error) {
+    ElMessage.error('角色分配失败')
+  } finally {
+    roleSubmitLoading.value = false
+  }
+}
+
+onMounted(async () => {
   getList()
+  try {
+    allRoles.value = await listAllRoles()
+  } catch (_) {
+    // 角色列表加载失败不阻塞页面
+  }
 })
 </script>
 
@@ -202,7 +268,23 @@ onMounted(() => {
         <el-table-column label="真实姓名" align="center" prop="realName" />
         <el-table-column label="手机号" align="center" prop="phone" width="120" />
         <el-table-column label="部门" align="center" prop="deptName" />
-        <el-table-column label="状态" align="center" key="status">
+        <el-table-column label="角色" align="center" min-width="140">
+          <template #default="{ row }">
+            <template v-if="row.roleNames?.length">
+              <el-tag
+                v-for="role in row.roleNames"
+                :key="role"
+                :type="getRoleTagType(role)"
+                size="small"
+                style="margin: 2px"
+              >
+                {{ getRoleLabel(role) }}
+              </el-tag>
+            </template>
+            <el-tag v-else type="info" size="small">未分配</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" align="center" key="status" width="80">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
               {{ scope.row.status === 1 ? '正常' : '停用' }}
@@ -210,9 +292,10 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
-        <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button link type="primary" :icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+            <el-button link type="warning" :icon="UserFilled" @click="handleAssignRole(scope.row)">角色</el-button>
             <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -270,6 +353,34 @@ onMounted(() => {
           <el-button @click="dialogVisible = false">取 消</el-button>
           <el-button type="primary" @click="submitForm">确 定</el-button>
         </div>
+      </template>
+    </el-dialog>
+
+    <!-- 角色分配对话框 -->
+    <el-dialog
+      :title="`分配角色 - ${currentRoleUsername}`"
+      v-model="roleDialogVisible"
+      width="480px"
+      append-to-body
+      destroy-on-close
+    >
+      <el-checkbox-group v-model="selectedRoleIds">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <el-checkbox
+            v-for="role in allRoles"
+            :key="role.roleId"
+            :value="role.roleId"
+          >
+            <el-tag :type="getRoleTagType(role.roleKey || '')" size="small" style="margin-right: 8px">
+              {{ role.roleKey }}
+            </el-tag>
+            {{ role.roleName }}
+          </el-checkbox>
+        </div>
+      </el-checkbox-group>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="roleSubmitLoading" @click="submitRoleAssign">确 定</el-button>
       </template>
     </el-dialog>
   </div>

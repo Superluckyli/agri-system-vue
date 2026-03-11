@@ -9,7 +9,7 @@ import { listIotData, listIotRule } from '@/api/modules/iot'
 import { listMaterialInfo } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
-import type { AgriTask, AgriTaskRule, DashboardData, IotSensorData, MaterialInfo } from '@/api/types/models'
+import type { AgriTask, AgriTaskRule, DashboardData, IotSensorData, MaterialInfo } from '@/types/entity'
 import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
 
 interface AlertItem {

@@ -7,7 +7,7 @@ import { Plus, Refresh, Search, User, View } from '@element-plus/icons-vue'
 
 import { assignTask, createTask, listTask } from '@/api/modules/task'
 import { listSystemUser } from '@/api/modules/system'
-import type { AgriTask, SysUser, TaskAssignRequest } from '@/api/types/models'
+import type { AgriTask, SysUser, TaskAssignRequest } from '@/types/entity'
 import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
 import { ROLE_FARMER, ROLE_WORKER } from '@/constants/permission'
 import { resolveUserRoles } from '@/utils/permission'

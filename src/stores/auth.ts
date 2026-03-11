@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import http from '@/api/http'
 import router from '@/router'
-import type { SysUser } from '@/api/types/models'
+import type { SysUser } from '@/types/entity'
 import { resolveUserRoles } from '@/utils/permission'
 
 export const useAuthStore = defineStore('auth', () => {

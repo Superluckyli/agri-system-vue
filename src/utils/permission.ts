@@ -1,13 +1,9 @@
 import {
   ALL_ROLES,
-  ROLE_ADMIN,
   ROLE_ALIAS_MAP,
-  ROLE_FARMER,
-  ROLE_FARM_OWNER,
-  ROLE_WORKER,
   type AppRole,
 } from '@/constants/permission'
-import type { SysUser } from '@/api/types/models'
+import type { SysUser } from '@/types/entity'
 
 function normalizeRoleValue(value: unknown): AppRole | null {
   if (typeof value !== 'string') {
@@ -80,22 +76,7 @@ export function resolveUserRoles(rawRoles: unknown, user: SysUser | null | undef
     return Array.from(new Set(normalizedRoles))
   }
 
-  const username = user?.username?.toLowerCase() || ''
-  if (username.includes('admin')) {
-    return [ROLE_ADMIN]
-  }
-  if (username.includes('owner') || username.includes('boss')) {
-    return [ROLE_FARM_OWNER]
-  }
-  if (username.includes('worker') || username.includes('operator')) {
-    return [ROLE_WORKER]
-  }
-  if (username.includes('farmer') || username.includes('farm')) {
-    return [ROLE_FARMER]
-  }
-
-  // Unknown role: use least privilege fallback.
-  return [ROLE_FARMER]
+  return []
 }
 
 export function hasAnyRole(currentRoles: string[] | AppRole[], requiredRoles: AppRole[]): boolean {

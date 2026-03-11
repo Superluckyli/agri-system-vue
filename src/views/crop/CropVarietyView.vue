@@ -10,7 +10,7 @@ import {
   removeCropVarietyByIds,
   updateCropVariety,
 } from '@/api/modules/crop'
-import type { BaseCropVariety } from '@/api/types/models'
+import type { BaseCropVariety } from '@/types/entity'
 
 interface QueryParams {
   pageNum: number

@@ -3,8 +3,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 import { listSystemUser, type ListSystemUserParams } from '@/api/modules/system'
-import type { MpPage } from '@/api/types/http'
-import type { SysUser } from '@/api/types/models'
+import type { MpPage } from '@/types/api'
+import type { SysUser } from '@/types/entity'
 import PageState from '@/components/page/PageState.vue'
 import { usePageState } from '@/composables/usePageState'
 

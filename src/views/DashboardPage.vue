@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { getReportDashboard } from '@/api/modules'
-import type { DashboardData, NameValueItem } from '@/api/types/models'
+import type { DashboardData, NameValueItem } from '@/types/entity'
 import TaskTrendChart from '@/components/dashboard/TaskTrendChart.vue'
 import PageState from '@/components/page/PageState.vue'
 import { usePageState } from '@/composables/usePageState'

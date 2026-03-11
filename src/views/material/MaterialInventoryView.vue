@@ -14,7 +14,7 @@ import {
 } from '@/api/modules/material'
 import { useAuthStore } from '@/stores/auth'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
-import type { MaterialInfo } from '@/api/types/models'
+import type { MaterialInfo } from '@/types/entity'
 
 interface QueryParams {
   pageNum: number

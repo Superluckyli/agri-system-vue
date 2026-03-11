@@ -7,7 +7,7 @@ import { listCropBatch } from '@/api/modules/crop'
 import { listMaterialInfo, listMaterialLog } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
-import type { AgriTask, CropBatch, DashboardData, MaterialInfo, MaterialInoutLog } from '@/api/types/models'
+import type { AgriTask, CropBatch, DashboardData, MaterialInfo, MaterialInoutLog } from '@/types/entity'
 import { TASK_STATUS } from '@/constants/task'
 
 const loading = ref(false)

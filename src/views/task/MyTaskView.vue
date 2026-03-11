@@ -6,7 +6,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Check, Close, EditPen, Refresh, Search, View } from '@element-plus/icons-vue'
 
 import { acceptTask, listTask, rejectTask } from '@/api/modules/task'
-import type { AgriTask } from '@/api/types/models'
+import type { AgriTask } from '@/types/entity'
 import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
 import { MENU_ACCESS, ROLE_FARMER } from '@/constants/permission'
 import { useAuthStore } from '@/stores/auth'

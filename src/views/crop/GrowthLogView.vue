@@ -6,7 +6,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 
 import { createCropGrowthLog, listCropGrowthLog } from '@/api/modules/crop'
-import type { GrowthStageLog } from '@/api/types/models'
+import type { GrowthStageLog } from '@/types/entity'
 
 interface GrowthLogFormModel {
   stageName: string

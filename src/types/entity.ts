@@ -14,11 +14,14 @@ export interface SysUser {
   deptName?: string
   status?: number
   createTime?: string
+  roleNames?: string[]
+  roleIds?: number[]
 }
 
 export interface LoginData {
   token: string
   user?: SysUser
+  roles?: string[]
 }
 
 export interface SysMenu extends UnknownRecord {

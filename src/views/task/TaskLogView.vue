@@ -7,7 +7,7 @@ import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { createMaterialLogExecute, listMaterialInfo } from '@/api/modules/material'
 import { createTaskLog, listTask, listTaskLog } from '@/api/modules/task'
-import type { AgriTask, MaterialInfo, TaskExecutionLog } from '@/api/types/models'
+import type { AgriTask, MaterialInfo, TaskExecutionLog } from '@/types/entity'
 import { ROLE_ADMIN, ROLE_FARM_OWNER } from '@/constants/permission'
 import { TASK_STATUS } from '@/constants/task'
 import { useAuthStore } from '@/stores/auth'

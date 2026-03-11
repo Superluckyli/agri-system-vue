@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { MENU_ACCESS, type AppRole } from '@/constants/permission'
 import { hasAnyRole } from '@/utils/permission'
 import { useAuthStore } from '@/stores/auth'
+import http from '@/api/http';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,10 +13,16 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginView.vue'),
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/auth/RegisterView.vue'),
+    },
+    {
       path: '/403',
       name: 'forbidden',
       component: () => import('@/views/error/ForbiddenView.vue'),
     },
+
     {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
@@ -113,13 +120,14 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
 
-  const isPublic = to.path === '/login' || to.path === '/403'
+  const publicPaths = new Set(['/login', '/register', '/403'])
+  const isPublic = publicPaths.has(to.path)
   if (!isPublic && !authStore.token) {
     next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }
 
-  if (to.path === '/login' && authStore.token) {
+  if ((to.path === '/login' || to.path === '/register') && authStore.token) {
     next('/dashboard')
     return
   }

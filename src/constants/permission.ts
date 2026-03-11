@@ -1,11 +1,13 @@
-export type AppRole = 'ADMIN' | 'FARM_OWNER' | 'FARMER' | 'WORKER'
+export type AppRole = 'ADMIN' | 'FARM_OWNER' | 'MANAGER' | 'FARMER' | 'WORKER' | 'DEMO'
 
 export const ROLE_ADMIN: AppRole = 'ADMIN'
 export const ROLE_FARM_OWNER: AppRole = 'FARM_OWNER'
+export const ROLE_MANAGER: AppRole = 'MANAGER'
 export const ROLE_FARMER: AppRole = 'FARMER'
 export const ROLE_WORKER: AppRole = 'WORKER'
+export const ROLE_DEMO: AppRole = 'DEMO'
 
-export const ALL_ROLES: AppRole[] = [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_FARMER, ROLE_WORKER]
+export const ALL_ROLES: AppRole[] = [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_MANAGER, ROLE_FARMER, ROLE_WORKER, ROLE_DEMO]
 
 export const MANAGER_ROLES: AppRole[] = [ROLE_ADMIN, ROLE_FARM_OWNER]
 
@@ -17,6 +19,7 @@ export const ROLE_ALIAS_MAP: Record<string, AppRole> = {
   ROOT: ROLE_ADMIN,
   SYSTEM_ADMIN: ROLE_ADMIN,
   管理员: ROLE_ADMIN,
+  超级管理员: ROLE_ADMIN,
 
   FARM_OWNER: ROLE_FARM_OWNER,
   ROLE_FARM_OWNER: ROLE_FARM_OWNER,
@@ -25,6 +28,10 @@ export const ROLE_ALIAS_MAP: Record<string, AppRole> = {
   FARM_ADMIN: ROLE_FARM_OWNER,
   FARMOWNER_ADMIN: ROLE_FARM_OWNER,
   农场主: ROLE_FARM_OWNER,
+
+  MANAGER: ROLE_MANAGER,
+  ROLE_MANAGER: ROLE_MANAGER,
+  经理: ROLE_MANAGER,
 
   FARMER: ROLE_FARMER,
   ROLE_FARMER: ROLE_FARMER,
@@ -38,16 +45,20 @@ export const ROLE_ALIAS_MAP: Record<string, AppRole> = {
   STAFF: ROLE_WORKER,
   OPERATOR: ROLE_WORKER,
   工人: ROLE_WORKER,
+
+  DEMO: ROLE_DEMO,
+  ROLE_DEMO: ROLE_DEMO,
+  演示账号: ROLE_DEMO,
 }
 
 export const MENU_ACCESS = {
   dashboard: MANAGER_ROLES,
   system: MANAGER_ROLES,
   taskManage: MANAGER_ROLES,
-  myTask: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
-  taskLog: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
+  myTask: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_MANAGER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
+  taskLog: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_MANAGER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
   crop: MANAGER_ROLES,
-  materialInventory: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
+  materialInventory: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_MANAGER, ROLE_FARMER, ROLE_WORKER] as AppRole[],
   materialLog: MANAGER_ROLES,
   iotMonitor: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_FARMER] as AppRole[],
   iotRule: MANAGER_ROLES,

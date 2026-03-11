@@ -5,7 +5,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { createMaterialLogExecute, listMaterialInfo, listMaterialLog } from '@/api/modules/material'
-import type { MaterialInfo, MaterialInoutLog } from '@/api/types/models'
+import type { MaterialInfo, MaterialInoutLog } from '@/types/entity'
 
 type TimeRange = [string, string] | []
 

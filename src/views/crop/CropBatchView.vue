@@ -12,7 +12,7 @@ import {
   removeCropBatchByIds,
   updateCropBatch,
 } from '@/api/modules/crop'
-import type { BaseCropVariety, CropBatch } from '@/api/types/models'
+import type { BaseCropVariety, CropBatch } from '@/types/entity'
 
 const router = useRouter()
 

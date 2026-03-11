@@ -6,7 +6,7 @@ import type { EChartsOption, LineSeriesOption } from 'echarts'
 
 import BaseChart from '@/components/BaseChart.vue'
 import { listIotData } from '@/api/modules/iot'
-import type { IotSensorData } from '@/api/types/models'
+import type { IotSensorData } from '@/types/entity'
 
 type TimeRange = '24h' | '7d'
 
