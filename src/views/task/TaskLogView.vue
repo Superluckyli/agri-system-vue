@@ -1,15 +1,15 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
-import { createMaterialLogExecute, listMaterialInfo } from '@/api/modules/material'
-import { createTaskLog, listTask, listTaskLog } from '@/api/modules/task'
-import type { AgriTask, MaterialInfo, TaskExecutionLog } from '@/types/entity'
+import { listMaterialInfo } from '@/api/modules/material'
+import { addTaskMaterial, createTaskLog, listTask, listTaskLog } from '@/api/modules/task'
+import type { AgriTask, AgriTaskLog, MaterialInfo } from '@/types/entity'
 import { ROLE_ADMIN, ROLE_FARM_OWNER } from '@/constants/permission'
-import { TASK_STATUS } from '@/constants/task'
+import { TASK_STATUS_V2 } from '@/constants/task'
 import { useAuthStore } from '@/stores/auth'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 
@@ -26,15 +26,10 @@ interface MaterialUsageItem {
 
 interface ExecuteFormModel {
   taskId: number | null
-  actualStartTime: string
-  actualEndTime: string
-  statusSnapshot: number
-  photoUrl: string
-  weather: string
-  laborHours: number | null
-  machineHours: number | null
-  qualityScore: number
-  problemDesc: string
+  growthNote: string
+  abnormalNote: string
+  statusSnapshot: string
+  imageUrls: string
   materialItems: MaterialUsageItem[]
 }
 
@@ -44,7 +39,7 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const loadError = ref('')
 const total = ref(0)
-const list = ref<TaskExecutionLog[]>([])
+const list = ref<AgriTaskLog[]>([])
 
 const ownTaskOptions = ref<AgriTask[]>([])
 const materialOptions = ref<MaterialInfo[]>([])
@@ -60,15 +55,10 @@ const executeSubmitting = ref(false)
 const executeFormRef = ref<FormInstance>()
 const executeForm = reactive<ExecuteFormModel>({
   taskId: null,
-  actualStartTime: '',
-  actualEndTime: '',
-  statusSnapshot: TASK_STATUS.COMPLETED,
-  photoUrl: '',
-  weather: '',
-  laborHours: null,
-  machineHours: null,
-  qualityScore: 80,
-  problemDesc: '',
+  growthNote: '',
+  abnormalNote: '',
+  statusSnapshot: TASK_STATUS_V2.COMPLETED,
+  imageUrls: '',
   materialItems: [{ materialId: null, quantity: null }],
 })
 
@@ -76,37 +66,17 @@ const currentRoles = computed(() => resolveUserRoles(authStore.roles, authStore.
 const canViewAllLogs = computed(() => hasAnyRole(currentRoles.value, [ROLE_ADMIN, ROLE_FARM_OWNER]))
 const currentUserId = computed(() => Number(authStore.user?.userId || 0))
 
-const isExecutableStatus = (status: number | undefined): boolean => {
-  return status === TASK_STATUS.IN_PROGRESS || status === TASK_STATUS.OVERDUE || status === TASK_STATUS.COMPLETED
+const isExecutableStatus = (statusV2: string | undefined): boolean => {
+  return statusV2 === TASK_STATUS_V2.IN_PROGRESS || statusV2 === TASK_STATUS_V2.OVERDUE || statusV2 === TASK_STATUS_V2.COMPLETED
 }
 
 const executableOwnTaskOptions = computed(() => {
-  return ownTaskOptions.value.filter((task) => isExecutableStatus(Number(task.status)))
+  return ownTaskOptions.value.filter((task) => isExecutableStatus(task.statusV2))
 })
-
-const validatePhotoUrl = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
-  const val = String(value || '').trim()
-  if (!val) {
-    callback(new Error('请填写执行照片URL'))
-    return
-  }
-  if (val.length > 255) {
-    callback(new Error('照片URL长度不能超过255字符'))
-    return
-  }
-  if (!/^https?:\/\//i.test(val) && !val.startsWith('/')) {
-    callback(new Error('请填写 http(s):// 或 / 开头的图片地址'))
-    return
-  }
-  callback()
-}
 
 const executeRules = reactive<FormRules<ExecuteFormModel>>({
   taskId: [{ required: true, message: '请选择任务', trigger: 'change' }],
-  actualStartTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  actualEndTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
-  statusSnapshot: [{ required: true, message: '请选择任务状态', trigger: 'change' }],
-  photoUrl: [{ validator: validatePhotoUrl, trigger: 'blur' }],
+  growthNote: [{ required: true, message: '请填写执行说明', trigger: 'blur' }],
 })
 
 const materialNameMap = computed(() => {
@@ -168,7 +138,7 @@ const loadOwnTasks = async () => {
     const res = await listTask({
       pageNum: 1,
       pageSize: 500,
-      executorId: currentUserId.value,
+      assigneeId: currentUserId.value,
     })
     ownTaskOptions.value = res.records || []
     ensureTaskAccessOrReset()
@@ -248,15 +218,10 @@ const handleCurrentChange = (page: number): void => {
 
 const resetExecuteForm = (defaultTaskId: number | null = null) => {
   executeForm.taskId = defaultTaskId
-  executeForm.actualStartTime = ''
-  executeForm.actualEndTime = ''
-  executeForm.statusSnapshot = TASK_STATUS.COMPLETED
-  executeForm.photoUrl = ''
-  executeForm.weather = ''
-  executeForm.laborHours = null
-  executeForm.machineHours = null
-  executeForm.qualityScore = 80
-  executeForm.problemDesc = ''
+  executeForm.growthNote = ''
+  executeForm.abnormalNote = ''
+  executeForm.statusSnapshot = TASK_STATUS_V2.COMPLETED
+  executeForm.imageUrls = ''
   executeForm.materialItems = [{ materialId: null, quantity: null }]
   executeFormRef.value?.clearValidate()
 }
@@ -336,52 +301,29 @@ const submitExecuteLog = async () => {
   }
 
   const materialUsage = normalizeMaterialUsage()
-  if (materialUsage.length === 0) {
-    ElMessage.warning('请至少填写一条有效的农资消耗')
-    return
-  }
-
-  const startAt = executeForm.actualStartTime
-  const endAt = executeForm.actualEndTime
-  if (new Date(startAt).getTime() > new Date(endAt).getTime()) {
-    ElMessage.warning('结束时间不能早于开始时间')
-    return
-  }
-
-  const photoUrl = executeForm.photoUrl.trim()
-  if (photoUrl.length > 255) {
-    ElMessage.warning('照片URL过长，请控制在255字符以内')
-    return
-  }
 
   executeSubmitting.value = true
   try {
+    // Record material usage via task materials API
     for (const item of materialUsage) {
-      await createMaterialLogExecute({
+      await addTaskMaterial(taskId, {
         materialId: item.materialId,
-        type: 2,
-        quantity: item.qty,
-        relatedTaskId: taskId,
-        remark: `任务执行消耗：${item.materialName}`,
+        actualQty: item.qty,
+        unitPrice: undefined,
       })
     }
 
-    const payload: TaskExecutionLog = {
+    const payload: AgriTaskLog = {
       taskId,
-      actualStartTime: executeForm.actualStartTime,
-      actualEndTime: executeForm.actualEndTime,
-      statusSnapshot: Number(executeForm.statusSnapshot || TASK_STATUS.COMPLETED),
-      photoUrl,
-      materialCostJson: JSON.stringify({
-        items: materialUsage,
-        extra: {
-          weather: executeForm.weather || null,
-          laborHours: executeForm.laborHours,
-          machineHours: executeForm.machineHours,
-          qualityScore: executeForm.qualityScore,
-        },
-      }),
-      problemDesc: executeForm.problemDesc || '执行完成',
+      action: 'execute',
+      fromStatus: TASK_STATUS_V2.IN_PROGRESS,
+      toStatus: executeForm.statusSnapshot,
+      growthNote: executeForm.growthNote || '执行完成',
+      abnormalNote: executeForm.abnormalNote || undefined,
+      imageUrls: executeForm.imageUrls.trim() || undefined,
+      remark: materialUsage.length > 0
+        ? `农资消耗: ${materialUsage.map((m) => `${m.materialName} ${m.qty}${m.unit}`).join(', ')}`
+        : undefined,
     }
 
     await createTaskLog(payload)
@@ -427,7 +369,7 @@ watch(
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <div class="title">执行日志</div>
+          <div class="title">任务日志</div>
           <div class="subtitle">执行者仅可查看自己的任务日志；管理员和农场主可查看全部。</div>
         </div>
       </template>
@@ -481,27 +423,32 @@ watch(
       />
 
       <el-table v-loading="loading" :data="list" style="width: 100%">
-        <el-table-column label="日志ID" prop="logId" width="90" align="center" />
+        <el-table-column label="ID" prop="id" width="80" align="center" />
         <el-table-column label="任务ID" prop="taskId" width="90" align="center" />
-        <el-table-column label="开始时间" prop="actualStartTime" min-width="170" />
-        <el-table-column label="结束时间" prop="actualEndTime" min-width="170" />
-        <el-table-column label="状态快照" prop="statusSnapshot" width="100" align="center" />
-        <el-table-column label="说明" prop="problemDesc" min-width="180" show-overflow-tooltip />
-        <el-table-column label="照片" min-width="120" align="center">
+        <el-table-column label="操作" prop="action" width="100" align="center" />
+        <el-table-column label="状态变更" min-width="160">
+          <template #default="scope">
+            {{ scope.row.fromStatus || '-' }} → {{ scope.row.toStatus || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="执行说明" prop="growthNote" min-width="180" show-overflow-tooltip />
+        <el-table-column label="异常说明" prop="abnormalNote" min-width="140" show-overflow-tooltip />
+        <el-table-column label="图片" min-width="120" align="center">
           <template #default="scope">
             <el-image
-              v-if="scope.row.photoUrl"
-              :src="scope.row.photoUrl"
-              :preview-src-list="[scope.row.photoUrl]"
+              v-if="scope.row.imageUrls"
+              :src="scope.row.imageUrls.split(',')[0]"
+              :preview-src-list="scope.row.imageUrls.split(',')"
               fit="cover"
               style="width: 56px; height: 56px; border-radius: 4px"
             />
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" min-width="170" />
+        <el-table-column label="备注" prop="remark" min-width="160" show-overflow-tooltip />
+        <el-table-column label="创建时间" prop="createdAt" min-width="170" />
         <template #empty>
-          <el-empty description="暂无执行日志" />
+          <el-empty description="暂无任务日志" />
         </template>
       </el-table>
 
@@ -538,40 +485,20 @@ watch(
           </el-select>
         </el-form-item>
 
-        <el-form-item label="开始时间" prop="actualStartTime">
-          <el-date-picker
-            v-model="executeForm.actualStartTime"
-            type="datetime"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            placeholder="请选择开始时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item label="结束时间" prop="actualEndTime">
-          <el-date-picker
-            v-model="executeForm.actualEndTime"
-            type="datetime"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            placeholder="请选择结束时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-
         <el-form-item label="任务状态" prop="statusSnapshot">
           <el-select v-model="executeForm.statusSnapshot" style="width: 240px">
-            <el-option :value="TASK_STATUS.IN_PROGRESS" label="执行中" />
-            <el-option :value="TASK_STATUS.COMPLETED" label="已完成" />
-            <el-option :value="TASK_STATUS.OVERDUE" label="已逾期" />
+            <el-option :value="TASK_STATUS_V2.IN_PROGRESS" label="执行中" />
+            <el-option :value="TASK_STATUS_V2.COMPLETED" label="已完成" />
+            <el-option :value="TASK_STATUS_V2.OVERDUE" label="已逾期" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="照片URL" prop="photoUrl">
+        <el-form-item label="图片URL">
           <el-input
-            v-model="executeForm.photoUrl"
-            maxlength="255"
+            v-model="executeForm.imageUrls"
+            maxlength="500"
             show-word-limit
-            placeholder="请填写图片URL（http(s):// 或 /开头，最长255）"
+            placeholder="多张图片用逗号分隔"
           />
         </el-form-item>
 
@@ -596,35 +523,22 @@ watch(
           </div>
         </el-form-item>
 
-        <el-form-item label="执行说明" prop="problemDesc">
+        <el-form-item label="执行说明" prop="growthNote">
           <el-input
-            v-model="executeForm.problemDesc"
+            v-model="executeForm.growthNote"
             type="textarea"
             :rows="3"
-            placeholder="可选：填写执行过程说明"
+            placeholder="填写执行过程说明"
           />
         </el-form-item>
 
-        <el-row :gutter="12">
-          <el-col :span="8">
-            <el-form-item label="天气" label-width="80px">
-              <el-input v-model="executeForm.weather" placeholder="如：晴/多云/小雨" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="人工工时" label-width="80px">
-              <el-input-number v-model="executeForm.laborHours" :min="0" :precision="1" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="机械工时" label-width="80px">
-              <el-input-number v-model="executeForm.machineHours" :min="0" :precision="1" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-form-item label="质量评分">
-          <el-slider v-model="executeForm.qualityScore" :min="0" :max="100" show-input />
+        <el-form-item label="异常说明">
+          <el-input
+            v-model="executeForm.abnormalNote"
+            type="textarea"
+            :rows="2"
+            placeholder="可选：填写异常情况"
+          />
         </el-form-item>
       </el-form>
 

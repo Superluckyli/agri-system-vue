@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -8,8 +8,8 @@ import { Plus, Refresh, Search, User, View } from '@element-plus/icons-vue'
 import { assignTask, createTask, listTask } from '@/api/modules/task'
 import { listSystemUser } from '@/api/modules/system'
 import type { AgriTask, SysUser, TaskAssignRequest } from '@/types/entity'
-import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
-import { ROLE_FARMER, ROLE_WORKER } from '@/constants/permission'
+import { TASK_PRIORITY_MAP, TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
+import { ROLE_TECHNICIAN, ROLE_WORKER } from '@/constants/permission'
 import { resolveUserRoles } from '@/utils/permission'
 
 const loading = ref(false)
@@ -21,7 +21,7 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 10,
   taskName: '',
-  status: undefined as number | undefined,
+  statusV2: undefined as string | undefined,
 })
 
 const drawerVisible = ref(false)
@@ -35,18 +35,18 @@ const userRoleLabelMap = ref<Record<number, string>>({})
 
 interface AssignFormModel {
   taskId: number | null
-  executorId: number | null
+  assigneeId: number | null
   remark: string
 }
 
 const assignForm = ref<AssignFormModel>({
   taskId: null,
-  executorId: null,
+  assigneeId: null,
   remark: '',
 })
 
 const assignRules = ref<FormRules<AssignFormModel>>({
-  executorId: [{ required: true, message: '请选择执行人', trigger: 'change' }],
+  assigneeId: [{ required: true, message: '请选择执行人', trigger: 'change' }],
 })
 
 interface CreateFormModel {
@@ -55,7 +55,6 @@ interface CreateFormModel {
   taskType: string
   priority: number
   planTime: string
-  extParams: string
 }
 
 const createDialogVisible = ref(false)
@@ -66,7 +65,6 @@ const createForm = ref<CreateFormModel>({
   taskType: '',
   priority: 2,
   planTime: '',
-  extParams: '',
 })
 
 const createRules: FormRules<CreateFormModel> = {
@@ -76,14 +74,13 @@ const createRules: FormRules<CreateFormModel> = {
 }
 
 const applyRouteFilter = () => {
-  const statusQuery = route.query.status
+  const statusQuery = route.query.statusV2 ?? route.query.status
   const taskNameQuery = route.query.taskName
 
   if (typeof statusQuery === 'string' && statusQuery.trim() !== '') {
-    const parsed = Number(statusQuery)
-    queryParams.value.status = Number.isFinite(parsed) ? parsed : undefined
+    queryParams.value.statusV2 = statusQuery.trim()
   } else {
-    queryParams.value.status = undefined
+    queryParams.value.statusV2 = undefined
   }
 
   if (typeof taskNameQuery === 'string') {
@@ -106,11 +103,11 @@ const getList = async () => {
 
 const roleLabelOfUser = (user: SysUser): string => {
   const roles = resolveUserRoles([], user)
-  const hasFarmer = roles.includes(ROLE_FARMER)
+  const hasTech = roles.includes(ROLE_TECHNICIAN)
   const hasWorker = roles.includes(ROLE_WORKER)
 
-  if (hasFarmer && hasWorker) return '农户/工人'
-  if (hasFarmer) return '农户'
+  if (hasTech && hasWorker) return '技术员/工人'
+  if (hasTech) return '技术员'
   if (hasWorker) return '工人'
   return '-'
 }
@@ -120,7 +117,7 @@ const isAssignableUser = (user: SysUser): boolean => {
   if (user.status !== undefined && Number(user.status) !== 1) return false
 
   const roles = resolveUserRoles([], user)
-  return roles.includes(ROLE_FARMER) || roles.includes(ROLE_WORKER)
+  return roles.includes(ROLE_TECHNICIAN) || roles.includes(ROLE_WORKER)
 }
 
 const getAssignableUsers = async () => {
@@ -145,13 +142,13 @@ const getAssignableUsers = async () => {
   }
 }
 
-const getExecutorName = (row: AgriTask): string => {
-  const id = Number(row.executorId ?? row.assigneeId)
+const getAssigneeName = (row: AgriTask): string => {
+  const id = Number(row.assigneeId)
   if (!Number.isFinite(id) || id <= 0) return '-'
-  return userNameMap.value[id] || `用户ID:${id}`
+  return userNameMap.value[id] || row.assigneeName || `用户ID:${id}`
 }
 
-const getExecutorRoleLabel = (userId?: number): string => {
+const getAssigneeRoleLabel = (userId?: number): string => {
   const id = Number(userId)
   if (!Number.isFinite(id) || id <= 0) return '-'
   return userRoleLabelMap.value[id] || '-'
@@ -167,7 +164,7 @@ const resetQuery = () => {
     pageNum: 1,
     pageSize: 10,
     taskName: '',
-    status: undefined,
+    statusV2: undefined,
   }
   void getList()
 }
@@ -193,7 +190,6 @@ const handleCreate = () => {
   createForm.value.taskType = ''
   createForm.value.priority = 2
   createForm.value.planTime = ''
-  createForm.value.extParams = ''
   createDialogVisible.value = true
   createFormRef.value?.clearValidate()
 }
@@ -209,7 +205,6 @@ const submitCreate = async () => {
     taskType: createForm.value.taskType.trim(),
     priority: Number(createForm.value.priority || 2),
     planTime: createForm.value.planTime,
-    extParams: createForm.value.extParams.trim(),
   }
 
   if (Number.isFinite(batchId) && batchId > 0) {
@@ -229,13 +224,13 @@ const submitCreate = async () => {
 }
 
 const handleAssign = (row: AgriTask) => {
-  if (row.status !== TASK_STATUS.PENDING_ASSIGN) {
-    ElMessage.warning('只能派单待分配状态的任务')
+  if (row.statusV2 !== TASK_STATUS_V2.PENDING_REVIEW) {
+    ElMessage.warning('只能派单待复核状态的任务')
     return
   }
 
   assignForm.value.taskId = row.taskId ?? null
-  assignForm.value.executorId = null
+  assignForm.value.assigneeId = null
   assignForm.value.remark = ''
   assignFormRef.value?.clearValidate()
 
@@ -251,21 +246,17 @@ const submitAssign = async () => {
   if (!valid) return
 
   const taskId = Number(assignForm.value.taskId)
-  const executorId = Number(assignForm.value.executorId)
+  const assigneeId = Number(assignForm.value.assigneeId)
 
-  if (!Number.isFinite(taskId) || taskId <= 0 || !Number.isFinite(executorId) || executorId <= 0) {
-    ElMessage.error('taskId 和 executorId 不能为空')
+  if (!Number.isFinite(taskId) || taskId <= 0 || !Number.isFinite(assigneeId) || assigneeId <= 0) {
+    ElMessage.error('taskId 和 assigneeId 不能为空')
     return
   }
 
   const payload: TaskAssignRequest = {
     taskId,
-    executorId,
+    assigneeId,
     remark: assignForm.value.remark || '',
-  }
-
-  if (import.meta.env.DEV) {
-    console.debug('[task.assign] payload', payload)
   }
 
   try {
@@ -276,7 +267,6 @@ const submitAssign = async () => {
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : '派单失败'
     ElMessage.error(message)
-    console.error('派单失败', error)
   }
 }
 
@@ -310,9 +300,9 @@ watch(
           />
         </el-form-item>
 
-        <el-form-item label="任务状态" prop="status">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 220px">
-            <el-option v-for="(val, key) in TASK_STATUS_MAP" :key="key" :label="val.text" :value="Number(key)" />
+        <el-form-item label="任务状态" prop="statusV2">
+          <el-select v-model="queryParams.statusV2" placeholder="请选择状态" clearable style="width: 220px">
+            <el-option v-for="(val, key) in TASK_STATUS_MAP" :key="key" :label="val.text" :value="key" />
           </el-select>
         </el-form-item>
 
@@ -347,19 +337,19 @@ watch(
         <el-table-column label="状态" width="120" align="center">
           <template #default="scope">
             <el-tag
-              v-if="scope.row.status !== undefined && TASK_STATUS_MAP[scope.row.status]"
-              :type="TASK_STATUS_MAP[scope.row.status]?.type"
+              v-if="scope.row.statusV2 && TASK_STATUS_MAP[scope.row.statusV2]"
+              :type="TASK_STATUS_MAP[scope.row.statusV2]?.type"
             >
-              {{ TASK_STATUS_MAP[scope.row.status]?.text }}
+              {{ TASK_STATUS_MAP[scope.row.statusV2]?.text }}
             </el-tag>
             <el-tag v-else type="info">未知</el-tag>
           </template>
         </el-table-column>
 
         <el-table-column label="计划时间" prop="planTime" width="170" align="center" />
-        <el-table-column label="执行人" width="150" align="center">
+        <el-table-column label="负责人" width="150" align="center">
           <template #default="scope">
-            {{ getExecutorName(scope.row) }}
+            {{ getAssigneeName(scope.row) }}
           </template>
         </el-table-column>
 
@@ -367,7 +357,7 @@ watch(
           <template #default="scope">
             <el-button link type="primary" :icon="View" @click="handleView(scope.row)">详情</el-button>
             <el-button
-              v-if="scope.row.status === TASK_STATUS.PENDING_ASSIGN"
+              v-if="scope.row.statusV2 === TASK_STATUS_V2.PENDING_REVIEW"
               link
               type="success"
               :icon="User"
@@ -401,18 +391,18 @@ watch(
           <el-descriptions-item label="任务名称">{{ currentDetail.taskName }}</el-descriptions-item>
           <el-descriptions-item label="任务类型">{{ currentDetail.taskType }}</el-descriptions-item>
           <el-descriptions-item label="计划时间">{{ currentDetail.planTime }}</el-descriptions-item>
-          <el-descriptions-item label="执行人">
-            {{ getExecutorName(currentDetail) }}
+          <el-descriptions-item label="负责人">
+            {{ getAssigneeName(currentDetail) }}
           </el-descriptions-item>
-          <el-descriptions-item label="执行人角色">
-            {{ getExecutorRoleLabel(Number(currentDetail.executorId ?? currentDetail.assigneeId)) }}
+          <el-descriptions-item label="负责人角色">
+            {{ getAssigneeRoleLabel(currentDetail.assigneeId) }}
           </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag
-              v-if="currentDetail.status !== undefined && TASK_STATUS_MAP[currentDetail.status]"
-              :type="TASK_STATUS_MAP[currentDetail.status as number]?.type"
+              v-if="currentDetail.statusV2 && TASK_STATUS_MAP[currentDetail.statusV2]"
+              :type="TASK_STATUS_MAP[currentDetail.statusV2]?.type"
             >
-              {{ TASK_STATUS_MAP[currentDetail.status as number]?.text }}
+              {{ TASK_STATUS_MAP[currentDetail.statusV2]?.text }}
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>
@@ -421,8 +411,8 @@ watch(
 
     <el-dialog title="任务派单" v-model="assignDialogVisible" width="450px" append-to-body>
       <el-form ref="assignFormRef" :model="assignForm" :rules="assignRules" label-width="90px">
-        <el-form-item label="执行人" prop="executorId">
-          <el-select v-model="assignForm.executorId" placeholder="请选择执行人" filterable style="width: 100%">
+        <el-form-item label="负责人" prop="assigneeId">
+          <el-select v-model="assignForm.assigneeId" placeholder="请选择负责人" filterable style="width: 100%">
             <el-option
               v-for="user in assignableUsers"
               :key="user.userId"
@@ -474,14 +464,6 @@ watch(
         </el-form-item>
         <el-form-item label="批次ID">
           <el-input-number v-model="createForm.batchId" :min="1" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="createForm.extParams"
-            type="textarea"
-            :rows="3"
-            placeholder="可选：填写任务补充说明"
-          />
         </el-form-item>
       </el-form>
 

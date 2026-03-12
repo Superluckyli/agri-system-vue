@@ -41,24 +41,36 @@ export interface SysRole extends UnknownRecord {
   createTime?: string
 }
 
-export interface CropBatch extends UnknownRecord {
-  batchId?: number
-  varietyId?: number
-  plotId?: string
-  sowingDate?: string
-  expectedHarvestDate?: string
-  currentStage?: string
-  isActive?: number
-  cropName?: string
+// --- V1 新增 ---
+
+export interface AgriFarmland extends UnknownRecord {
+  id?: number
+  tenantId?: number
+  orgId?: number
+  name?: string
+  area?: number
+  areaUnit?: string
+  location?: string
+  soilType?: string
+  status?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface GrowthStageLog extends UnknownRecord {
-  logId?: number
-  batchId?: number
-  stageName?: string
-  logDate?: string
-  imageUrl?: string
-  description?: string
+export interface AgriCropBatch extends UnknownRecord {
+  id?: number
+  tenantId?: number
+  orgId?: number
+  farmlandId?: number
+  varietyId?: number
+  batchNo?: string
+  status?: string
+  sowingDate?: string
+  expectedHarvestDate?: string
+  actualHarvestDate?: string
+  abandonReason?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface BaseCropVariety extends UnknownRecord {
@@ -94,57 +106,167 @@ export interface AgriTaskRule extends UnknownRecord {
 
 export interface MaterialInfo extends UnknownRecord {
   materialId?: number
+  tenantId?: number
+  orgId?: number
   name?: string
   category?: string
-  price?: number
-  stockQuantity?: number
+  specification?: string
   unit?: string
-  updateTime?: string
+  currentStock?: number
+  safeThreshold?: number
+  suggestPurchaseQty?: number
+  supplierId?: number
+  unitPrice?: number
+  status?: number
+  version?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface MaterialInoutLog extends UnknownRecord {
-  logId?: number
+export interface MaterialStockLog extends UnknownRecord {
+  id?: number
   materialId?: number
-  type?: number
-  quantity?: number
-  relatedTaskId?: number
+  changeType?: string
+  qty?: number
+  beforeStock?: number
+  afterStock?: number
+  relatedType?: string
+  relatedId?: number
+  operatorId?: number
   remark?: string
-  createTime?: string
+  createdAt?: string
 }
 
 export interface AgriTask {
   taskId?: number
+  tenantId?: number
+  orgId?: number
   batchId?: number
+  taskNo?: string
   taskName?: string
   taskType?: string
+  taskSource?: string
+  riskLevel?: string
+  needReview?: number
   priority?: number
   planTime?: string
-  status?: number
-  executorId?: number
-  creatorId?: number
+  deadlineAt?: string
+  statusV2?: string
   assigneeId?: number
-  landId?: number
-  extParams?: string
+  assigneeName?: string
+  assignTime?: string
+  assignBy?: number
+  assignRemark?: string
+  reviewerUserId?: number
+  acceptTime?: string
+  acceptBy?: number
+  completedAt?: string
+  rejectTime?: string
+  rejectBy?: number
+  rejectReason?: string
+  rejectReasonType?: string
+  suspendReason?: string
+  cancelReason?: string
+  suggestAction?: string
+  precautionNote?: string
   createBy?: number
   createTime?: string
+  updateBy?: number
+  updateTime?: string
+  version?: number
 }
 
 export interface TaskAssignRequest {
   taskId: number
-  executorId: number
+  assigneeId: number
   remark?: string
 }
 
-export interface TaskExecutionLog extends UnknownRecord {
-  logId?: number
+export interface TaskAcceptDTO {
   taskId?: number
-  actualStartTime?: string
-  actualEndTime?: string
-  statusSnapshot?: number
-  photoUrl?: string
-  materialCostJson?: string
-  problemDesc?: string
-  createTime?: string
+}
+
+export interface TaskRejectDTO {
+  taskId?: number
+  reason?: string
+}
+
+export interface AgriTaskLog extends UnknownRecord {
+  id?: number
+  taskId?: number
+  batchId?: number
+  action?: string
+  fromStatus?: string
+  toStatus?: string
+  operatorId?: number
+  targetUserId?: number
+  growthNote?: string
+  imageUrls?: string
+  abnormalNote?: string
+  remark?: string
+  traceId?: string
+  createdAt?: string
+}
+
+export interface AgriTaskMaterial extends UnknownRecord {
+  id?: number
+  taskId?: number
+  materialId?: number
+  suggestedQty?: number
+  actualQty?: number
+  unitPrice?: number
+  deviationReason?: string
+  createdAt?: string
+}
+
+export interface SupplierInfo extends UnknownRecord {
+  id?: number
+  tenantId?: number
+  orgId?: number
+  name?: string
+  contactPerson?: string
+  contactPhone?: string
+  address?: string
+  remark?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PurchaseOrder extends UnknownRecord {
+  id?: number
+  tenantId?: number
+  orgId?: number
+  orderNo?: string
+  status?: string
+  supplierId?: number
+  totalAmount?: number
+  payMethod?: string
+  remark?: string
+  createdBy?: number
+  confirmedBy?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PurchaseOrderItem extends UnknownRecord {
+  id?: number
+  purchaseOrderId?: number
+  materialId?: number
+  purchaseQty?: number
+  receiveQty?: number
+  unitPrice?: number
+  lineAmount?: number
+  remark?: string
+}
+
+export interface PaymentRecord extends UnknownRecord {
+  id?: number
+  purchaseOrderId?: number
+  payAmount?: number
+  payMethod?: string
+  payTime?: string
+  remark?: string
+  createdAt?: string
 }
 
 export interface DashboardSeriesItem extends UnknownRecord {
@@ -170,16 +292,7 @@ export interface DashboardData {
   envMonitor?: NameValueItem[]
 }
 
-export interface TaskAcceptDTO {
-  taskId?: number
-}
-
-export interface TaskRejectDTO {
-  taskId?: number
-  reason?: string
-}
-
-// 补充类型别名导出
+// 类型别名
 export type User = SysUser
 export type Role = SysRole
 export type Task = AgriTask

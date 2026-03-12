@@ -4,11 +4,11 @@ import type { EChartsOption } from 'echarts'
 
 import BaseChart from '@/components/BaseChart.vue'
 import { listCropBatch } from '@/api/modules/crop'
-import { listMaterialInfo, listMaterialLog } from '@/api/modules/material'
+import { listMaterialInfo, listStockLog } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
-import type { AgriTask, CropBatch, DashboardData, MaterialInfo, MaterialInoutLog } from '@/types/entity'
-import { TASK_STATUS } from '@/constants/task'
+import type { AgriCropBatch, AgriTask, DashboardData, MaterialInfo, MaterialStockLog } from '@/types/entity'
+import { TASK_STATUS_V2 } from '@/constants/task'
 
 const loading = ref(false)
 const loadError = ref('')
@@ -17,8 +17,8 @@ const dataTruncated = ref(false)
 const dashboardData = ref<DashboardData | null>(null)
 const taskRecords = ref<AgriTask[]>([])
 const materialRecords = ref<MaterialInfo[]>([])
-const materialLogRecords = ref<MaterialInoutLog[]>([])
-const batchRecords = ref<CropBatch[]>([])
+const materialLogRecords = ref<MaterialStockLog[]>([])
+const batchRecords = ref<AgriCropBatch[]>([])
 
 const useFrontendAggregation = computed(() => true)
 
@@ -37,7 +37,7 @@ async function fetchData(): Promise<void> {
       getReportDashboard().catch(() => null),
       listTask({ pageNum: 1, pageSize: 500 }).catch(() => null),
       listMaterialInfo({ pageNum: 1, pageSize: 500 }).catch(() => null),
-      listMaterialLog({ pageNum: 1, pageSize: 500 }).catch(() => null),
+      listStockLog({ pageNum: 1, pageSize: 500 }).catch(() => null),
       listCropBatch({ pageNum: 1, pageSize: 500 }).catch(() => null),
     ])
 
@@ -64,12 +64,12 @@ const taskCompletionRate = computed(() => {
   if (total === 0) {
     return 0
   }
-  const completed = taskRecords.value.filter((item) => item.status === TASK_STATUS.COMPLETED).length
+  const completed = taskRecords.value.filter((item) => item.statusV2 === TASK_STATUS_V2.COMPLETED).length
   return Math.round((completed / total) * 100)
 })
 
 const taskCompletionOption = computed<EChartsOption>(() => {
-  const completed = taskRecords.value.filter((item) => item.status === TASK_STATUS.COMPLETED).length
+  const completed = taskRecords.value.filter((item) => item.statusV2 === TASK_STATUS_V2.COMPLETED).length
   const uncompleted = Math.max(taskRecords.value.length - completed, 0)
 
   return {
@@ -106,7 +106,7 @@ const materialCostOption = computed<EChartsOption>(() => {
     return acc
   }, {})
 
-  const outLogs = materialLogRecords.value.filter((item) => item.type === 2)
+  const outLogs = materialLogRecords.value.filter((item) => item.changeType === 'task_out' || item.changeType === 'manual_out')
   const aggregate = outLogs.reduce<Record<number, { name: string; quantity: number; cost: number }>>(
     (acc, log) => {
       const materialId = Number(log.materialId || 0)
@@ -114,8 +114,8 @@ const materialCostOption = computed<EChartsOption>(() => {
 
       const info = materialMap[materialId]
       const name = info?.name || `物料${materialId}`
-      const quantity = toNumber(log.quantity)
-      const price = toNumber(info?.price)
+      const quantity = toNumber(log.qty)
+      const price = toNumber(info?.unitPrice)
       const cost = quantity * price
 
       if (!acc[materialId]) {
@@ -161,7 +161,7 @@ const materialCostOption = computed<EChartsOption>(() => {
 
 const batchCompareOption = computed<EChartsOption>(() => {
   const aggregate = batchRecords.value.reduce<Record<string, number>>((acc, item) => {
-    const key = item.cropName || `品种ID:${item.varietyId || '-'}`
+    const key = `品种ID:${item.varietyId || '-'}`
     acc[key] = (acc[key] || 0) + 1
     return acc
   }, {})

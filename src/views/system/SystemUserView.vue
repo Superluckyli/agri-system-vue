@@ -50,7 +50,7 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 10,
   username: '',
-  phone: ''
+  realName: ''
 })
 
 const getList = async () => {
@@ -76,7 +76,7 @@ const resetQuery = () => {
     pageNum: 1,
     pageSize: 10,
     username: '',
-    phone: ''
+    realName: ''
   }
   handleQuery()
 }
@@ -245,8 +245,8 @@ onMounted(async () => {
         <el-form-item label="用户名" prop="username">
           <el-input v-model="queryParams.username" placeholder="请输入用户名" clearable style="width: 200px" @keyup.enter="handleQuery" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="queryParams.phone" placeholder="请输入手机号码" clearable style="width: 200px" @keyup.enter="handleQuery" />
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="queryParams.realName" placeholder="请输入真实姓名" clearable style="width: 200px" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>

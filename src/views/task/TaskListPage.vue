@@ -5,13 +5,14 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { listTask, type ListTaskParams } from '@/api/modules/task'
 import type { MpPage } from '@/types/api'
 import type { AgriTask } from '@/types/entity'
+import { TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
 import PageState from '@/components/page/PageState.vue'
 import { usePageState } from '@/composables/usePageState'
 
 interface TaskFilterForm {
   taskName: string
-  status: '' | number
-  executorId: string
+  statusV2: string
+  assigneeId: string
 }
 
 const { loading, errorMessage, start, finish, fail } = usePageState()
@@ -19,8 +20,8 @@ const { loading, errorMessage, start, finish, fail } = usePageState()
 const formRef = ref<FormInstance>()
 const filterForm = reactive<TaskFilterForm>({
   taskName: '',
-  status: '',
-  executorId: '',
+  statusV2: '',
+  assigneeId: '',
 })
 
 const pager = reactive({
@@ -33,20 +34,18 @@ const tableData = ref<AgriTask[]>([])
 
 const rules: FormRules<TaskFilterForm> = {
   taskName: [{ max: 40, message: '任务名最多 40 个字符', trigger: 'blur' }],
-  executorId: [
+  assigneeId: [
     {
       validator: (_, value: string, callback) => {
         if (!value) {
           callback()
           return
         }
-
         if (/^\d+$/.test(value)) {
           callback()
           return
         }
-
-        callback(new Error('执行人ID必须为数字'))
+        callback(new Error('负责人ID必须为数字'))
       },
       trigger: 'blur',
     },
@@ -55,39 +54,13 @@ const rules: FormRules<TaskFilterForm> = {
 
 const isEmpty = computed(() => tableData.value.length === 0)
 
-function statusLabel(status: number | undefined): string {
-  if (status === 0) {
-    return '待执行'
-  }
-  if (status === 1) {
-    return '执行中'
-  }
-  if (status === 2) {
-    return '已完成'
-  }
-  return '未知'
-}
-
-function statusType(status: number | undefined): 'warning' | 'primary' | 'success' | 'info' {
-  if (status === 0) {
-    return 'warning'
-  }
-  if (status === 1) {
-    return 'primary'
-  }
-  if (status === 2) {
-    return 'success'
-  }
-  return 'info'
-}
-
 function buildParams(): ListTaskParams {
   return {
     pageNum: pager.pageNum,
     pageSize: pager.pageSize,
     taskName: filterForm.taskName || undefined,
-    status: filterForm.status === '' ? undefined : filterForm.status,
-    executorId: filterForm.executorId ? Number(filterForm.executorId) : undefined,
+    statusV2: filterForm.statusV2 || undefined,
+    assigneeId: filterForm.assigneeId ? Number(filterForm.assigneeId) : undefined,
   }
 }
 
@@ -104,15 +77,9 @@ async function fetchTasks(): Promise<void> {
 }
 
 async function handleSearch(): Promise<void> {
-  if (!formRef.value) {
-    return
-  }
-
+  if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) {
-    return
-  }
-
+  if (!valid) return
   pager.pageNum = 1
   await fetchTasks()
 }
@@ -151,16 +118,18 @@ onMounted(() => {
         <el-form-item label="任务名" prop="taskName">
           <el-input v-model="filterForm.taskName" clearable placeholder="输入任务名" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="filterForm.status" placeholder="全部状态" style="width: 150px">
-            <el-option label="全部" value="" />
-            <el-option label="待执行" :value="0" />
-            <el-option label="执行中" :value="1" />
-            <el-option label="已完成" :value="2" />
+        <el-form-item label="状态" prop="statusV2">
+          <el-select v-model="filterForm.statusV2" placeholder="全部状态" clearable style="width: 150px">
+            <el-option
+              v-for="(item, key) in TASK_STATUS_MAP"
+              :key="key"
+              :label="item.text"
+              :value="key"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="执行人ID" prop="executorId">
-          <el-input v-model="filterForm.executorId" clearable placeholder="例如 3" />
+        <el-form-item label="负责人ID" prop="assigneeId">
+          <el-input v-model="filterForm.assigneeId" clearable placeholder="例如 3" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
@@ -182,11 +151,13 @@ onMounted(() => {
           <el-table-column prop="taskName" label="任务名" min-width="180" />
           <el-table-column prop="taskType" label="任务类型" width="120" />
           <el-table-column prop="priority" label="优先级" width="100" />
-          <el-table-column prop="executorId" label="执行人ID" width="120" />
+          <el-table-column prop="assigneeName" label="负责人" width="120" />
           <el-table-column prop="planTime" label="计划时间" min-width="170" />
           <el-table-column label="状态" width="110">
             <template #default="{ row }">
-              <el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag>
+              <el-tag :type="TASK_STATUS_MAP[row.statusV2]?.type ?? 'info'">
+                {{ TASK_STATUS_MAP[row.statusV2]?.text ?? row.statusV2 }}
+              </el-tag>
             </template>
           </el-table-column>
         </el-table>

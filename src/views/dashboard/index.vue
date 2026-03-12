@@ -10,7 +10,7 @@ import { listMaterialInfo } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
 import type { AgriTask, AgriTaskRule, DashboardData, IotSensorData, MaterialInfo } from '@/types/entity'
-import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
+import { TASK_PRIORITY_MAP, TASK_STATUS_V2, TASK_STATUS_MAP } from '@/constants/task'
 
 interface AlertItem {
   id: string
@@ -58,7 +58,7 @@ const CATEGORY_THRESHOLD_MAP: Record<string, number> = {
 
 function isLowStock(item: MaterialInfo): boolean {
   const threshold = CATEGORY_THRESHOLD_MAP[item.category || ''] ?? 50
-  return parseNumber(item.stockQuantity) <= threshold
+  return parseNumber(item.currentStock) <= threshold
 }
 
 function buildAlerts(
@@ -98,7 +98,7 @@ function buildAlerts(
     .map((item) => ({
       id: `material-${item.materialId}`,
       title: `库存预警：${item.name || item.materialId}`,
-      desc: `当前库存 ${item.stockQuantity ?? '-'} ${item.unit || ''}`,
+      desc: `当前库存 ${item.currentStock ?? '-'} ${item.unit || ''}`,
       level: 'warning' as const,
       time: item.updateTime || '-',
       targetPath: '/material/inventory?lowStock=1',
@@ -118,9 +118,9 @@ async function fetchData(): Promise<void> {
     const [dashboardRes, pendingAssign, pendingAccept, inProgress, latestTaskRes, iotDataRes, iotRuleRes, materialRes] =
       await Promise.all([
         getReportDashboard().catch(() => null),
-        listTask({ pageNum: 1, pageSize: 1, status: TASK_STATUS.PENDING_ASSIGN }).catch(() => null),
-        listTask({ pageNum: 1, pageSize: 1, status: TASK_STATUS.PENDING_ACCEPT }).catch(() => null),
-        listTask({ pageNum: 1, pageSize: 1, status: TASK_STATUS.IN_PROGRESS }).catch(() => null),
+        listTask({ pageNum: 1, pageSize: 1, statusV2: TASK_STATUS_V2.PENDING_REVIEW }).catch(() => null),
+        listTask({ pageNum: 1, pageSize: 1, statusV2: TASK_STATUS_V2.PENDING_ACCEPT }).catch(() => null),
+        listTask({ pageNum: 1, pageSize: 1, statusV2: TASK_STATUS_V2.IN_PROGRESS }).catch(() => null),
         listTask({ pageNum: 1, pageSize: 20 }).catch(() => null),
         listIotData({ pageNum: 1, pageSize: 300 }).catch(() => null),
         listIotRule({ pageNum: 1, pageSize: 200 }).catch(() => null),
@@ -138,7 +138,7 @@ async function fetchData(): Promise<void> {
     stats.value[3]!.value = latestTasks.filter((item) => (item.createTime || '').includes(today)).length
 
     pendingTasks.value = latestTasks
-      .filter((item) => item.status === TASK_STATUS.PENDING_ASSIGN || item.status === TASK_STATUS.PENDING_ACCEPT)
+      .filter((item) => item.statusV2 === TASK_STATUS_V2.PENDING_REVIEW || item.statusV2 === TASK_STATUS_V2.PENDING_ACCEPT)
       .slice(0, 8)
 
     const rules = iotRuleRes?.records || []
@@ -205,8 +205,8 @@ const taskTrendOption = computed<EChartsOption>(() => {
 })
 
 function handleTaskNavigate(task?: AgriTask): void {
-  if (task?.status !== undefined) {
-    void router.push({ path: '/task/list', query: { status: String(task.status) } })
+  if (task?.statusV2 !== undefined) {
+    void router.push({ path: '/task/list', query: { statusV2: task.statusV2 } })
     return
   }
   void router.push('/task/list')
@@ -287,8 +287,8 @@ onMounted(() => {
                 <el-table-column prop="taskName" label="任务" min-width="140" show-overflow-tooltip />
                 <el-table-column label="状态" width="110" align="center">
                   <template #default="scope">
-                    <el-tag v-if="scope.row.status !== undefined" :type="TASK_STATUS_MAP[scope.row.status]?.type">
-                      {{ TASK_STATUS_MAP[scope.row.status]?.text }}
+                    <el-tag v-if="scope.row.statusV2 !== undefined" :type="TASK_STATUS_MAP[scope.row.statusV2]?.type">
+                      {{ TASK_STATUS_MAP[scope.row.statusV2]?.text }}
                     </el-tag>
                   </template>
                 </el-table-column>

@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 
-import { createCropGrowthLog, listCropGrowthLog } from '@/api/modules/crop'
-import type { GrowthStageLog } from '@/types/entity'
+import { createTaskLog, listTaskLog } from '@/api/modules/task'
+import type { AgriTaskLog } from '@/types/entity'
 
 interface GrowthLogFormModel {
-  stageName: string
-  logDate: string
-  imageUrl: string
-  description: string
+  growthNote: string
+  abnormalNote: string
+  imageUrls: string
 }
 
 const route = useRoute()
@@ -24,37 +23,32 @@ const validBatchId = computed(() => Number.isFinite(batchId.value) && batchId.va
 const loading = ref(false)
 const submitLoading = ref(false)
 const loadError = ref('')
-const logs = ref<GrowthStageLog[]>([])
+const logs = ref<AgriTaskLog[]>([])
+const total = ref(0)
 
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 
-const form = reactive<GrowthLogFormModel>({
-  stageName: '',
-  logDate: '',
-  imageUrl: '',
-  description: '',
+const form = ref<GrowthLogFormModel>({
+  growthNote: '',
+  abnormalNote: '',
+  imageUrls: '',
 })
 
 const rules: FormRules<GrowthLogFormModel> = {
-  stageName: [{ required: true, message: '请输入生长阶段', trigger: 'blur' }],
-  logDate: [{ required: true, message: '请选择记录时间', trigger: 'change' }],
-  description: [{ required: true, message: '请输入日志描述', trigger: 'blur' }],
+  growthNote: [{ required: true, message: '请输入生长记录描述', trigger: 'blur' }],
 }
 
 const sortedLogs = computed(() => {
   return [...logs.value].sort((a, b) => {
-    const aTime = a.logDate ? new Date(a.logDate).getTime() : 0
-    const bTime = b.logDate ? new Date(b.logDate).getTime() : 0
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
     return bTime - aTime
   })
 })
 
 const resetForm = () => {
-  form.stageName = ''
-  form.logDate = ''
-  form.imageUrl = ''
-  form.description = ''
+  form.value = { growthNote: '', abnormalNote: '', imageUrls: '' }
 }
 
 const fetchLogs = async () => {
@@ -67,7 +61,9 @@ const fetchLogs = async () => {
   loading.value = true
   loadError.value = ''
   try {
-    logs.value = await listCropGrowthLog({ batchId: batchId.value })
+    const res = await listTaskLog({ batchId: batchId.value, pageNum: 1, pageSize: 500 })
+    logs.value = res.records || []
+    total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载生长日志失败'
     logs.value = []
@@ -87,17 +83,17 @@ const submitForm = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
-  const payload: GrowthStageLog = {
+  const payload: AgriTaskLog = {
     batchId: batchId.value,
-    stageName: form.stageName.trim(),
-    logDate: form.logDate,
-    imageUrl: form.imageUrl.trim() || undefined,
-    description: form.description.trim(),
+    action: 'growth_record',
+    growthNote: form.value.growthNote.trim(),
+    abnormalNote: form.value.abnormalNote.trim() || undefined,
+    imageUrls: form.value.imageUrls.trim() || undefined,
   }
 
   submitLoading.value = true
   try {
-    await createCropGrowthLog(payload)
+    await createTaskLog(payload)
     ElMessage.success('新增生长日志成功')
     dialogVisible.value = false
     await fetchLogs()
@@ -148,7 +144,7 @@ onMounted(() => {
         :closable="false"
         style="margin-bottom: 14px"
       >
-        <template #title>{{ loadError || '无效的批次ID，请从“种植批次管理”页点击进入。' }}</template>
+        <template #title>{{ loadError || '无效的批次ID，请从"种植批次管理"页点击进入。' }}</template>
       </el-alert>
 
       <el-skeleton :loading="loading" animated :rows="6">
@@ -157,16 +153,28 @@ onMounted(() => {
           <el-timeline v-else>
             <el-timeline-item
               v-for="item in sortedLogs"
-              :key="item.logId || `${item.logDate}-${item.stageName}`"
-              :timestamp="item.logDate || '-'"
+              :key="item.id || item.createdAt"
+              :timestamp="item.createdAt || '-'"
               placement="top"
             >
               <el-card shadow="hover">
-                <div class="timeline-title">{{ item.stageName || '未命名阶段' }}</div>
-                <div class="timeline-text">{{ item.description || '暂无描述' }}</div>
-                <div v-if="item.imageUrl" class="timeline-link">
-                  图片链接：
-                  <el-link :href="item.imageUrl" target="_blank" type="primary">{{ item.imageUrl }}</el-link>
+                <div class="timeline-title">{{ item.action || '生长记录' }}</div>
+                <div class="timeline-text">{{ item.growthNote || '暂无描述' }}</div>
+                <div v-if="item.abnormalNote" class="timeline-text" style="color: #e6a23c">
+                  异常说明：{{ item.abnormalNote }}
+                </div>
+                <div v-if="item.imageUrls" class="timeline-link">
+                  <el-image
+                    v-for="(url, idx) in item.imageUrls.split(',')"
+                    :key="idx"
+                    :src="url"
+                    :preview-src-list="item.imageUrls.split(',')"
+                    fit="cover"
+                    style="width: 56px; height: 56px; border-radius: 4px; margin-right: 6px"
+                  />
+                </div>
+                <div v-if="item.remark" class="timeline-text" style="font-size: 12px; color: #909399">
+                  备注：{{ item.remark }}
                 </div>
               </el-card>
             </el-timeline-item>
@@ -177,23 +185,14 @@ onMounted(() => {
 
     <el-dialog v-model="dialogVisible" title="新增生长日志" width="560px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="生长阶段" prop="stageName">
-          <el-input v-model="form.stageName" placeholder="例如：Seedling / Tillering / Maturity" />
+        <el-form-item label="生长记录" prop="growthNote">
+          <el-input v-model="form.growthNote" type="textarea" :rows="4" placeholder="请输入生长记录描述" />
         </el-form-item>
-        <el-form-item label="记录时间" prop="logDate">
-          <el-date-picker
-            v-model="form.logDate"
-            type="datetime"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            placeholder="请选择记录时间"
-            style="width: 100%"
-          />
+        <el-form-item label="异常说明">
+          <el-input v-model="form.abnormalNote" type="textarea" :rows="2" placeholder="可选：填写异常情况" />
         </el-form-item>
-        <el-form-item label="图片链接">
-          <el-input v-model="form.imageUrl" placeholder="可选：输入图片 URL" />
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入阶段描述" />
+        <el-form-item label="图片URL">
+          <el-input v-model="form.imageUrls" placeholder="多张图片用逗号分隔" maxlength="500" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>

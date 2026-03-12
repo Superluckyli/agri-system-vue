@@ -28,8 +28,8 @@ interface MaterialFormModel {
   materialId?: number
   name: string
   category: string
-  price: number | null
-  stockQuantity: number | null
+  unitPrice: number | null
+  currentStock: number | null
   unit: string
 }
 
@@ -60,15 +60,15 @@ const form = reactive<MaterialFormModel>({
   materialId: undefined,
   name: '',
   category: '',
-  price: null,
-  stockQuantity: null,
+  unitPrice: null,
+  currentStock: null,
   unit: '',
 })
 
 const rules: FormRules<MaterialFormModel> = {
   name: [{ required: true, message: '请输入物料名称', trigger: 'blur' }],
   category: [{ required: true, message: '请输入物料类型', trigger: 'blur' }],
-  stockQuantity: [{ required: true, message: '请输入库存量', trigger: 'change' }],
+  currentStock: [{ required: true, message: '请输入库存量', trigger: 'change' }],
   unit: [{ required: true, message: '请输入单位', trigger: 'blur' }],
 }
 
@@ -85,8 +85,9 @@ function getWarnThreshold(item: MaterialInfo): number {
 }
 
 function isLowStock(item: MaterialInfo): boolean {
-  const stock = Number(item.stockQuantity || 0)
-  return stock <= getWarnThreshold(item)
+  const stock = Number(item.currentStock || 0)
+  const threshold = item.safeThreshold ?? getWarnThreshold(item)
+  return stock <= threshold
 }
 
 const filteredList = computed(() => {
@@ -160,8 +161,8 @@ function resetForm(): void {
   form.materialId = undefined
   form.name = ''
   form.category = ''
-  form.price = null
-  form.stockQuantity = null
+  form.unitPrice = null
+  form.currentStock = null
   form.unit = ''
 }
 
@@ -179,8 +180,8 @@ function handleEdit(row: MaterialInfo): void {
   form.materialId = row.materialId
   form.name = row.name || ''
   form.category = row.category || ''
-  form.price = row.price ?? null
-  form.stockQuantity = row.stockQuantity ?? null
+  form.unitPrice = row.unitPrice ?? null
+  form.currentStock = row.currentStock ?? null
   form.unit = row.unit || ''
   dialogVisible.value = true
 }
@@ -195,8 +196,8 @@ async function submitForm(): Promise<void> {
     materialId: form.materialId,
     name: form.name.trim(),
     category: form.category.trim(),
-    price: Number(form.price || 0),
-    stockQuantity: Number(form.stockQuantity),
+    unitPrice: Number(form.unitPrice || 0),
+    currentStock: Number(form.currentStock),
     unit: form.unit.trim(),
   }
 
@@ -259,12 +260,6 @@ onMounted(() => {
         </div>
       </template>
 
-      <el-alert type="info" :closable="false" style="margin-bottom: 12px">
-        <template #title>
-          当前后端契约未提供“预警阈值”字段，此页使用前端阈值规则展示预警。TODO：后端补充阈值字段后切换为真实字段。
-        </template>
-      </el-alert>
-
       <el-alert v-if="!canManage" type="warning" :closable="false" style="margin-bottom: 12px">
         <template #title>当前账号为只读权限：可查询库存，不可新增/编辑/删除。</template>
       </el-alert>
@@ -314,21 +309,21 @@ onMounted(() => {
         <el-table-column label="类型" prop="category" min-width="120" />
         <el-table-column label="库存量" min-width="140" align="center">
           <template #default="scope">
-            <span>{{ scope.row.stockQuantity ?? '-' }} {{ scope.row.unit || '' }}</span>
+            <span>{{ scope.row.currentStock ?? '-' }} {{ scope.row.unit || '' }}</span>
             <el-tag v-if="isLowStock(scope.row)" type="danger" style="margin-left: 8px">预警</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="预警阈值(前端)" min-width="120" align="center">
+        <el-table-column label="预警阈值" min-width="120" align="center">
           <template #default="scope">
-            {{ getWarnThreshold(scope.row) }} {{ scope.row.unit || '' }}
+            {{ scope.row.safeThreshold ?? getWarnThreshold(scope.row) }} {{ scope.row.unit || '' }}
           </template>
         </el-table-column>
         <el-table-column label="单价" min-width="100" align="center">
           <template #default="scope">
-            {{ scope.row.price ?? '-' }}
+            {{ scope.row.unitPrice ?? '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" prop="updateTime" min-width="180" />
+        <el-table-column label="更新时间" prop="updatedAt" min-width="180" />
         <el-table-column v-if="canManage" label="操作" width="160" align="center" fixed="right">
           <template #default="scope">
             <el-button link type="primary" :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
@@ -363,14 +358,14 @@ onMounted(() => {
         <el-form-item label="物料类型" prop="category">
           <el-input v-model="form.category" placeholder="例如：Fertilizer / Pesticide / Seed" />
         </el-form-item>
-        <el-form-item label="库存量" prop="stockQuantity">
-          <el-input-number v-model="form.stockQuantity" :min="0" :precision="2" style="width: 100%" />
+        <el-form-item label="库存量" prop="currentStock">
+          <el-input-number v-model="form.currentStock" :min="0" :precision="2" style="width: 100%" />
         </el-form-item>
         <el-form-item label="单位" prop="unit">
           <el-input v-model="form.unit" placeholder="例如：kg / L / bag" />
         </el-form-item>
         <el-form-item label="单价">
-          <el-input-number v-model="form.price" :min="0" :precision="2" style="width: 100%" />
+          <el-input-number v-model="form.unitPrice" :min="0" :precision="2" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>

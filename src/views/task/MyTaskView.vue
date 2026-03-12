@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -7,8 +7,8 @@ import { Check, Close, EditPen, Refresh, Search, View } from '@element-plus/icon
 
 import { acceptTask, listTask, rejectTask } from '@/api/modules/task'
 import type { AgriTask } from '@/types/entity'
-import { TASK_PRIORITY_MAP, TASK_STATUS, TASK_STATUS_MAP } from '@/constants/task'
-import { MENU_ACCESS, ROLE_FARMER } from '@/constants/permission'
+import { TASK_PRIORITY_MAP, TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
+import { MENU_ACCESS, ROLE_TECHNICIAN, ROLE_WORKER } from '@/constants/permission'
 import { useAuthStore } from '@/stores/auth'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 
@@ -16,7 +16,9 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const currentRoles = computed(() => resolveUserRoles(authStore.roles, authStore.user))
-const canAcceptOrReject = computed(() => currentRoles.value.includes(ROLE_FARMER))
+const canAcceptOrReject = computed(() =>
+  currentRoles.value.includes(ROLE_TECHNICIAN) || currentRoles.value.includes(ROLE_WORKER),
+)
 const canVisitTaskLog = computed(() => hasAnyRole(currentRoles.value, MENU_ACCESS.taskLog))
 
 const loading = ref(false)
@@ -27,8 +29,8 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 10,
   taskName: '',
-  status: undefined as number | undefined,
-  executorId: authStore.user?.userId || '',
+  statusV2: undefined as string | undefined,
+  assigneeId: authStore.user?.userId || '',
 })
 
 const drawerVisible = ref(false)
@@ -46,7 +48,7 @@ const rejectRules = ref<FormRules>({
 })
 
 const getList = async () => {
-  if (!queryParams.value.executorId) {
+  if (!queryParams.value.assigneeId) {
     ElMessage.warning('未获取到当前用户ID，无法加载我的任务')
     return
   }
@@ -73,8 +75,8 @@ const resetQuery = () => {
     pageNum: 1,
     pageSize: 10,
     taskName: '',
-    status: undefined,
-    executorId: authStore.user?.userId || '',
+    statusV2: undefined,
+    assigneeId: authStore.user?.userId || '',
   }
   void getList()
 }
@@ -109,8 +111,7 @@ const handleExecute = (row: AgriTask) => {
 
 const showExecuteButton = (row: AgriTask): boolean => {
   if (!canVisitTaskLog.value) return false
-  const status = Number(row.status)
-  return status === TASK_STATUS.IN_PROGRESS || status === TASK_STATUS.OVERDUE
+  return row.statusV2 === TASK_STATUS_V2.IN_PROGRESS || row.statusV2 === TASK_STATUS_V2.OVERDUE
 }
 
 const handleAccept = (row: AgriTask) => {
@@ -119,7 +120,7 @@ const handleAccept = (row: AgriTask) => {
     return
   }
 
-  if (row.status !== TASK_STATUS.PENDING_ACCEPT) {
+  if (row.statusV2 !== TASK_STATUS_V2.PENDING_ACCEPT) {
     ElMessage.warning('仅待接单状态可以执行接单')
     return
   }
@@ -143,7 +144,7 @@ const handleReject = (row: AgriTask) => {
     return
   }
 
-  if (row.status !== TASK_STATUS.PENDING_ACCEPT) {
+  if (row.statusV2 !== TASK_STATUS_V2.PENDING_ACCEPT) {
     ElMessage.warning('仅待接单状态可以执行拒单')
     return
   }
@@ -192,8 +193,8 @@ onMounted(() => {
         </el-form-item>
 
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 180px">
-            <el-option v-for="(val, key) in TASK_STATUS_MAP" :key="key" :label="val.text" :value="Number(key)" />
+          <el-select v-model="queryParams.statusV2" placeholder="请选择状态" clearable style="width: 180px">
+            <el-option v-for="(val, key) in TASK_STATUS_MAP" :key="key" :label="val.text" :value="key" />
           </el-select>
         </el-form-item>
 
@@ -205,7 +206,7 @@ onMounted(() => {
 
       <el-alert
         v-if="!canAcceptOrReject"
-        title="当前角色为执行人（WORKER），仅展示任务，不提供接单/拒单操作。"
+        title="当前角色无接单/拒单权限，仅展示任务列表。"
         type="info"
         :closable="false"
         style="margin-bottom: 12px"
@@ -230,10 +231,10 @@ onMounted(() => {
         <el-table-column label="状态" width="120" align="center">
           <template #default="scope">
             <el-tag
-              v-if="scope.row.status !== undefined && TASK_STATUS_MAP[scope.row.status]"
-              :type="TASK_STATUS_MAP[scope.row.status]?.type"
+              v-if="scope.row.statusV2 && TASK_STATUS_MAP[scope.row.statusV2]"
+              :type="TASK_STATUS_MAP[scope.row.statusV2]?.type"
             >
-              {{ TASK_STATUS_MAP[scope.row.status]?.text }}
+              {{ TASK_STATUS_MAP[scope.row.statusV2]?.text }}
             </el-tag>
           </template>
         </el-table-column>
@@ -246,7 +247,7 @@ onMounted(() => {
             <el-button v-if="showExecuteButton(scope.row)" link type="warning" :icon="EditPen" @click="handleExecute(scope.row)">
               执行
             </el-button>
-            <template v-if="canAcceptOrReject && scope.row.status === TASK_STATUS.PENDING_ACCEPT">
+            <template v-if="canAcceptOrReject && scope.row.statusV2 === TASK_STATUS_V2.PENDING_ACCEPT">
               <el-button link type="success" :icon="Check" @click="handleAccept(scope.row)">接单</el-button>
               <el-button link type="danger" :icon="Close" @click="handleReject(scope.row)">拒单</el-button>
             </template>
@@ -282,10 +283,10 @@ onMounted(() => {
           <el-descriptions-item label="计划时间">{{ currentDetail.planTime }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag
-              v-if="currentDetail.status !== undefined && TASK_STATUS_MAP[currentDetail.status]"
-              :type="TASK_STATUS_MAP[currentDetail.status as number]?.type"
+              v-if="currentDetail.statusV2 && TASK_STATUS_MAP[currentDetail.statusV2]"
+              :type="TASK_STATUS_MAP[currentDetail.statusV2]?.type"
             >
-              {{ TASK_STATUS_MAP[currentDetail.status as number]?.text }}
+              {{ TASK_STATUS_MAP[currentDetail.statusV2]?.text }}
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>

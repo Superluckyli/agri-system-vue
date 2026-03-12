@@ -279,7 +279,6 @@ async function submitQuickTask(): Promise<void> {
     taskType: taskForm.taskType.trim(),
     priority: parseNumber(taskForm.priority),
     planTime: new Date().toISOString(),
-    extParams: taskForm.remark.trim(),
   }
 
   try {
