@@ -6,7 +6,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { listMaterialInfo } from '@/api/modules/material'
-import { addTaskMaterial, createTaskLog, listTask, listTaskLog } from '@/api/modules/task'
+import { createTaskMaterials, createTaskLogAdd, listTask, listTaskLog } from '@/api/modules/task'
 import type { AgriTask, AgriTaskLog, MaterialInfo } from '@/types/entity'
 import { ROLE_ADMIN, ROLE_FARM_OWNER } from '@/constants/permission'
 import { TASK_STATUS_V2 } from '@/constants/task'
@@ -306,7 +306,7 @@ const submitExecuteLog = async () => {
   try {
     // Record material usage via task materials API
     for (const item of materialUsage) {
-      await addTaskMaterial(taskId, {
+      await createTaskMaterials(taskId, {
         materialId: item.materialId,
         actualQty: item.qty,
         unitPrice: undefined,
@@ -326,7 +326,7 @@ const submitExecuteLog = async () => {
         : undefined,
     }
 
-    await createTaskLog(payload)
+    await createTaskLogAdd(payload)
 
     ElMessage.success('执行日志提交成功')
     executeDialogVisible.value = false

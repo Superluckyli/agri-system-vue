@@ -47,12 +47,13 @@ export interface AgriFarmland extends UnknownRecord {
   id?: number
   tenantId?: number
   orgId?: number
+  code?: string
   name?: string
   area?: number
-  areaUnit?: string
   location?: string
-  soilType?: string
-  status?: string
+  status?: number
+  managerUserId?: number
+  cropAdaptNote?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -64,13 +65,22 @@ export interface AgriCropBatch extends UnknownRecord {
   farmlandId?: number
   varietyId?: number
   batchNo?: string
+  cropVariety?: string
   status?: string
-  sowingDate?: string
-  expectedHarvestDate?: string
+  stage?: string
+  plantingDate?: string
+  estimatedHarvestDate?: string
   actualHarvestDate?: string
+  ownerUserId?: number
+  targetOutput?: number
+  actualOutput?: number
   abandonReason?: string
+  remark?: string
   createdAt?: string
   updatedAt?: string
+  // transient (JOIN)
+  farmlandName?: string
+  varietyName?: string
 }
 
 export interface BaseCropVariety extends UnknownRecord {
@@ -121,6 +131,8 @@ export interface MaterialInfo extends UnknownRecord {
   version?: number
   createdAt?: string
   updatedAt?: string
+  // transient (JOIN)
+  supplierName?: string
 }
 
 export interface MaterialStockLog extends UnknownRecord {
@@ -173,6 +185,8 @@ export interface AgriTask {
   createTime?: string
   updateBy?: number
   updateTime?: string
+  sourceRuleId?: number
+  sourceFarmlandId?: number
   version?: number
 }
 
@@ -205,6 +219,8 @@ export interface AgriTaskLog extends UnknownRecord {
   abnormalNote?: string
   remark?: string
   traceId?: string
+  // transient (JOIN)
+  operatorName?: string
   createdAt?: string
 }
 
@@ -216,20 +232,21 @@ export interface AgriTaskMaterial extends UnknownRecord {
   actualQty?: number
   unitPrice?: number
   deviationReason?: string
+  // transient (JOIN)
+  materialName?: string
   createdAt?: string
 }
 
 export interface SupplierInfo extends UnknownRecord {
   id?: number
   tenantId?: number
-  orgId?: number
   name?: string
-  contactPerson?: string
-  contactPhone?: string
+  contactName?: string
+  phone?: string
   address?: string
+  status?: number
   remark?: string
   createdAt?: string
-  updatedAt?: string
 }
 
 export interface PurchaseOrder extends UnknownRecord {
@@ -244,6 +261,7 @@ export interface PurchaseOrder extends UnknownRecord {
   remark?: string
   createdBy?: number
   confirmedBy?: number
+  version?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -265,8 +283,9 @@ export interface PaymentRecord extends UnknownRecord {
   payAmount?: number
   payMethod?: string
   payTime?: string
+  status?: string
+  operatorId?: number
   remark?: string
-  createdAt?: string
 }
 
 export interface DashboardSeriesItem extends UnknownRecord {

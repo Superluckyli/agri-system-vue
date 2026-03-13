@@ -253,7 +253,7 @@ function handleDelete(row: AgriTaskRule): void {
     cancelButtonText: '取消',
   })
     .then(async () => {
-      await removeIotRuleById({ id: row.ruleId as number })
+      await removeIotRuleById(row.ruleId as number)
       ElMessage.success('删除规则成功')
       await fetchList()
     })

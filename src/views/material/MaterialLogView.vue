@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 
-import { listMaterialInfo, listStockLog } from '@/api/modules/material'
+import { listMaterialInfo, listMaterialStockLog } from '@/api/modules/material'
 import type { MaterialInfo, MaterialStockLog } from '@/types/entity'
 
 type TimeRange = [string, string] | []
@@ -53,7 +53,7 @@ async function fetchLogs(): Promise<void> {
   loadError.value = ''
   dataTruncated.value = false
   try {
-    const res = await listStockLog({
+    const res = await listMaterialStockLog({
       pageNum: 1,
       pageSize: 500,
       materialId: queryParams.materialId || undefined,

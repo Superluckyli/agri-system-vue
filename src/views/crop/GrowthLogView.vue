@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 
-import { createTaskLog, listTaskLog } from '@/api/modules/task'
+import { createTaskLogAdd, listTaskLog } from '@/api/modules/task'
 import type { AgriTaskLog } from '@/types/entity'
 
 interface GrowthLogFormModel {
@@ -93,7 +93,7 @@ const submitForm = async () => {
 
   submitLoading.value = true
   try {
-    await createTaskLog(payload)
+    await createTaskLogAdd(payload)
     ElMessage.success('新增生长日志成功')
     dialogVisible.value = false
     await fetchLogs()

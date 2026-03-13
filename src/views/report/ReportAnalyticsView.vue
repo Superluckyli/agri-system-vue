@@ -4,7 +4,7 @@ import type { EChartsOption } from 'echarts'
 
 import BaseChart from '@/components/BaseChart.vue'
 import { listCropBatch } from '@/api/modules/crop'
-import { listMaterialInfo, listStockLog } from '@/api/modules/material'
+import { listMaterialInfo, listMaterialStockLog } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
 import type { AgriCropBatch, AgriTask, DashboardData, MaterialInfo, MaterialStockLog } from '@/types/entity'
@@ -37,7 +37,7 @@ async function fetchData(): Promise<void> {
       getReportDashboard().catch(() => null),
       listTask({ pageNum: 1, pageSize: 500 }).catch(() => null),
       listMaterialInfo({ pageNum: 1, pageSize: 500 }).catch(() => null),
-      listStockLog({ pageNum: 1, pageSize: 500 }).catch(() => null),
+      listMaterialStockLog({ pageNum: 1, pageSize: 500 }).catch(() => null),
       listCropBatch({ pageNum: 1, pageSize: 500 }).catch(() => null),
     ])
 

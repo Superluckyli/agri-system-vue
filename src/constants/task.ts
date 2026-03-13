@@ -36,9 +36,9 @@ export const TASK_PRIORITY_MAP: Record<number, { text: string; type: '' | 'succe
   [TASK_PRIORITY.LOW]: { text: '低', type: 'info' },
 }
 
-// 批次状态
+// 批次状态（后端初始值为 not_started）
 export const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
-  planned: { text: '计划中', type: 'info' },
+  not_started: { text: '未开始', type: 'info' },
   in_progress: { text: '生长中', type: '' },
   paused: { text: '已暂停', type: 'warning' },
   harvested: { text: '已收获', type: 'success' },
@@ -50,6 +50,51 @@ export const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'succes
 export const PURCHASE_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
   draft: { text: '草稿', type: 'info' },
   confirmed: { text: '已确认', type: '' },
-  received: { text: '已收货', type: 'success' },
+  receiving: { text: '收货中', type: 'warning' },
+  partial_received: { text: '部分收货', type: 'warning' },
+  completed: { text: '已完成', type: 'success' },
   cancelled: { text: '已取消', type: 'danger' },
+}
+
+// 风险等级
+export const RISK_LEVEL = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+} as const
+
+export const RISK_LEVEL_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  [RISK_LEVEL.LOW]: { text: '低', type: 'success' },
+  [RISK_LEVEL.MEDIUM]: { text: '中', type: 'warning' },
+  [RISK_LEVEL.HIGH]: { text: '高', type: 'danger' },
+}
+
+// 任务来源
+export const TASK_SOURCE = {
+  MANUAL: 'manual',
+  RULE: 'rule',
+  AI: 'ai',
+} as const
+
+export const TASK_SOURCE_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  [TASK_SOURCE.MANUAL]: { text: '手动创建', type: '' },
+  [TASK_SOURCE.RULE]: { text: '规则触发', type: 'warning' },
+  [TASK_SOURCE.AI]: { text: 'AI 推荐', type: 'info' },
+}
+
+// 物资变更类型
+export const MATERIAL_CHANGE_TYPE = {
+  OUT: 'OUT',
+  IN: 'IN',
+  ADJUST: 'ADJUST',
+  DAMAGE: 'DAMAGE',
+  RETURN: 'RETURN',
+} as const
+
+export const MATERIAL_CHANGE_TYPE_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  [MATERIAL_CHANGE_TYPE.OUT]: { text: '出库', type: 'danger' },
+  [MATERIAL_CHANGE_TYPE.IN]: { text: '入库', type: 'success' },
+  [MATERIAL_CHANGE_TYPE.ADJUST]: { text: '盘点调整', type: 'warning' },
+  [MATERIAL_CHANGE_TYPE.DAMAGE]: { text: '损耗', type: 'danger' },
+  [MATERIAL_CHANGE_TYPE.RETURN]: { text: '退货', type: 'info' },
 }

@@ -9,10 +9,10 @@ import {
   createSystemUser,
   updateSystemUser,
   removeSystemUserByUserIds,
-  getUserRoles,
-  assignUserRoles,
-  listAllRoles
+  getSystemUserRolesByUserId,
+  getSystemRoleAll
 } from '@/api/modules/system'
+import { put } from '@/api/http'
 import type { SysUser, SysRole } from '@/types/entity'
 
 // ==== 角色颜色映射 ====
@@ -205,7 +205,8 @@ const handleAssignRole = async (row: SysUser) => {
   currentRoleUserId.value = row.userId!
   currentRoleUsername.value = row.realName || row.username || ''
   try {
-    selectedRoleIds.value = await getUserRoles(row.userId!)
+    const roles = await getSystemUserRolesByUserId(row.userId!)
+    selectedRoleIds.value = roles.map(r => r.roleId).filter((id): id is number => id != null)
     roleDialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取用户角色失败')
@@ -216,7 +217,7 @@ const submitRoleAssign = async () => {
   if (currentRoleUserId.value == null) return
   roleSubmitLoading.value = true
   try {
-    await assignUserRoles(currentRoleUserId.value, selectedRoleIds.value)
+    await put<void>(`/system/user/${currentRoleUserId.value}/roles`, selectedRoleIds.value)
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
     getList()
@@ -230,7 +231,7 @@ const submitRoleAssign = async () => {
 onMounted(async () => {
   getList()
   try {
-    allRoles.value = await listAllRoles()
+    allRoles.value = await getSystemRoleAll()
   } catch (_) {
     // 角色列表加载失败不阻塞页面
   }

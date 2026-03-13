@@ -7,11 +7,11 @@ import { Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-v
 
 import {
   createCropBatch,
+  getCropFarmlandAll,
   getCropVarietyAll,
   harvestBatch,
   abandonBatch,
   listCropBatch,
-  listFarmland,
   removeCropBatchByIds,
   updateCropBatch,
 } from '@/api/modules/crop'
@@ -31,8 +31,8 @@ interface BatchFormModel {
   id?: number
   varietyId: number | null
   farmlandId: number | null
-  sowingDate: string
-  expectedHarvestDate: string
+  plantingDate: string
+  estimatedHarvestDate: string
 }
 
 const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
@@ -70,15 +70,15 @@ const form = reactive<BatchFormModel>({
   id: undefined,
   varietyId: null,
   farmlandId: null,
-  sowingDate: '',
-  expectedHarvestDate: '',
+  plantingDate: '',
+  estimatedHarvestDate: '',
 })
 
 const rules: FormRules<BatchFormModel> = {
   varietyId: [{ required: true, message: '请选择作物品种', trigger: 'change' }],
   farmlandId: [{ required: true, message: '请选择农田地块', trigger: 'change' }],
-  sowingDate: [{ required: true, message: '请选择种植日期', trigger: 'change' }],
-  expectedHarvestDate: [{ required: true, message: '请选择预计收获日期', trigger: 'change' }],
+  plantingDate: [{ required: true, message: '请选择种植日期', trigger: 'change' }],
+  estimatedHarvestDate: [{ required: true, message: '请选择预计收获日期', trigger: 'change' }],
 }
 
 const detailDrawerVisible = ref(false)
@@ -99,8 +99,7 @@ const fetchVarieties = async () => {
 
 const fetchFarmlands = async () => {
   try {
-    const res = await listFarmland({ pageNum: 1, pageSize: 500 })
-    farmlandOptions.value = res.records || []
+    farmlandOptions.value = await getCropFarmlandAll()
   } catch (error) {
     farmlandOptions.value = []
     console.error('加载农田列表失败', error)
@@ -157,8 +156,8 @@ const resetForm = () => {
   form.id = undefined
   form.varietyId = null
   form.farmlandId = null
-  form.sowingDate = ''
-  form.expectedHarvestDate = ''
+  form.plantingDate = ''
+  form.estimatedHarvestDate = ''
 }
 
 const handleAdd = async () => {
@@ -179,8 +178,8 @@ const handleEdit = async (row: AgriCropBatch) => {
   form.id = row.id
   form.varietyId = row.varietyId ?? null
   form.farmlandId = row.farmlandId ?? null
-  form.sowingDate = row.sowingDate || ''
-  form.expectedHarvestDate = row.expectedHarvestDate || ''
+  form.plantingDate = row.plantingDate || ''
+  form.estimatedHarvestDate = row.estimatedHarvestDate || ''
   dialogVisible.value = true
   if (varieties.value.length === 0) {
     await fetchVarieties()
@@ -191,8 +190,8 @@ const handleEdit = async (row: AgriCropBatch) => {
 }
 
 const validateDateRange = () => {
-  if (!form.sowingDate || !form.expectedHarvestDate) return true
-  return new Date(form.expectedHarvestDate).getTime() >= new Date(form.sowingDate).getTime()
+  if (!form.plantingDate || !form.estimatedHarvestDate) return true
+  return new Date(form.estimatedHarvestDate).getTime() >= new Date(form.plantingDate).getTime()
 }
 
 const submitForm = async () => {
@@ -209,8 +208,8 @@ const submitForm = async () => {
     id: form.id,
     varietyId: Number(form.varietyId),
     farmlandId: Number(form.farmlandId),
-    sowingDate: form.sowingDate,
-    expectedHarvestDate: form.expectedHarvestDate,
+    plantingDate: form.plantingDate,
+    estimatedHarvestDate: form.estimatedHarvestDate,
   }
 
   try {
@@ -269,15 +268,13 @@ const handleHarvest = (row: AgriCropBatch) => {
 
 const handleAbandon = (row: AgriCropBatch) => {
   if (!row.id) return
-  ElMessageBox.prompt('请输入废弃原因', '废弃批次', {
+  ElMessageBox.confirm('确认废弃该批次吗？废弃后不可恢复。', '废弃批次', {
     confirmButtonText: '确定废弃',
     cancelButtonText: '取消',
     type: 'warning',
-    inputPattern: /.+/,
-    inputErrorMessage: '请输入废弃原因',
   })
-    .then(async ({ value }) => {
-      await abandonBatch(row.id as number, value)
+    .then(async () => {
+      await abandonBatch(row.id as number)
       ElMessage.success('批次已废弃')
       await fetchList()
     })
@@ -378,8 +375,8 @@ onMounted(() => {
             {{ getFarmlandName(scope.row) }}
           </template>
         </el-table-column>
-        <el-table-column label="种植日期" prop="sowingDate" width="130" align="center" />
-        <el-table-column label="预计收获" prop="expectedHarvestDate" width="130" align="center" />
+        <el-table-column label="种植日期" prop="plantingDate" width="130" align="center" />
+        <el-table-column label="预计收获" prop="estimatedHarvestDate" width="130" align="center" />
         <el-table-column label="状态" width="100" align="center">
           <template #default="scope">
             <el-tag
@@ -463,18 +460,18 @@ onMounted(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="种植日期" prop="sowingDate">
+        <el-form-item label="种植日期" prop="plantingDate">
           <el-date-picker
-            v-model="form.sowingDate"
+            v-model="form.plantingDate"
             type="date"
             value-format="YYYY-MM-DD"
             placeholder="请选择种植日期"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="预计收获日期" prop="expectedHarvestDate">
+        <el-form-item label="预计收获日期" prop="estimatedHarvestDate">
           <el-date-picker
-            v-model="form.expectedHarvestDate"
+            v-model="form.estimatedHarvestDate"
             type="date"
             value-format="YYYY-MM-DD"
             placeholder="请选择预计收获日期"
@@ -495,8 +492,8 @@ onMounted(() => {
           <el-descriptions-item label="批次编号">{{ currentDetail.batchNo || '-' }}</el-descriptions-item>
           <el-descriptions-item label="作物品种">{{ getVarietyLabel(currentDetail) }}</el-descriptions-item>
           <el-descriptions-item label="农田地块">{{ getFarmlandName(currentDetail) }}</el-descriptions-item>
-          <el-descriptions-item label="种植日期">{{ currentDetail.sowingDate || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="预计收获">{{ currentDetail.expectedHarvestDate || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="种植日期">{{ currentDetail.plantingDate || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="预计收获">{{ currentDetail.estimatedHarvestDate || '-' }}</el-descriptions-item>
           <el-descriptions-item label="实际收获">{{ currentDetail.actualHarvestDate || '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag

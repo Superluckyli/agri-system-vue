@@ -100,7 +100,7 @@ function buildAlerts(
       title: `库存预警：${item.name || item.materialId}`,
       desc: `当前库存 ${item.currentStock ?? '-'} ${item.unit || ''}`,
       level: 'warning' as const,
-      time: item.updateTime || '-',
+      time: item.updatedAt || '-',
       targetPath: '/material/inventory?lowStock=1',
     }))
 
