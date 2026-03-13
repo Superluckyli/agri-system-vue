@@ -1,9 +1,7 @@
 import axios from 'axios'
-import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
+import type { AxiosInstance, AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
-import router from '@/router'
-import type { R } from '@/types/api'
 
 const http: AxiosInstance = axios.create({
   baseURL: '/api',
@@ -26,7 +24,7 @@ http.interceptors.request.use(
 
 // Response interceptor
 http.interceptors.response.use(
-  (response: AxiosResponse<R<any>>) => {
+  (response) => {
     // Return complete blob response directly if it's a file download
     if (response.request.responseType === 'blob' || response.request.responseType === 'arraybuffer') {
       return response.data
@@ -65,9 +63,9 @@ http.interceptors.response.use(
   }
 )
 
-export const get = <T = any>(url: string, config?: any): Promise<T> => http.get(url, config)
-export const post = <T = any>(url: string, data?: any, config?: any): Promise<T> => http.post(url, data, config)
-export const put = <T = any>(url: string, data?: any, config?: any): Promise<T> => http.put(url, data, config)
-export const del = <T = any>(url: string, config?: any): Promise<T> => http.delete(url, config)
+export const get = <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> => http.get(url, config)
+export const post = <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => http.post(url, data, config)
+export const put = <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => http.put(url, data, config)
+export const del = <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> => http.delete(url, config)
 
 export default http

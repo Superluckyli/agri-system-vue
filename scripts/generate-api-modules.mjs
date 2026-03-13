@@ -219,7 +219,7 @@ function isBatchDelete(method, pathKeys) {
  * Whether the path params should be expanded as direct function parameters
  * (as opposed to being wrapped in a Params interface).
  */
-function useDirectPathParams(method, pathname, pathKeys, hasBody) {
+function useDirectPathParams(method, pathname, pathKeys) {
   if (isListEndpoint(method, pathname)) return false
   if (isBatchDelete(method, pathKeys)) return false
   if (pathKeys.length === 0) return false

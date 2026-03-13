@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { MENU_ACCESS, type AppRole } from '@/constants/permission'
 import { hasAnyRole } from '@/utils/permission'
 import { useAuthStore } from '@/stores/auth'
-import http from '@/api/http';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

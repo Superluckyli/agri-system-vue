@@ -208,7 +208,7 @@ const handleAssignRole = async (row: SysUser) => {
     const roles = await getSystemUserRolesByUserId(row.userId!)
     selectedRoleIds.value = roles.map(r => r.roleId).filter((id): id is number => id != null)
     roleDialogVisible.value = true
-  } catch (error) {
+  } catch {
     ElMessage.error('获取用户角色失败')
   }
 }
@@ -221,7 +221,7 @@ const submitRoleAssign = async () => {
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
     getList()
-  } catch (error) {
+  } catch {
     ElMessage.error('角色分配失败')
   } finally {
     roleSubmitLoading.value = false
@@ -232,7 +232,7 @@ onMounted(async () => {
   getList()
   try {
     allRoles.value = await getSystemRoleAll()
-  } catch (_) {
+  } catch {
     // 角色列表加载失败不阻塞页面
   }
 })

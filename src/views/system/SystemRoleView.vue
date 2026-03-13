@@ -136,9 +136,8 @@ const handleDelete = (row: SysRole) => {
         queryParams.value.pageNum -= 1
       }
       getList()
-    } catch (e: any) {
-      // 通过对 interceptor 内层抛出的 new Error('') 或者原生 AxiosError 进行 catch
-      // 如果报错内容匹配后端"绑定用户"限定，采用 Notification 显示
+    } catch (err: unknown) {
+      const e = err as { message?: string; msg?: string }
       const msg = e?.message || e?.msg || ''
       if (msg.includes('绑定') || msg.includes('禁止')) {
         ElNotification({
@@ -148,8 +147,7 @@ const handleDelete = (row: SysRole) => {
           duration: 5000
         })
       }
-      // 此前 interceptor 已经通过 ElMessage.error() 展示过原始后台错误，因此其余错误不额外增加。
-      console.error('角色删除失败处理：', e)
+      console.error('角色删除失败处理：', err)
     }
   }).catch(() => {})
 }

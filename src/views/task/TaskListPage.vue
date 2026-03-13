@@ -5,7 +5,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { listTask, type ListTaskParams } from '@/api/modules/task'
 import type { MpPage } from '@/types/api'
 import type { AgriTask } from '@/types/entity'
-import { TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
+import { TASK_STATUS_MAP } from '@/constants/task'
 import PageState from '@/components/page/PageState.vue'
 import { usePageState } from '@/composables/usePageState'
 

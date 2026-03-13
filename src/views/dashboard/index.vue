@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ name: 'DashboardIndex' })
+
 import { computed, markRaw, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Bell, DataAnalysis, Document, TrendCharts, Warning } from '@element-plus/icons-vue'
@@ -10,7 +12,7 @@ import { listMaterialInfo } from '@/api/modules/material'
 import { getReportDashboard } from '@/api/modules/report'
 import { listTask } from '@/api/modules/task'
 import type { AgriTask, AgriTaskRule, DashboardData, IotSensorData, MaterialInfo } from '@/types/entity'
-import { TASK_PRIORITY_MAP, TASK_STATUS_V2, TASK_STATUS_MAP } from '@/constants/task'
+import { TASK_STATUS_V2, TASK_STATUS_MAP } from '@/constants/task'
 
 interface AlertItem {
   id: string

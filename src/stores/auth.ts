@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import http from '@/api/http'
 import router from '@/router'
-import type { SysUser } from '@/types/entity'
+import type { LoginBody, LoginData, SysUser } from '@/types/entity'
 import { resolveUserRoles } from '@/utils/permission'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -30,8 +30,8 @@ export const useAuthStore = defineStore('auth', () => {
     setRoles(normalizedRoles)
   }
 
-  const login = async (form: any) => {
-    const data: any = await http.post('/login', form)
+  const login = async (form: LoginBody) => {
+    const data = await http.post('/login', form) as LoginData
     setToken(data.token)
     setUser(data.user || null)
     syncRoles(data.roles, data.user || null)
@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     router.replace('/login')
   }
 
-  const setAuth = (data: any) => {
+  const setAuth = (data: Partial<LoginData> | null) => {
     if (data?.token) setToken(data.token)
     if (data?.user) setUser(data.user)
     syncRoles(data?.roles, data?.user || user.value)
