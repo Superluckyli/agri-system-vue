@@ -46,6 +46,19 @@ export const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'succes
   archived: { text: '已归档', type: 'info' },
 }
 
+// 农田状态
+export const FARMLAND_STATUS_MAP: Record<number, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  0: { text: '闲置', type: 'info' },
+  1: { text: '使用中', type: 'success' },
+  2: { text: '已停用', type: 'danger' },
+}
+
+// 供应商状态
+export const SUPPLIER_STATUS_MAP: Record<number, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  0: { text: '禁用', type: 'danger' },
+  1: { text: '正常', type: 'success' },
+}
+
 // 采购单状态
 export const PURCHASE_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
   draft: { text: '草稿', type: 'info' },

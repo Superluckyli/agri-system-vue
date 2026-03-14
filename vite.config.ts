@@ -15,6 +15,18 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    build: {
+      chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vue-vendor': ['vue', 'vue-router', 'pinia'],
+            'element-plus': ['element-plus', '@element-plus/icons-vue'],
+            'echarts': ['echarts', 'vue-echarts'],
+          },
+        },
+      },
+    },
     server: {
       host: '0.0.0.0',
       port: 5173,

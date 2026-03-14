@@ -25,6 +25,7 @@ interface RuleFormModel {
   autoTaskType: string
   priority: number
   isEnable: number
+  cooldownMinutes: number
 }
 
 interface TaskQuickForm {
@@ -75,6 +76,7 @@ const form = reactive<RuleFormModel>({
   autoTaskType: '',
   priority: 2,
   isEnable: 1,
+  cooldownMinutes: 60,
 })
 
 const rules: FormRules<RuleFormModel> = {
@@ -185,6 +187,7 @@ function resetForm(): void {
   form.autoTaskType = ''
   form.priority = 2
   form.isEnable = 1
+  form.cooldownMinutes = 60
 }
 
 function handleAdd(): void {
@@ -204,6 +207,7 @@ function handleEdit(row: AgriTaskRule): void {
   form.autoTaskType = row.autoTaskType || ''
   form.priority = row.priority ?? 2
   form.isEnable = row.isEnable ?? 1
+  form.cooldownMinutes = row.cooldownMinutes ?? 60
   dialogVisible.value = true
 }
 
@@ -226,6 +230,7 @@ async function submitForm(): Promise<void> {
     autoTaskType: form.autoTaskType.trim(),
     priority: parseNumber(form.priority),
     isEnable: parseNumber(form.isEnable),
+    cooldownMinutes: parseNumber(form.cooldownMinutes),
   }
 
   try {
@@ -442,6 +447,9 @@ onMounted(() => {
             <el-radio :value="1">启用</el-radio>
             <el-radio :value="0">停用</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="冷却时间(分钟)">
+          <el-input-number v-model="form.cooldownMinutes" :min="1" :max="1440" :step="10" />
         </el-form-item>
       </el-form>
       <template #footer>

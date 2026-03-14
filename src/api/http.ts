@@ -46,6 +46,8 @@ http.interceptors.response.use(
       if (status === 401) {
         ElMessage.error('登录状态已过期，请重新登录')
         authStore.logout()
+      } else if (status === 403) {
+        ElMessage.error('权限不足，无法执行该操作')
       } else {
         ElMessage.error(`请求错误：${status}`)
       }

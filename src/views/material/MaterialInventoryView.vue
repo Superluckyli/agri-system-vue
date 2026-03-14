@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Delete, Edit, Plus, Refresh, Search, Download } from '@element-plus/icons-vue'
 
 import { MANAGER_ROLES } from '@/constants/permission'
 import {
@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 import type { MaterialInfo } from '@/types/entity'
+import { useExport, type ExportColumn } from '@/composables/useExport'
 
 interface QueryParams {
   pageNum: number
@@ -245,6 +246,28 @@ watch(
   { immediate: true },
 )
 
+const { exportToXlsx } = useExport()
+
+const materialExportColumns: ExportColumn[] = [
+  { header: '物料ID', key: 'materialId' },
+  { header: '物料名称', key: 'name' },
+  { header: '类型', key: 'category' },
+  { header: '库存量', key: 'currentStock' },
+  { header: '单位', key: 'unit' },
+  { header: '预警阈值', key: 'safeThreshold' },
+  { header: '单价', key: 'unitPrice' },
+]
+
+const handleExport = async () => {
+  try {
+    const res = await listMaterialInfo({ pageNum: 1, pageSize: 9999 })
+    exportToXlsx(res.records || [], materialExportColumns, '物资库存')
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败')
+  }
+}
+
 onMounted(() => {
   void fetchList()
 })
@@ -293,8 +316,9 @@ onMounted(() => {
       </el-form>
 
       <el-row :gutter="10" class="toolbar">
-        <el-col :span="6">
+        <el-col :span="12">
           <el-button v-if="canManage" type="primary" plain :icon="Plus" @click="handleAdd">新增投入品</el-button>
+          <el-button type="success" plain :icon="Download" @click="handleExport">导出</el-button>
         </el-col>
       </el-row>
 

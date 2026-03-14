@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus, Refresh, Search, User, View } from '@element-plus/icons-vue'
+import { Plus, Refresh, Search, User, View, Download } from '@element-plus/icons-vue'
 
 import { assignTask, createTask, listTask } from '@/api/modules/task'
 import { listSystemUser } from '@/api/modules/system'
@@ -11,6 +11,7 @@ import type { AgriTask, SysUser, TaskAssignRequest } from '@/types/entity'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
 import { ROLE_TECHNICIAN, ROLE_WORKER } from '@/constants/permission'
 import { resolveUserRoles } from '@/utils/permission'
+import { useExport, type ExportColumn } from '@/composables/useExport'
 
 const loading = ref(false)
 const list = ref<AgriTask[]>([])
@@ -270,6 +271,28 @@ const submitAssign = async () => {
   }
 }
 
+const { exportToXlsx } = useExport()
+
+const exportColumns: ExportColumn[] = [
+  { header: '任务ID', key: 'taskId' },
+  { header: '任务名称', key: 'taskName' },
+  { header: '任务类型', key: 'taskType' },
+  { header: '优先级', key: 'priority', formatter: (v) => TASK_PRIORITY_MAP[v as number]?.text || String(v ?? '') },
+  { header: '状态', key: 'statusV2', formatter: (v) => TASK_STATUS_MAP[v as string]?.text || String(v ?? '') },
+  { header: '计划时间', key: 'planTime' },
+  { header: '负责人', key: 'assigneeName' },
+]
+
+const handleExport = async () => {
+  try {
+    const res = await listTask({ pageNum: 1, pageSize: 9999 })
+    exportToXlsx(res.records || [], exportColumns, '任务列表')
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败')
+  }
+}
+
 onMounted(() => {
   applyRouteFilter()
   void getAssignableUsers()
@@ -313,8 +336,9 @@ watch(
       </el-form>
 
       <el-row :gutter="10" class="toolbar">
-        <el-col :span="6">
+        <el-col :span="12">
           <el-button type="primary" :icon="Plus" @click="handleCreate">创建任务</el-button>
+          <el-button type="success" plain :icon="Download" @click="handleExport">导出</el-button>
         </el-col>
       </el-row>
 

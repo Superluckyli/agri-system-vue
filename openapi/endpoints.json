@@ -364,6 +364,70 @@
         "notes": "Request body is array of role IDs in JSON body."
     },
     {
+        "tag": "SystemUser",
+        "method": "PUT",
+        "path": "/system/user/profile",
+        "auth": {
+            "required": true,
+            "roles": [],
+            "header": "Authorization: Bearer <token>"
+        },
+        "summary": "Update own profile",
+        "request": {
+            "schema": {
+                "query": {},
+                "path": {},
+                "body": "SysUser"
+            },
+            "example": {
+                "query": {},
+                "path": {},
+                "bodyOpenapiRef": null
+            }
+        },
+        "response": {
+            "schema": "R<SysUser>",
+            "example": {
+                "success": { "code": 200, "msg": "Operation success", "data": "<see openapi response example>" },
+                "fail": { "code": 500, "msg": "Operation failed", "data": null },
+                "openapiRef": null
+            }
+        },
+        "notes": "Updates current user realName/phone/deptName. Returns updated user."
+    },
+    {
+        "tag": "SystemUser",
+        "method": "PUT",
+        "path": "/system/user/password",
+        "auth": {
+            "required": true,
+            "roles": [],
+            "header": "Authorization: Bearer <token>"
+        },
+        "summary": "Change own password",
+        "request": {
+            "schema": {
+                "query": {},
+                "path": {},
+                "body": "PasswordChangeRequest"
+            },
+            "example": {
+                "query": {},
+                "path": {},
+                "bodyOpenapiRef": null
+            }
+        },
+        "response": {
+            "schema": "R<Void>",
+            "example": {
+                "success": { "code": 200, "msg": "密码修改成功", "data": null },
+                "fail": { "code": 500, "msg": "旧密码不正确", "data": null },
+                "openapiRef": null
+            }
+        },
+        "notes": "Requires oldPassword and newPassword (min 6 chars)."
+    },
+    {
         "tag": "SystemRole",
         "method": "GET",
         "path": "/system/role/list",

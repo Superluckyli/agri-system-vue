@@ -76,6 +76,12 @@ const router = createRouter({
           component: () => import('@/views/crop/CropBatchView.vue'),
         },
         {
+          path: 'crop/farmland',
+          name: 'CropFarmland',
+          meta: { roles: MENU_ACCESS.farmland },
+          component: () => import('@/views/crop/FarmlandView.vue'),
+        },
+        {
           path: 'crop/growth-log/:batchId',
           name: 'GrowthLog',
           meta: { roles: MENU_ACCESS.crop },
@@ -94,6 +100,18 @@ const router = createRouter({
           component: () => import('@/views/material/MaterialLogView.vue'),
         },
         {
+          path: 'supplier',
+          name: 'Supplier',
+          meta: { roles: MENU_ACCESS.supplier },
+          component: () => import('@/views/supplier/SupplierView.vue'),
+        },
+        {
+          path: 'purchase',
+          name: 'PurchaseOrder',
+          meta: { roles: MENU_ACCESS.purchase },
+          component: () => import('@/views/purchase/PurchaseOrderView.vue'),
+        },
+        {
           path: 'iot/monitor',
           name: 'IotMonitor',
           meta: { roles: MENU_ACCESS.iotMonitor },
@@ -110,6 +128,11 @@ const router = createRouter({
           name: 'ReportAnalytics',
           meta: { roles: MENU_ACCESS.report },
           component: () => import('@/views/report/ReportAnalyticsView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'Profile',
+          component: () => import('@/views/system/ProfileView.vue'),
         },
       ],
     },

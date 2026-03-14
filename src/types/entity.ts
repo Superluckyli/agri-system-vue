@@ -112,6 +112,7 @@ export interface AgriTaskRule extends UnknownRecord {
   autoTaskType?: string
   priority?: number
   isEnable?: number
+  cooldownMinutes?: number
 }
 
 export interface MaterialInfo extends UnknownRecord {
@@ -309,6 +310,11 @@ export interface DashboardData {
   cropDistribution?: NameValueItem[]
   taskTrend?: ChartDataVO
   envMonitor?: NameValueItem[]
+}
+
+export interface PasswordChangeRequest {
+  oldPassword: string
+  newPassword: string
 }
 
 // 类型别名

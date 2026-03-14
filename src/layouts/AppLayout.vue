@@ -12,45 +12,84 @@ interface NavItem {
   roles: AppRole[]
 }
 
+interface NavGroup {
+  label: string
+  children: NavItem[]
+}
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const navigationItems: NavItem[] = [
-  { path: '/dashboard', label: '工作台 (Dashboard)', roles: MENU_ACCESS.dashboard },
-  { path: '/system/user', label: '用户管理', roles: MENU_ACCESS.system },
-  { path: '/system/role', label: '角色管理', roles: MENU_ACCESS.system },
-  { path: '/task/list', label: '任务派单', roles: MENU_ACCESS.taskManage },
-  { path: '/task/my', label: '我的任务', roles: MENU_ACCESS.myTask },
-  { path: '/task/log', label: '执行日志', roles: MENU_ACCESS.taskLog },
-  { path: '/crop/variety', label: '作物品种', roles: MENU_ACCESS.crop },
-  { path: '/crop/batch', label: '种植批次', roles: MENU_ACCESS.crop },
-  { path: '/crop/growth-log/1', label: '生长日志', roles: MENU_ACCESS.crop },
-  { path: '/material/inventory', label: '物资库存', roles: MENU_ACCESS.materialInventory },
-  { path: '/material/log', label: '出入库登记', roles: MENU_ACCESS.materialLog },
-  { path: '/iot/monitor', label: '设备监测', roles: MENU_ACCESS.iotMonitor },
-  { path: '/iot/rule', label: '预警规则', roles: MENU_ACCESS.iotRule },
-  { path: '/report/analytics', label: '统计报表', roles: MENU_ACCESS.report },
+const navigationGroups: NavGroup[] = [
+  {
+    label: '工作台',
+    children: [
+      { path: '/dashboard', label: 'Dashboard', roles: MENU_ACCESS.dashboard },
+    ],
+  },
+  {
+    label: '系统管理',
+    children: [
+      { path: '/system/user', label: '用户管理', roles: MENU_ACCESS.system },
+      { path: '/system/role', label: '角色管理', roles: MENU_ACCESS.system },
+    ],
+  },
+  {
+    label: '任务管理',
+    children: [
+      { path: '/task/list', label: '任务派单', roles: MENU_ACCESS.taskManage },
+      { path: '/task/my', label: '我的任务', roles: MENU_ACCESS.myTask },
+      { path: '/task/log', label: '执行日志', roles: MENU_ACCESS.taskLog },
+    ],
+  },
+  {
+    label: '种植管理',
+    children: [
+      { path: '/crop/variety', label: '作物品种', roles: MENU_ACCESS.crop },
+      { path: '/crop/batch', label: '种植批次', roles: MENU_ACCESS.crop },
+      { path: '/crop/farmland', label: '农田管理', roles: MENU_ACCESS.farmland },
+    ],
+  },
+  {
+    label: '物资采购',
+    children: [
+      { path: '/material/inventory', label: '物资库存', roles: MENU_ACCESS.materialInventory },
+      { path: '/material/log', label: '出入库登记', roles: MENU_ACCESS.materialLog },
+      { path: '/supplier', label: '供应商管理', roles: MENU_ACCESS.supplier },
+      { path: '/purchase', label: '采购管理', roles: MENU_ACCESS.purchase },
+    ],
+  },
+  {
+    label: 'IoT 监测',
+    children: [
+      { path: '/iot/monitor', label: '设备监测', roles: MENU_ACCESS.iotMonitor },
+      { path: '/iot/rule', label: '预警规则', roles: MENU_ACCESS.iotRule },
+    ],
+  },
+  {
+    label: '统计报表',
+    children: [
+      { path: '/report/analytics', label: '分析报表', roles: MENU_ACCESS.report },
+    ],
+  },
 ]
 
 const currentRoles = computed(() => resolveUserRoles(authStore.roles, authStore.user))
 
-const visibleNavigationItems = computed(() => {
-  return navigationItems.filter((item) => hasAnyRole(currentRoles.value, item.roles))
-})
-
-const activePath = computed(() => {
-  if (route.path.startsWith('/crop/growth-log/')) {
-    return '/crop/growth-log/1'
-  }
-  return route.path
+const visibleGroups = computed(() => {
+  return navigationGroups
+    .map((group) => ({
+      ...group,
+      children: group.children.filter((item) => hasAnyRole(currentRoles.value, item.roles)),
+    }))
+    .filter((group) => group.children.length > 0)
 })
 
 async function handleNavigate(path: string): Promise<void> {
   if (route.path === path) {
     return
   }
-
   try {
     await router.push(path)
   } catch (error) {
@@ -67,22 +106,31 @@ function handleLogout(): void {
   <div class="app-layout">
     <aside class="app-layout__aside">
       <div class="app-layout__brand">Agri System</div>
-      <nav class="app-layout__nav">
-        <button
-          v-for="item in visibleNavigationItems"
-          :key="item.path"
-          type="button"
-          class="nav-item"
-          :class="{ 'nav-item--active': activePath === item.path }"
-          @click="handleNavigate(item.path)"
-        >
-          {{ item.label }}
-        </button>
-      </nav>
+      <el-menu
+        :default-active="route.path"
+        background-color="#1a2e1a"
+        text-color="rgba(255, 255, 255, 0.75)"
+        active-text-color="#4ade80"
+        :unique-opened="true"
+        class="sidebar-menu"
+        @select="handleNavigate"
+      >
+        <el-sub-menu v-for="group in visibleGroups" :key="group.label" :index="group.label">
+          <template #title>{{ group.label }}</template>
+          <el-menu-item
+            v-for="item in group.children"
+            :key="item.path"
+            :index="item.path"
+          >
+            {{ item.label }}
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
     </aside>
 
     <div class="app-layout__body">
       <header class="app-layout__header">
+        <router-link to="/profile" class="header-profile-link">个人中心</router-link>
         <span class="header-user">{{ authStore.user?.realName || authStore.user?.username || 'User' }}</span>
         <el-button type="danger" plain size="small" @click="handleLogout">Logout</el-button>
       </header>
@@ -122,36 +170,44 @@ function handleLogout(): void {
   letter-spacing: 0.5px;
 }
 
-.app-layout__nav {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
+.sidebar-menu {
+  border-right: none;
+  overflow-y: auto;
+  flex: 1;
 }
 
-.nav-item {
-  border: 0;
-  background: transparent;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 20px;
-  color: rgba(255, 255, 255, 0.75);
+.sidebar-menu :deep(.el-sub-menu__title) {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5) !important;
+  letter-spacing: 0.3px;
+}
+
+.sidebar-menu :deep(.el-sub-menu__title:hover) {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.sidebar-menu :deep(.el-menu-item) {
   font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  height: 42px;
+  line-height: 42px;
 }
 
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+.sidebar-menu :deep(.el-menu-item:hover) {
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.nav-item--active {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+.sidebar-menu :deep(.el-menu-item.is-active) {
+  background-color: rgba(255, 255, 255, 0.15) !important;
   border-right: 3px solid #4ade80;
+}
+
+.sidebar-menu :deep(.el-menu--inline) {
+  background-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.sidebar-menu :deep(.el-sub-menu__icon-arrow) {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .app-layout__body {
@@ -171,6 +227,16 @@ function handleLogout(): void {
   padding: 0 24px;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+}
+
+.header-profile-link {
+  font-size: 14px;
+  color: #409eff;
+  text-decoration: none;
+}
+
+.header-profile-link:hover {
+  text-decoration: underline;
 }
 
 .header-user {
