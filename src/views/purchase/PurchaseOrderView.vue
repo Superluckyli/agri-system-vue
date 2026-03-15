@@ -85,7 +85,7 @@ const fetchList = async () => {
       status: queryParams.status || undefined,
       supplierId: queryParams.supplierId || undefined,
     })
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载采购订单失败'
@@ -408,7 +408,7 @@ const purchaseExportColumns: ExportColumn[] = [
 const handleExport = async () => {
   try {
     const res = await listPurchase({ pageNum: 1, pageSize: 9999 })
-    exportToXlsx(res.records || [], purchaseExportColumns, '采购订单')
+    exportToXlsx(res.items || [], purchaseExportColumns, '采购订单')
     ElMessage.success('导出成功')
   } catch {
     ElMessage.error('导出失败')

@@ -40,7 +40,7 @@ function parseTime(value?: string): number {
 async function fetchMaterials(): Promise<void> {
   try {
     const res = await listMaterialInfo({ pageNum: 1, pageSize: 500 })
-    materialOptions.value = res.records || []
+    materialOptions.value = res.items || []
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : '加载物料选项失败'
     ElMessage.error(message)
@@ -59,7 +59,7 @@ async function fetchLogs(): Promise<void> {
       materialId: queryParams.materialId || undefined,
       changeType: queryParams.changeType || undefined,
     })
-    logs.value = res.records || []
+    logs.value = res.items || []
     dataTruncated.value = Number(res.total || 0) > logs.value.length
     queryParams.pageNum = 1
   } catch (error) {

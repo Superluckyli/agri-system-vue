@@ -42,10 +42,10 @@ async function fetchData(): Promise<void> {
     ])
 
     dashboardData.value = dashboardRes
-    taskRecords.value = taskRes?.records || []
-    materialRecords.value = materialRes?.records || []
-    materialLogRecords.value = materialLogRes?.records || []
-    batchRecords.value = batchRes?.records || []
+    taskRecords.value = taskRes?.items || []
+    materialRecords.value = materialRes?.items || []
+    materialLogRecords.value = materialLogRes?.items || []
+    batchRecords.value = batchRes?.items || []
 
     dataTruncated.value =
       toNumber(taskRes?.total) > taskRecords.value.length ||

@@ -93,7 +93,7 @@ const getList = async () => {
   loading.value = true
   try {
     const res = await listTask(queryParams.value)
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     console.error('获取任务列表失败', error)
@@ -124,7 +124,7 @@ const isAssignableUser = (user: SysUser): boolean => {
 const getAssignableUsers = async () => {
   try {
     const res = await listSystemUser({ pageNum: 1, pageSize: 500, status: 1 })
-    assignableUsers.value = (res.records || []).filter((user) => isAssignableUser(user))
+    assignableUsers.value = (res.items || []).filter((user) => isAssignableUser(user))
 
     const nameMap: Record<number, string> = {}
     const roleMap: Record<number, string> = {}
@@ -286,7 +286,7 @@ const exportColumns: ExportColumn[] = [
 const handleExport = async () => {
   try {
     const res = await listTask({ pageNum: 1, pageSize: 9999 })
-    exportToXlsx(res.records || [], exportColumns, '任务列表')
+    exportToXlsx(res.items || [], exportColumns, '任务列表')
     ElMessage.success('导出成功')
   } catch {
     ElMessage.error('导出失败')

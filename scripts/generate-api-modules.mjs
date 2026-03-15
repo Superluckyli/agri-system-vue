@@ -111,9 +111,9 @@ function parseResponseType(responseObj) {
 
   if (text.includes('R<Void>')) return 'void'
 
-  // R<Page<T>> → MpPage<T>
+  // R<Page<T>> → PageResult<T>
   const pageMatch = text.match(/R<Page<([A-Za-z0-9_]+)>>/)
-  if (pageMatch) return `MpPage<${pageMatch[1]}>`
+  if (pageMatch) return `PageResult<${pageMatch[1]}>`
 
   // R<List<T>> or R<Array<T>> → T[]
   const listMatch = text.match(/R<(?:List|Array)<([A-Za-z0-9_]+)>>/)
@@ -251,7 +251,7 @@ function extractModelTypes(returnType) {
   const names = new Set()
   const matches = returnType.match(/[A-Z][A-Za-z0-9_]*/g) ?? []
   for (const item of matches) {
-    if (item !== 'MpPage' && item !== 'Promise') {
+    if (item !== 'PageResult' && item !== 'Promise') {
       names.add(item)
     }
   }
@@ -332,7 +332,7 @@ for (const moduleName of moduleOrder) {
   const bodyLines = []
   const httpFns = new Set()
   const modelTypes = new Set()
-  let usesMpPage = false
+  let usesPageResult = false
 
   for (const endpoint of moduleEndpoints) {
     const method = endpoint.method.toLowerCase()
@@ -359,8 +359,8 @@ for (const moduleName of moduleOrder) {
     for (const typeName of extractModelTypes(returnType)) {
       modelTypes.add(typeName)
     }
-    if (returnType.includes('MpPage<')) {
-      usesMpPage = true
+    if (returnType.includes('PageResult<')) {
+      usesPageResult = true
     }
 
     // Determine signature style
@@ -455,8 +455,8 @@ for (const moduleName of moduleOrder) {
     imports.push(`import type { ${modelTypeImports.join(', ')} } from '@/types/entity'`)
   }
 
-  if (usesMpPage) {
-    imports.push("import type { MpPage } from '@/types/api'")
+  if (usesPageResult) {
+    imports.push("import type { PageResult } from '@/types/api'")
   }
 
   const content = [

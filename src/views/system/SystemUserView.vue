@@ -57,7 +57,7 @@ const getList = async () => {
   loading.value = true
   try {
     const res = await listSystemUser(queryParams.value)
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = res.total || 0
   } catch (error) {
     console.error('获取用户列表失败', error)

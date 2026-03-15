@@ -140,7 +140,7 @@ const loadOwnTasks = async () => {
       pageSize: 500,
       assigneeId: currentUserId.value,
     })
-    ownTaskOptions.value = res.records || []
+    ownTaskOptions.value = res.items || []
     ensureTaskAccessOrReset()
   } catch (error) {
     ownTaskOptions.value = []
@@ -151,7 +151,7 @@ const loadOwnTasks = async () => {
 const loadMaterialOptions = async () => {
   try {
     const res = await listMaterialInfo({ pageNum: 1, pageSize: 500 })
-    materialOptions.value = res.records || []
+    materialOptions.value = res.items || []
   } catch (error) {
     materialOptions.value = []
     console.error('加载农资列表失败', error)
@@ -183,7 +183,7 @@ const fetchList = async (): Promise<void> => {
       taskId: queryParams.taskId || undefined,
     })
 
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '获取执行日志失败'

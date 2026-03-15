@@ -146,7 +146,7 @@ async function fetchList(): Promise<void> {
   dataTruncated.value = false
   try {
     const res = await listIotRule({ pageNum: 1, pageSize: 500 })
-    list.value = res.records || []
+    list.value = res.items || []
     dataTruncated.value = Number(res.total || 0) > list.value.length
     queryParams.pageNum = 1
   } catch (error) {

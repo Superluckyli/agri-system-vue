@@ -71,7 +71,7 @@ const fetchList = async () => {
       pageSize: queryParams.pageSize,
       cropName: queryParams.cropName || undefined,
     })
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载品种列表失败'

@@ -76,7 +76,7 @@ const fetchList = async () => {
       pageSize: queryParams.pageSize,
       name: queryParams.name || undefined,
     })
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载供应商列表失败'

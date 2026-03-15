@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { MaterialInfo, MaterialStockLog } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListMaterialInfoParams {
   pageNum?: number | string
@@ -13,8 +13,8 @@ export interface ListMaterialInfoParams {
   category?: string | number
 }
 
-export function listMaterialInfo(params: ListMaterialInfoParams): Promise<MpPage<MaterialInfo>> {
-  return get<MpPage<MaterialInfo>>('/material/info/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name, category: params.category } })
+export function listMaterialInfo(params: ListMaterialInfoParams): Promise<PageResult<MaterialInfo>> {
+  return get<PageResult<MaterialInfo>>('/material/info/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name, category: params.category } })
 }
 
 export function getMaterialInfoLowStock(): Promise<MaterialInfo[]> {
@@ -48,6 +48,6 @@ export interface ListMaterialStockLogParams {
   changeType?: string | number
 }
 
-export function listMaterialStockLog(params: ListMaterialStockLogParams): Promise<MpPage<MaterialStockLog>> {
-  return get<MpPage<MaterialStockLog>>('/material/stock-log/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, materialId: params.materialId, changeType: params.changeType } })
+export function listMaterialStockLog(params: ListMaterialStockLogParams): Promise<PageResult<MaterialStockLog>> {
+  return get<PageResult<MaterialStockLog>>('/material/stock-log/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, materialId: params.materialId, changeType: params.changeType } })
 }

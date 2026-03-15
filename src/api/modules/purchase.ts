@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { PaymentRecord, PurchaseOrder, PurchaseOrderItem } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListPurchaseParams {
   pageNum?: number | string
@@ -13,8 +13,8 @@ export interface ListPurchaseParams {
   supplierId?: number | string
 }
 
-export function listPurchase(params: ListPurchaseParams): Promise<MpPage<PurchaseOrder>> {
-  return get<MpPage<PurchaseOrder>>('/purchase/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, status: params.status, supplierId: params.supplierId } })
+export function listPurchase(params: ListPurchaseParams): Promise<PageResult<PurchaseOrder>> {
+  return get<PageResult<PurchaseOrder>>('/purchase/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, status: params.status, supplierId: params.supplierId } })
 }
 
 export function createPurchase(body: PurchaseOrder): Promise<void> {

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import type { EChartsOption, LineSeriesOption } from 'echarts'
 
 import BaseChart from '@/components/BaseChart.vue'
 import { listIotData } from '@/api/modules/iot'
+import { useIotSse } from '@/composables/useIotSse'
 import type { IotSensorData } from '@/types/entity'
 
 type TimeRange = '24h' | '7d'
@@ -59,6 +60,23 @@ const dataTruncated = ref(false)
 
 const overviewRecords = ref<IotSensorData[]>([])
 const tableRecords = ref<IotSensorData[]>([])
+
+// SSE 实时数据订阅
+const { connected: sseConnected, latestData: sseLatestData, connect: sseConnect } = useIotSse()
+
+const MAX_RECORDS = 1000
+
+watch(sseLatestData, (newData) => {
+  if (!newData) return
+  // 追加到 overview 和 table，保持最大记录数限制
+  overviewRecords.value = [newData, ...overviewRecords.value].slice(0, MAX_RECORDS)
+  const matchesFilter =
+    (!queryParams.sensorType || normalizeSensorType(newData.sensorType) === queryParams.sensorType) &&
+    (!queryParams.plotId || newData.plotId === queryParams.plotId)
+  if (matchesFilter) {
+    tableRecords.value = [newData, ...tableRecords.value].slice(0, MAX_RECORDS)
+  }
+})
 
 function normalizeSensorType(sensorType?: string): string {
   const raw = (sensorType || '').toLowerCase().trim()
@@ -151,8 +169,8 @@ async function fetchIotData(): Promise<void> {
       }),
     ])
 
-    overviewRecords.value = overviewRes.records || []
-    tableRecords.value = tableRes.records || []
+    overviewRecords.value = overviewRes.items || []
+    tableRecords.value = tableRes.items || []
 
     dataTruncated.value =
       Number(overviewRes.total || 0) > overviewRecords.value.length ||
@@ -273,6 +291,7 @@ function handleCurrentChange(page: number): void {
 
 onMounted(() => {
   void fetchIotData()
+  sseConnect()
 })
 </script>
 
@@ -281,8 +300,14 @@ onMounted(() => {
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <div class="title">IoT 监测数据看板</div>
-          <div class="subtitle">实时环境指标、趋势分析与监测数据明细</div>
+          <div class="header-left">
+            <div class="title">IoT 监测数据看板</div>
+            <div class="subtitle">实时环境指标、趋势分析与监测数据明细</div>
+          </div>
+          <div class="sse-status">
+            <span class="sse-dot" :class="{ 'sse-online': sseConnected }" />
+            <span class="sse-label">{{ sseConnected ? '实时连接中' : '离线' }}</span>
+          </div>
         </div>
       </template>
 
@@ -399,6 +424,12 @@ onMounted(() => {
   padding: 24px;
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .card-header .title {
   font-size: 16px;
   font-weight: 600;
@@ -409,6 +440,30 @@ onMounted(() => {
   margin-top: 4px;
   font-size: 13px;
   color: #909399;
+}
+
+.sse-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: #f5f7fa;
+  font-size: 12px;
+  color: #909399;
+  white-space: nowrap;
+}
+
+.sse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c0c4cc;
+}
+
+.sse-dot.sse-online {
+  background: #67c23a;
+  box-shadow: 0 0 4px rgba(103, 194, 58, 0.6);
 }
 
 .metric-row {

@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { AgriCropBatch, AgriFarmland, BaseCropVariety } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListCropFarmlandParams {
   pageNum?: number | string
@@ -12,8 +12,8 @@ export interface ListCropFarmlandParams {
   name?: string
 }
 
-export function listCropFarmland(params: ListCropFarmlandParams): Promise<MpPage<AgriFarmland>> {
-  return get<MpPage<AgriFarmland>>('/crop/farmland/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name } })
+export function listCropFarmland(params: ListCropFarmlandParams): Promise<PageResult<AgriFarmland>> {
+  return get<PageResult<AgriFarmland>>('/crop/farmland/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name } })
 }
 
 export function getCropFarmlandAll(): Promise<AgriFarmland[]> {
@@ -42,8 +42,8 @@ export interface ListCropVarietyParams {
   cropName?: string
 }
 
-export function listCropVariety(params: ListCropVarietyParams): Promise<MpPage<BaseCropVariety>> {
-  return get<MpPage<BaseCropVariety>>('/crop/variety/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, cropName: params.cropName } })
+export function listCropVariety(params: ListCropVarietyParams): Promise<PageResult<BaseCropVariety>> {
+  return get<PageResult<BaseCropVariety>>('/crop/variety/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, cropName: params.cropName } })
 }
 
 export function getCropVarietyAll(): Promise<BaseCropVariety[]> {
@@ -74,8 +74,8 @@ export interface ListCropBatchParams {
   farmlandId?: number | string
 }
 
-export function listCropBatch(params: ListCropBatchParams): Promise<MpPage<AgriCropBatch>> {
-  return get<MpPage<AgriCropBatch>>('/crop/batch/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, batchNo: params.batchNo, status: params.status, farmlandId: params.farmlandId } })
+export function listCropBatch(params: ListCropBatchParams): Promise<PageResult<AgriCropBatch>> {
+  return get<PageResult<AgriCropBatch>>('/crop/batch/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, batchNo: params.batchNo, status: params.status, farmlandId: params.farmlandId } })
 }
 
 export function createCropBatch(body: AgriCropBatch): Promise<void> {

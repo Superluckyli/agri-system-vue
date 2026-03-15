@@ -1768,8 +1768,8 @@
     },
     {
         "tag": "Task",
-        "method": "POST",
-        "path": "/task/accept",
+        "method": "PUT",
+        "path": "/task/{id}/accept",
         "auth": {
             "required": true,
             "roles": [
@@ -1781,13 +1781,14 @@
         "request": {
             "schema": {
                 "query": {},
-                "path": {},
-                "body": "TaskAcceptDTO"
+                "path": {
+                    "id": "number"
+                },
+                "body": null
             },
             "example": {
                 "query": {},
-                "path": {},
-                "bodyOpenapiRef": "#/paths/~1task~1accept/post/requestBody/content/application~1json/example"
+                "path": { "id": 3 }
             }
         },
         "response": {
@@ -1810,8 +1811,8 @@
     },
     {
         "tag": "Task",
-        "method": "POST",
-        "path": "/task/reject",
+        "method": "PUT",
+        "path": "/task/{id}/reject",
         "auth": {
             "required": true,
             "roles": [
@@ -1823,13 +1824,14 @@
         "request": {
             "schema": {
                 "query": {},
-                "path": {},
+                "path": {
+                    "id": "number"
+                },
                 "body": "TaskRejectDTO"
             },
             "example": {
                 "query": {},
-                "path": {},
-                "bodyOpenapiRef": "#/paths/~1task~1reject/post/requestBody/content/application~1json/example"
+                "path": { "id": 3 }
             }
         },
         "response": {
@@ -1896,7 +1898,7 @@
     },
     {
         "tag": "Task",
-        "method": "POST",
+        "method": "PUT",
         "path": "/task/{id}/complete",
         "auth": {
             "required": true,
@@ -2064,7 +2066,7 @@
     },
     {
         "tag": "Task",
-        "method": "DELETE",
+        "method": "PUT",
         "path": "/task/{id}/cancel",
         "auth": {
             "required": true,

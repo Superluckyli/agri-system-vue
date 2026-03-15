@@ -63,6 +63,9 @@ export function resolveUserRoles(rawRoles: unknown, user: SysUser | null | undef
     extractRoleStringsFromUnknown((user as Record<string, unknown>).roles).forEach((item) =>
       candidates.add(item),
     )
+    extractRoleStringsFromUnknown((user as Record<string, unknown>).roleNames).forEach((item) =>
+      candidates.add(item),
+    )
     extractRoleStringsFromUnknown((user as Record<string, unknown>).authorities).forEach((item) =>
       candidates.add(item),
     )

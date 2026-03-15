@@ -115,7 +115,7 @@ async function fetchList(): Promise<void> {
       name: queryParams.name || undefined,
       category: queryParams.category || undefined,
     })
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载库存列表失败'
@@ -261,7 +261,7 @@ const materialExportColumns: ExportColumn[] = [
 const handleExport = async () => {
   try {
     const res = await listMaterialInfo({ pageNum: 1, pageSize: 9999 })
-    exportToXlsx(res.records || [], materialExportColumns, '物资库存')
+    exportToXlsx(res.items || [], materialExportColumns, '物资库存')
     ElMessage.success('导出成功')
   } catch {
     ElMessage.error('导出失败')

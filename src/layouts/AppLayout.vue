@@ -5,6 +5,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { MENU_ACCESS, type AppRole } from '@/constants/permission'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 import { useAuthStore } from '@/stores/auth'
+import AppBreadcrumb from '@/components/layout/AppBreadcrumb.vue'
+import TagsView from '@/components/layout/TagsView.vue'
 
 interface NavItem {
   path: string
@@ -130,10 +132,14 @@ function handleLogout(): void {
 
     <div class="app-layout__body">
       <header class="app-layout__header">
+        <AppBreadcrumb />
+        <div style="flex: 1" />
         <router-link to="/profile" class="header-profile-link">个人中心</router-link>
         <span class="header-user">{{ authStore.user?.realName || authStore.user?.username || 'User' }}</span>
         <el-button type="danger" plain size="small" @click="handleLogout">Logout</el-button>
       </header>
+
+      <TagsView />
 
       <main class="app-layout__main">
         <router-view :key="route.fullPath" />

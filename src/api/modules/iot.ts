@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { AgriTaskRule, IotSensorData } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListIotDataParams {
   pageNum?: number | string
@@ -13,8 +13,8 @@ export interface ListIotDataParams {
   sensorType?: string | number
 }
 
-export function listIotData(params: ListIotDataParams): Promise<MpPage<IotSensorData>> {
-  return get<MpPage<IotSensorData>>('/iot/data/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, plotId: params.plotId, sensorType: params.sensorType } })
+export function listIotData(params: ListIotDataParams): Promise<PageResult<IotSensorData>> {
+  return get<PageResult<IotSensorData>>('/iot/data/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, plotId: params.plotId, sensorType: params.sensorType } })
 }
 
 export interface ListIotRuleParams {
@@ -22,8 +22,8 @@ export interface ListIotRuleParams {
   pageSize?: number | string
 }
 
-export function listIotRule(params: ListIotRuleParams): Promise<MpPage<AgriTaskRule>> {
-  return get<MpPage<AgriTaskRule>>('/iot/rule/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize } })
+export function listIotRule(params: ListIotRuleParams): Promise<PageResult<AgriTaskRule>> {
+  return get<PageResult<AgriTaskRule>>('/iot/rule/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize } })
 }
 
 export function createIotRule(body: AgriTaskRule): Promise<void> {

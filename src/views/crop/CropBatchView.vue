@@ -117,7 +117,7 @@ const fetchList = async () => {
       status: queryParams.status || undefined,
       farmlandId: queryParams.farmlandId || undefined,
     })
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载批次列表失败'

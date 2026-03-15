@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "Smart Agriculture Management",
+    "logout": "Logout",
+    "profile": "Profile"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "system": "System",
+    "userManage": "Users",
+    "roleManage": "Roles",
+    "taskManage": "Tasks",
+    "taskDispatch": "Dispatch",
+    "myTask": "My Tasks",
+    "taskLog": "Task Logs",
+    "cropManage": "Crops",
+    "variety": "Varieties",
+    "batch": "Batches",
+    "farmland": "Farmlands",
+    "materialManage": "Materials",
+    "inventory": "Inventory",
+    "stockLog": "Stock Log",
+    "supplier": "Suppliers",
+    "purchase": "Purchase",
+    "iot": "IoT",
+    "monitor": "Monitoring",
+    "rule": "Alert Rules",
+    "report": "Reports"
+  },
+  "action": {
+    "search": "Search",
+    "reset": "Reset",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "export": "Export",
+    "refresh": "Refresh",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "message": {
+    "success": "Operation successful",
+    "failed": "Operation failed",
+    "confirmDelete": "Confirm delete selected data?",
+    "noData": "No data",
+    "loading": "Loading...",
+    "loadFailed": "Load failed"
+  },
+  "login": {
+    "title": "User Login",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Login",
+    "register": "Register"
+  }
+}

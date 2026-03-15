@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { PasswordChangeRequest, SysMenu, SysRole, SysUser } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListSystemUserParams {
   pageNum?: number | string
@@ -14,8 +14,8 @@ export interface ListSystemUserParams {
   status?: number | string
 }
 
-export function listSystemUser(params: ListSystemUserParams): Promise<MpPage<SysUser>> {
-  return get<MpPage<SysUser>>('/system/user/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, username: params.username, realName: params.realName, status: params.status } })
+export function listSystemUser(params: ListSystemUserParams): Promise<PageResult<SysUser>> {
+  return get<PageResult<SysUser>>('/system/user/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, username: params.username, realName: params.realName, status: params.status } })
 }
 
 export function getSystemUserByUserId(userId: number | string): Promise<SysUser> {
@@ -60,8 +60,8 @@ export interface ListSystemRoleParams {
   roleName?: string
 }
 
-export function listSystemRole(params: ListSystemRoleParams): Promise<MpPage<SysRole>> {
-  return get<MpPage<SysRole>>('/system/role/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, roleName: params.roleName } })
+export function listSystemRole(params: ListSystemRoleParams): Promise<PageResult<SysRole>> {
+  return get<PageResult<SysRole>>('/system/role/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, roleName: params.roleName } })
 }
 
 export function getSystemRoleAll(): Promise<SysRole[]> {

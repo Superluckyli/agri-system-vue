@@ -136,16 +136,16 @@ async function fetchData(): Promise<void> {
     stats.value[2]!.value = parseNumber(inProgress?.total)
 
     const today = new Date().toISOString().slice(0, 10)
-    const latestTasks = latestTaskRes?.records || []
+    const latestTasks = latestTaskRes?.items || []
     stats.value[3]!.value = latestTasks.filter((item) => (item.createTime || '').includes(today)).length
 
     pendingTasks.value = latestTasks
       .filter((item) => item.statusV2 === TASK_STATUS_V2.PENDING_REVIEW || item.statusV2 === TASK_STATUS_V2.PENDING_ACCEPT)
       .slice(0, 8)
 
-    const rules = iotRuleRes?.records || []
-    const data = iotDataRes?.records || []
-    const materials = materialRes?.records || []
+    const rules = iotRuleRes?.items || []
+    const data = iotDataRes?.items || []
+    const materials = materialRes?.items || []
     latestAlerts.value = buildAlerts(rules, data, materials)
 
     dataTruncated.value =

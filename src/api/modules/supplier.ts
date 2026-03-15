@@ -4,7 +4,7 @@
 
 import { del, get, post, put } from '@/api/http'
 import type { SupplierInfo } from '@/types/entity'
-import type { MpPage } from '@/types/api'
+import type { PageResult } from '@/types/api'
 
 export interface ListSupplierParams {
   pageNum?: number | string
@@ -12,8 +12,8 @@ export interface ListSupplierParams {
   name?: string
 }
 
-export function listSupplier(params: ListSupplierParams): Promise<MpPage<SupplierInfo>> {
-  return get<MpPage<SupplierInfo>>('/supplier/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name } })
+export function listSupplier(params: ListSupplierParams): Promise<PageResult<SupplierInfo>> {
+  return get<PageResult<SupplierInfo>>('/supplier/list', { params: { pageNum: params.pageNum, pageSize: params.pageSize, name: params.name } })
 }
 
 export function getSupplierAll(): Promise<SupplierInfo[]> {

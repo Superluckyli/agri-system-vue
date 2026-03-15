@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "智慧农业管理系统",
+    "logout": "退出登录",
+    "profile": "个人中心"
+  },
+  "nav": {
+    "dashboard": "工作台",
+    "system": "系统管理",
+    "userManage": "用户管理",
+    "roleManage": "角色管理",
+    "taskManage": "任务管理",
+    "taskDispatch": "任务派单",
+    "myTask": "我的任务",
+    "taskLog": "执行日志",
+    "cropManage": "种植管理",
+    "variety": "作物品种",
+    "batch": "种植批次",
+    "farmland": "农田管理",
+    "materialManage": "物资采购",
+    "inventory": "物资库存",
+    "stockLog": "出入库登记",
+    "supplier": "供应商管理",
+    "purchase": "采购管理",
+    "iot": "IoT 监测",
+    "monitor": "设备监测",
+    "rule": "预警规则",
+    "report": "统计报表"
+  },
+  "action": {
+    "search": "搜索",
+    "reset": "重置",
+    "add": "新增",
+    "edit": "编辑",
+    "delete": "删除",
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "export": "导出",
+    "refresh": "刷新",
+    "submit": "提交",
+    "approve": "通过",
+    "reject": "拒绝"
+  },
+  "message": {
+    "success": "操作成功",
+    "failed": "操作失败",
+    "confirmDelete": "确认删除选中的数据？",
+    "noData": "暂无数据",
+    "loading": "加载中...",
+    "loadFailed": "加载失败"
+  },
+  "login": {
+    "title": "用户登录",
+    "username": "用户名",
+    "password": "密码",
+    "submit": "登录",
+    "register": "注册账号"
+  }
+}

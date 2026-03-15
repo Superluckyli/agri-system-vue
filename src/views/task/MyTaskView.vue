@@ -56,7 +56,7 @@ const getList = async () => {
   loading.value = true
   try {
     const res = await listTask(queryParams.value)
-    list.value = res.records || []
+    list.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     console.error('获取我的任务失败', error)
@@ -131,7 +131,7 @@ const handleAccept = (row: AgriTask) => {
     type: 'success',
   })
     .then(async () => {
-      await acceptTask({ taskId: row.taskId! })
+      await acceptTask(row.taskId!)
       ElMessage.success('接单成功')
       void getList()
     })
@@ -161,7 +161,7 @@ const submitReject = async () => {
   if (!valid) return
 
   try {
-    await rejectTask({
+    await rejectTask(rejectForm.value.taskId!, {
       taskId: rejectForm.value.taskId!,
       reason: rejectForm.value.reason,
     })

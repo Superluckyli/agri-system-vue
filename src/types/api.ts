@@ -4,10 +4,12 @@ export type R<T> = {
     data: T
 }
 
-export type MpPage<T> = {
-    current: number
+export type PageResult<T> = {
+    page: number
     size: number
     total: number
-    records: T[]
-    pages?: number
+    items: T[]
 }
+
+/** @deprecated 使用 PageResult<T> 代替 */
+export type MpPage<T> = PageResult<T>

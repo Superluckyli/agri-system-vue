@@ -62,7 +62,7 @@ const fetchLogs = async () => {
   loadError.value = ''
   try {
     const res = await listTaskLog({ batchId: batchId.value, pageNum: 1, pageSize: 500 })
-    logs.value = res.records || []
+    logs.value = res.items || []
     total.value = Number(res.total || 0)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '加载生长日志失败'
