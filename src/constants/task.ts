@@ -1,26 +1,24 @@
 // V1 任务状态常量 (status_v2 VARCHAR)
 export const TASK_STATUS_V2 = {
+  CREATED: 'created',
   PENDING_REVIEW: 'pending_review',
   PENDING_ACCEPT: 'pending_accept',
   IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   REJECTED_REASSIGN: 'rejected_reassign',
   REJECTED_REVIEW: 'rejected_review',
-  SUSPENDED: 'suspended',
   OVERDUE: 'overdue',
-  CANCELLED: 'cancelled',
 } as const
 
 export const TASK_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  [TASK_STATUS_V2.CREATED]: { text: '已创建', type: 'info' },
   [TASK_STATUS_V2.PENDING_REVIEW]: { text: '待复核', type: 'warning' },
   [TASK_STATUS_V2.PENDING_ACCEPT]: { text: '待接单', type: 'info' },
   [TASK_STATUS_V2.IN_PROGRESS]: { text: '执行中', type: '' },
   [TASK_STATUS_V2.COMPLETED]: { text: '已完成', type: 'success' },
   [TASK_STATUS_V2.REJECTED_REASSIGN]: { text: '已拒单(重派)', type: 'danger' },
   [TASK_STATUS_V2.REJECTED_REVIEW]: { text: '已拒单(复核)', type: 'danger' },
-  [TASK_STATUS_V2.SUSPENDED]: { text: '已暂停', type: 'warning' },
   [TASK_STATUS_V2.OVERDUE]: { text: '已逾期', type: 'danger' },
-  [TASK_STATUS_V2.CANCELLED]: { text: '已取消', type: 'info' },
 }
 
 // 任务优先级常量映射

@@ -1954,7 +1954,7 @@
                 "path": {
                     "id": "number"
                 },
-                "body": null
+                "body": "TaskReviewRequest"
             },
             "example": {
                 "query": {},
@@ -2248,7 +2248,7 @@
                 "path": {
                     "taskId": "number"
                 },
-                "body": "AgriTaskMaterial"
+                "body": "AgriTaskMaterial[]"
             },
             "example": {
                 "query": {},
@@ -2371,7 +2371,7 @@
     {
         "tag": "TaskLog",
         "method": "POST",
-        "path": "/task/log/add",
+        "path": "/task/log",
         "auth": {
             "required": true,
             "roles": [],

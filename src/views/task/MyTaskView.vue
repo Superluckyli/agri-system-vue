@@ -111,7 +111,7 @@ const handleExecute = (row: AgriTask) => {
 
 const showExecuteButton = (row: AgriTask): boolean => {
   if (!canVisitTaskLog.value) return false
-  return row.statusV2 === TASK_STATUS_V2.IN_PROGRESS || row.statusV2 === TASK_STATUS_V2.OVERDUE
+  return row.statusV2 === TASK_STATUS_V2.IN_PROGRESS
 }
 
 const handleAccept = (row: AgriTask) => {

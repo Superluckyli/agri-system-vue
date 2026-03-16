@@ -355,7 +355,7 @@ for (const moduleName of moduleOrder) {
     httpFns.add(httpFn)
 
     // Collect model types for imports
-    if (bodyType) modelTypes.add(bodyType)
+    if (bodyType) modelTypes.add(bodyType.replace(/\[\]$/, ''))
     for (const typeName of extractModelTypes(returnType)) {
       modelTypes.add(typeName)
     }

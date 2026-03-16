@@ -47,6 +47,8 @@ declare module 'vue' {
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElTimeline: typeof import('element-plus/es')['ElTimeline']
+    ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     PageState: typeof import('./components/page/PageState.vue')['default']
     ProForm: typeof import('./components/ProForm.vue')['default']
     ProTable: typeof import('./components/ProTable.vue')['default']

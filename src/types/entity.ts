@@ -206,6 +206,11 @@ export interface TaskRejectDTO {
   reason?: string
 }
 
+export interface TaskReviewRequest {
+  approved: boolean
+  comment?: string
+}
+
 export interface AgriTaskLog extends UnknownRecord {
   id?: number
   taskId?: number

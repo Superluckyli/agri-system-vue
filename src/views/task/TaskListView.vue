@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh, Search, User, View, Download } from '@element-plus/icons-vue'
 
-import { assignTask, createTask, listTask } from '@/api/modules/task'
+import { assignTask, createTask, listTask, reviewTask } from '@/api/modules/task'
 import { listSystemUser } from '@/api/modules/system'
-import type { AgriTask, SysUser, TaskAssignRequest } from '@/types/entity'
+import type { AgriTask, SysUser, TaskAssignRequest, TaskReviewRequest } from '@/types/entity'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP, TASK_STATUS_V2 } from '@/constants/task'
-import { ROLE_TECHNICIAN, ROLE_WORKER } from '@/constants/permission'
-import { resolveUserRoles } from '@/utils/permission'
+import { ROLE_TECHNICIAN, ROLE_WORKER, MANAGER_ROLES } from '@/constants/permission'
+import { resolveUserRoles, hasAnyRole } from '@/utils/permission'
 import { useExport, type ExportColumn } from '@/composables/useExport'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 const loading = ref(false)
 const list = ref<AgriTask[]>([])
@@ -74,6 +77,26 @@ const createRules: FormRules<CreateFormModel> = {
   planTime: [{ required: true, message: '请选择计划时间', trigger: 'change' }],
 }
 
+// --- 复核相关 ---
+const reviewDialogVisible = ref(false)
+const reviewForm = ref<{ taskId: number | null; approved: boolean; comment: string }>({
+  taskId: null,
+  approved: true,
+  comment: '',
+})
+
+/** 当前用户是否有派单权限 (ADMIN / FARM_OWNER / TECHNICIAN) */
+const canAssign = computed(() => {
+  const roles = authStore.roles || []
+  return hasAnyRole(roles, [...MANAGER_ROLES, ROLE_TECHNICIAN])
+})
+
+/** 当前用户是否有复核权限 (ADMIN / FARM_OWNER / MANAGER / TECHNICIAN) */
+const canReview = computed(() => {
+  const roles = authStore.roles || []
+  return hasAnyRole(roles, [...MANAGER_ROLES, ROLE_TECHNICIAN])
+})
+
 const applyRouteFilter = () => {
   const statusQuery = route.query.statusV2 ?? route.query.status
   const taskNameQuery = route.query.taskName
@@ -118,7 +141,7 @@ const isAssignableUser = (user: SysUser): boolean => {
   if (user.status !== undefined && Number(user.status) !== 1) return false
 
   const roles = resolveUserRoles([], user)
-  return roles.includes(ROLE_TECHNICIAN) || roles.includes(ROLE_WORKER)
+  return roles.includes(ROLE_WORKER)
 }
 
 const getAssignableUsers = async () => {
@@ -224,9 +247,41 @@ const submitCreate = async () => {
   }
 }
 
+const handleReview = (row: AgriTask) => {
+  reviewForm.value.taskId = row.taskId ?? null
+  reviewForm.value.approved = true
+  reviewForm.value.comment = ''
+  reviewDialogVisible.value = true
+}
+
+const submitReview = async () => {
+  const taskId = reviewForm.value.taskId
+  if (!taskId) return
+
+  const payload: TaskReviewRequest = {
+    approved: reviewForm.value.approved,
+    comment: reviewForm.value.comment || undefined,
+  }
+
+  try {
+    await reviewTask(taskId, payload)
+    ElMessage.success(payload.approved ? '复核通过' : '复核已拒绝')
+    reviewDialogVisible.value = false
+    void getList()
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : '复核操作失败'
+    ElMessage.error(message)
+  }
+}
+
 const handleAssign = (row: AgriTask) => {
-  if (row.statusV2 !== TASK_STATUS_V2.PENDING_REVIEW) {
-    ElMessage.warning('只能派单待复核状态的任务')
+  const assignable = [
+    TASK_STATUS_V2.CREATED,
+    TASK_STATUS_V2.PENDING_ACCEPT,
+    TASK_STATUS_V2.REJECTED_REASSIGN,
+  ]
+  if (!assignable.includes(row.statusV2 as any)) {
+    ElMessage.warning('仅已创建或已拒单(重派)的任务可派单')
     return
   }
 
@@ -295,7 +350,9 @@ const handleExport = async () => {
 
 onMounted(() => {
   applyRouteFilter()
-  void getAssignableUsers()
+  if (canAssign.value) {
+    void getAssignableUsers()
+  }
   void getList()
 })
 
@@ -377,11 +434,19 @@ watch(
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="220" align="center">
+        <el-table-column label="操作" width="280" align="center">
           <template #default="scope">
             <el-button link type="primary" :icon="View" @click="handleView(scope.row)">详情</el-button>
             <el-button
-              v-if="scope.row.statusV2 === TASK_STATUS_V2.PENDING_REVIEW"
+              v-if="scope.row.statusV2 === TASK_STATUS_V2.PENDING_REVIEW && canReview"
+              link
+              type="warning"
+              @click="handleReview(scope.row)"
+            >
+              复核
+            </el-button>
+            <el-button
+              v-if="(scope.row.statusV2 === TASK_STATUS_V2.CREATED || scope.row.statusV2 === TASK_STATUS_V2.REJECTED_REASSIGN || scope.row.statusV2 === TASK_STATUS_V2.PENDING_ACCEPT) && canAssign"
               link
               type="success"
               :icon="User"
@@ -495,6 +560,39 @@ watch(
         <div class="dialog-footer">
           <el-button @click="createDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="submitCreate">确定创建</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 复核对话框 -->
+    <el-dialog title="任务复核" v-model="reviewDialogVisible" width="480px" append-to-body>
+      <el-form label-width="90px">
+        <el-form-item label="复核结果">
+          <el-radio-group v-model="reviewForm.approved">
+            <el-radio :value="true">通过</el-radio>
+            <el-radio :value="false">拒绝</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="审批意见">
+          <el-input
+            v-model="reviewForm.comment"
+            type="textarea"
+            :rows="3"
+            :placeholder="reviewForm.approved ? '可选：补充审批说明' : '请填写拒绝原因'"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="reviewDialogVisible = false">取消</el-button>
+          <el-button
+            :type="reviewForm.approved ? 'success' : 'danger'"
+            @click="submitReview"
+          >
+            {{ reviewForm.approved ? '确认通过' : '确认拒绝' }}
+          </el-button>
         </div>
       </template>
     </el-dialog>

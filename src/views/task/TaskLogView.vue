@@ -6,10 +6,10 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { listMaterialInfo } from '@/api/modules/material'
-import { createTaskMaterials, createTaskLogAdd, listTask, listTaskLog } from '@/api/modules/task'
+import { createTaskMaterials, createTaskLog, completeTask, listTask, listTaskLog } from '@/api/modules/task'
 import type { AgriTask, AgriTaskLog, MaterialInfo } from '@/types/entity'
 import { ROLE_ADMIN, ROLE_FARM_OWNER } from '@/constants/permission'
-import { TASK_STATUS_V2 } from '@/constants/task'
+import { TASK_STATUS_V2, TASK_STATUS_MAP } from '@/constants/task'
 import { useAuthStore } from '@/stores/auth'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 
@@ -67,7 +67,7 @@ const canViewAllLogs = computed(() => hasAnyRole(currentRoles.value, [ROLE_ADMIN
 const currentUserId = computed(() => Number(authStore.user?.userId || 0))
 
 const isExecutableStatus = (statusV2: string | undefined): boolean => {
-  return statusV2 === TASK_STATUS_V2.IN_PROGRESS || statusV2 === TASK_STATUS_V2.OVERDUE || statusV2 === TASK_STATUS_V2.COMPLETED
+  return statusV2 === TASK_STATUS_V2.IN_PROGRESS
 }
 
 const executableOwnTaskOptions = computed(() => {
@@ -305,17 +305,17 @@ const submitExecuteLog = async () => {
   executeSubmitting.value = true
   try {
     // Record material usage via task materials API
-    for (const item of materialUsage) {
-      await createTaskMaterials(taskId, {
+    if (materialUsage.length > 0) {
+      await createTaskMaterials(taskId, materialUsage.map(item => ({
         materialId: item.materialId,
         actualQty: item.qty,
         unitPrice: undefined,
-      })
+      })))
     }
 
     const payload: AgriTaskLog = {
       taskId,
-      action: 'execute',
+      action: 'execute_log',
       fromStatus: TASK_STATUS_V2.IN_PROGRESS,
       toStatus: executeForm.statusSnapshot,
       growthNote: executeForm.growthNote || '执行完成',
@@ -326,7 +326,11 @@ const submitExecuteLog = async () => {
         : undefined,
     }
 
-    await createTaskLogAdd(payload)
+    await createTaskLog(payload)
+
+    if (executeForm.statusSnapshot === TASK_STATUS_V2.COMPLETED) {
+      await completeTask(taskId)
+    }
 
     ElMessage.success('执行日志提交成功')
     executeDialogVisible.value = false
@@ -426,9 +430,24 @@ watch(
         <el-table-column label="ID" prop="id" width="80" align="center" />
         <el-table-column label="任务ID" prop="taskId" width="90" align="center" />
         <el-table-column label="操作" prop="action" width="100" align="center" />
-        <el-table-column label="状态变更" min-width="160">
+        <el-table-column label="状态变更" min-width="200">
           <template #default="scope">
-            {{ scope.row.fromStatus || '-' }} → {{ scope.row.toStatus || '-' }}
+            <span v-if="!scope.row.fromStatus && !scope.row.toStatus">-</span>
+            <span v-else style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+              <el-tag
+                v-if="scope.row.fromStatus"
+                :type="TASK_STATUS_MAP[scope.row.fromStatus]?.type ?? 'info'"
+                size="small"
+                disable-transitions
+              >{{ TASK_STATUS_MAP[scope.row.fromStatus]?.text ?? scope.row.fromStatus }}</el-tag>
+              <span v-if="scope.row.fromStatus && scope.row.toStatus" style="color: #909399;">→</span>
+              <el-tag
+                v-if="scope.row.toStatus"
+                :type="TASK_STATUS_MAP[scope.row.toStatus]?.type ?? 'info'"
+                size="small"
+                disable-transitions
+              >{{ TASK_STATUS_MAP[scope.row.toStatus]?.text ?? scope.row.toStatus }}</el-tag>
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="执行说明" prop="growthNote" min-width="180" show-overflow-tooltip />

@@ -119,7 +119,7 @@ export function useTaskAssign(onSuccess: () => void) {
     if (user.userId === undefined || user.userId === null) return false
     if (user.status !== undefined && Number(user.status) !== 1) return false
     const roles = resolveUserRoles([], user)
-    return roles.includes(ROLE_TECHNICIAN) || roles.includes(ROLE_WORKER)
+    return roles.includes(ROLE_WORKER)
   }
 
   async function fetchAssignableUsers() {
