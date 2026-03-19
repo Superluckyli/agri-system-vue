@@ -28,10 +28,8 @@ const ROLE_TAG_TYPE: Record<string, string> = {
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: '超级管理员',
   FARM_OWNER: '农场主',
-  MANAGER: '管理员',
-  FARMER: '农户',
-  WORKER: '工人',
-  DEMO: '演示账号',
+  TECHNICIAN: '技术员',
+  WORKER: '工人'
 }
 
 function getRoleTagType(roleKey: string): string {

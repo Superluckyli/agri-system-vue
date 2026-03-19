@@ -2,13 +2,13 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
-import type { EChartsOption, LineSeriesOption } from 'echarts'
+import type { EChartsOption } from 'echarts'
 
 import BaseChart from '@/components/BaseChart.vue'
 import { listIotData } from '@/api/modules/iot'
 import { useIotSse } from '@/composables/useIotSse'
 import type { IotSensorData } from '@/types/entity'
-import { filterSupportedIotSensorRecords, normalizeIotSensorType } from './iotSensorShared'
+import { buildIotTrendConfig, filterSupportedIotSensorRecords, normalizeIotSensorType } from './iotSensorShared'
 
 type TimeRange = '24h' | '7d'
 
@@ -206,35 +206,12 @@ const latestMetrics = computed(() => {
 })
 
 const chartOption = computed<EChartsOption>(() => {
-  const filtered = filterByTimeRange(overviewRecords.value, queryParams.timeRange)
-  const sorted = [...filtered].sort((a, b) => parseTime(a.createTime) - parseTime(b.createTime))
-
-  const series: LineSeriesOption[] = SENSOR_META
-    .filter((meta) => !queryParams.sensorType || queryParams.sensorType === meta.key)
-    .map((meta) => {
-      const data: Array<[number, number]> = sorted
-        .filter((item) => normalizeSensorType(item.sensorType) === meta.key)
-        .map((item) => [parseTime(item.createTime), toNumber(item.value) ?? 0])
-      return {
-        name: meta.label,
-        type: 'line' as const,
-        smooth: true,
-        showSymbol: false,
-        emphasis: { focus: 'series' as const },
-        data,
-      }
-    })
-    .filter((item) => item.data.length > 0)
-
-  return {
-    color: SENSOR_META.map((item) => item.color),
-    tooltip: { trigger: 'axis' },
-    legend: { top: 4 },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'time' },
-    yAxis: { type: 'value' },
-    series,
-  }
+  return buildIotTrendConfig({
+    records: overviewRecords.value,
+    sensorMeta: SENSOR_META,
+    timeRange: queryParams.timeRange,
+    selectedSensor: queryParams.sensorType,
+  })
 })
 
 const filteredTableRecords = computed(() => {
@@ -347,17 +324,15 @@ onMounted(() => {
         <el-button text type="primary" @click="fetchIotData">点击重试</el-button>
       </el-alert>
 
-      <el-row :gutter="12" class="metric-row">
-        <el-col v-for="item in latestMetrics" :key="item.key" :xs="12" :sm="8" :lg="4">
-          <el-card shadow="hover" class="metric-card">
-            <div class="metric-label">{{ item.label }}</div>
-            <div class="metric-value" :style="{ color: item.color }">
-              {{ item.value }} <span class="metric-unit">{{ item.unit }}</span>
-            </div>
-            <div class="metric-time">{{ item.time }}</div>
-          </el-card>
-        </el-col>
-      </el-row>
+      <div class="metric-row">
+        <el-card v-for="item in latestMetrics" :key="item.key" shadow="hover" class="metric-card">
+          <div class="metric-label">{{ item.label }}</div>
+          <div class="metric-value" :style="{ color: item.color }">
+            {{ item.value }} <span class="metric-unit">{{ item.unit }}</span>
+          </div>
+          <div class="metric-time">{{ item.time }}</div>
+        </el-card>
+      </div>
 
       <el-card shadow="never" class="chart-card">
         <template #header>
@@ -459,6 +434,9 @@ onMounted(() => {
 }
 
 .metric-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -507,5 +485,23 @@ onMounted(() => {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 1280px) {
+  .metric-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildIotTrendConfig,
   IOT_SENSOR_META,
   filterSupportedIotSensorRecords,
   isSupportedIotSensorType,
@@ -36,5 +37,25 @@ describe('filterSupportedIotSensorRecords', () => {
     ])
 
     expect(filtered).toEqual([{ sensorType: 'temperature' }, { sensorType: 'light' }])
+  })
+})
+
+describe('buildIotTrendConfig', () => {
+  it('uses one y-axis per visible sensor and a 5-minute time interval', () => {
+    const config = buildIotTrendConfig({
+      records: [
+        { sensorType: 'temperature', value: 18.5, createTime: '2026-03-19T10:00:00' },
+        { sensorType: 'light', value: 1800, createTime: '2026-03-19T10:05:00' },
+        { sensorType: 'ph', value: 6.1, createTime: '2026-03-19T10:10:00' },
+      ],
+      sensorMeta: IOT_SENSOR_META,
+      timeRange: '24h',
+      selectedSensor: '',
+    })
+
+    expect(config.xAxis.minInterval).toBe(5 * 60 * 1000)
+    expect(Array.isArray(config.yAxis)).toBe(true)
+    expect((config.yAxis as unknown[]).length).toBe(5)
+    expect((config.series as Array<{ yAxisIndex: number }>).map((item) => item.yAxisIndex)).toEqual([0, 2, 4])
   })
 })
