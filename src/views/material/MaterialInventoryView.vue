@@ -32,6 +32,7 @@ interface MaterialFormModel {
   unitPrice: number | null
   currentStock: number | null
   unit: string
+  safeThreshold: number | null
 }
 
 const route = useRoute()
@@ -64,6 +65,7 @@ const form = reactive<MaterialFormModel>({
   unitPrice: null,
   currentStock: null,
   unit: '',
+  safeThreshold: null,
 })
 
 const rules: FormRules<MaterialFormModel> = {
@@ -165,6 +167,7 @@ function resetForm(): void {
   form.unitPrice = null
   form.currentStock = null
   form.unit = ''
+  form.safeThreshold = null
 }
 
 function handleAdd(): void {
@@ -184,6 +187,7 @@ function handleEdit(row: MaterialInfo): void {
   form.unitPrice = row.unitPrice ?? null
   form.currentStock = row.currentStock ?? null
   form.unit = row.unit || ''
+  form.safeThreshold = row.safeThreshold ?? null
   dialogVisible.value = true
 }
 
@@ -200,6 +204,7 @@ async function submitForm(): Promise<void> {
     unitPrice: Number(form.unitPrice || 0),
     currentStock: Number(form.currentStock),
     unit: form.unit.trim(),
+    safeThreshold: form.safeThreshold != null ? Number(form.safeThreshold) : undefined,
   }
 
   try {
@@ -255,7 +260,7 @@ const materialExportColumns: ExportColumn[] = [
   { header: '库存量', key: 'currentStock' },
   { header: '单位', key: 'unit' },
   { header: '预警阈值', key: 'safeThreshold' },
-  { header: '单价', key: 'unitPrice' },
+  { header: '默认采购价', key: 'unitPrice' },
 ]
 
 const handleExport = async () => {
@@ -342,7 +347,7 @@ onMounted(() => {
             {{ scope.row.safeThreshold ?? getWarnThreshold(scope.row) }} {{ scope.row.unit || '' }}
           </template>
         </el-table-column>
-        <el-table-column label="单价" min-width="100" align="center">
+        <el-table-column label="默认采购价" min-width="100" align="center">
           <template #default="scope">
             {{ scope.row.unitPrice ?? '-' }}
           </template>
@@ -388,9 +393,15 @@ onMounted(() => {
         <el-form-item label="单位" prop="unit">
           <el-input v-model="form.unit" placeholder="例如：kg / L / bag" />
         </el-form-item>
-        <el-form-item label="单价">
+        <el-form-item label="预警阈值">
+          <el-input-number v-model="form.safeThreshold" :min="0" :precision="0" style="width: 100%" placeholder="低于此值触发预警" />
+        </el-form-item>
+        <el-form-item label="默认采购价">
           <el-input-number v-model="form.unitPrice" :min="0" :precision="2" style="width: 100%" />
         </el-form-item>
+        <div style="margin-top: -8px; margin-bottom: 12px; color: #909399; font-size: 12px; line-height: 1.6">
+          该价格用于新采购单默认带价和库存参考展示，不会回改历史采购明细成交价。
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>

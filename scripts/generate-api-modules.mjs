@@ -258,6 +258,18 @@ function extractModelTypes(returnType) {
   return names
 }
 
+/** @param {string} bodyType */
+function extractBodyModelTypes(bodyType) {
+  const names = new Set()
+  const matches = bodyType.match(/[A-Z][A-Za-z0-9_]*/g) ?? []
+  for (const item of matches) {
+    if (item !== 'Array') {
+      names.add(item)
+    }
+  }
+  return names
+}
+
 // ---------------------------------------------------------------------------
 // HTTP method → function name mapping
 // ---------------------------------------------------------------------------
@@ -355,7 +367,11 @@ for (const moduleName of moduleOrder) {
     httpFns.add(httpFn)
 
     // Collect model types for imports
-    if (bodyType) modelTypes.add(bodyType.replace(/\[\]$/, ''))
+    if (bodyType) {
+      for (const typeName of extractBodyModelTypes(bodyType)) {
+        modelTypes.add(typeName)
+      }
+    }
     for (const typeName of extractModelTypes(returnType)) {
       modelTypes.add(typeName)
     }

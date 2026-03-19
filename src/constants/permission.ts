@@ -56,6 +56,7 @@ export const MENU_ACCESS = {
   materialLog: MANAGER_ROLES,
   supplier: MANAGER_ROLES,
   purchase: MANAGER_ROLES,
+  chat: ALL_ROLES,
   iotMonitor: [ROLE_ADMIN, ROLE_FARM_OWNER, ROLE_TECHNICIAN] as AppRole[],
   iotRule: MANAGER_ROLES,
   report: MANAGER_ROLES,

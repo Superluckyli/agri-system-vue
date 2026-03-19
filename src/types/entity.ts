@@ -113,6 +113,7 @@ export interface AgriTaskRule extends UnknownRecord {
   priority?: number
   isEnable?: number
   cooldownMinutes?: number
+  createMode?: 'MANUAL' | 'AUTO' | 'AUTO_AI'
 }
 
 export interface MaterialInfo extends UnknownRecord {
@@ -315,6 +316,61 @@ export interface DashboardData {
   cropDistribution?: NameValueItem[]
   taskTrend?: ChartDataVO
   envMonitor?: NameValueItem[]
+}
+
+// Dashboard V2
+export interface TaskCompletionVO {
+  completed: number
+  total: number
+}
+
+export interface FarmlandStatsVO {
+  totalArea: number
+  activeArea: number
+  utilizationRate: number
+}
+
+export interface CropProgressItem {
+  id?: number
+  batchNo?: string
+  cropVariety?: string
+  farmlandName?: string
+  progressPercent?: number
+  stage?: string
+  status?: string
+  targetOutput?: number
+  actualOutput?: number
+  estimatedHarvestDate?: string
+}
+
+export interface AlertItem {
+  title?: string
+  description?: string
+  level?: string
+  time?: string
+  sensorType?: string
+}
+
+export interface LowStockItem {
+  materialId?: number
+  name?: string
+  category?: string
+  unit?: string
+  currentStock?: number
+  safeThreshold?: number
+  unitPrice?: number
+  healthPercent?: number
+  status?: string
+}
+
+export interface DashboardV2Data {
+  taskCompletion?: TaskCompletionVO
+  farmlandStats?: FarmlandStatsVO
+  alertCount?: number
+  monthlySpending?: number
+  cropProgress?: CropProgressItem[]
+  recentAlerts?: AlertItem[]
+  lowStockMaterials?: LowStockItem[]
 }
 
 export interface PasswordChangeRequest {

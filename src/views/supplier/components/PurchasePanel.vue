@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Delete, Edit, Plus, Refresh, Search, View, Download } from '@element-plus/icons-vue'
@@ -10,7 +9,6 @@ import {
   confirmPurchase,
   createPurchase,
   createPurchaseItems,
-  createPurchasePayment,
   getPurchaseItemsByOrderId,
   getPurchasePaymentsByOrderId,
   listPurchase,
@@ -20,19 +18,23 @@ import {
   updatePurchaseItems,
   updatePurchasePay,
 } from '@/api/modules/purchase'
-import { getSupplierAll } from '@/api/modules/supplier'
-import { getMaterialInfoAll, getMaterialInfoLowStock } from '@/api/modules/material'
 import { PAY_METHOD_OPTIONS, PURCHASE_STATUS_MAP } from '@/constants/task'
 import type { MaterialInfo, PaymentRecord, PurchaseOrder, PurchaseOrderItem, SupplierInfo } from '@/types/entity'
 import { useExport, type ExportColumn } from '@/composables/useExport'
 import {
   applyMaterialDefaultsToPurchaseItem,
   getLatestPurchaseOrderState,
-  mapLowStockMaterialsToPurchaseItems,
   mapPurchaseItemsToEditableItems,
   saveDraftPurchaseOrderEdit,
   toPurchaseOrderItemPayload,
-} from './purchaseOrderShared'
+} from '@/views/purchase/purchaseOrderShared'
+
+const props = defineProps<{
+  supplier: SupplierInfo | null
+  supplierOptions: SupplierInfo[]
+  materialOptions: MaterialInfo[]
+  prefill?: string
+}>()
 
 // --- 查询 & 列表 ---
 
@@ -40,7 +42,6 @@ interface QueryParams {
   pageNum: number
   pageSize: number
   status: string
-  supplierId: number | null
 }
 
 const loading = ref(false)
@@ -52,41 +53,22 @@ const queryParams = reactive<QueryParams>({
   pageNum: 1,
   pageSize: 10,
   status: '',
-  supplierId: null,
 })
-
-const supplierOptions = ref<SupplierInfo[]>([])
-const materialOptions = ref<MaterialInfo[]>([])
-
-const fetchSuppliers = async () => {
-  try {
-    supplierOptions.value = await getSupplierAll()
-  } catch {
-    supplierOptions.value = []
-  }
-}
-
-const fetchMaterials = async () => {
-  try {
-    materialOptions.value = await getMaterialInfoAll()
-  } catch {
-    materialOptions.value = []
-  }
-}
 
 const getSupplierName = (supplierId?: number) => {
   if (!supplierId) return '-'
-  const found = supplierOptions.value.find((s) => s.id === supplierId)
+  const found = props.supplierOptions.find((s) => s.id === supplierId)
   return found?.name || `供应商ID: ${supplierId}`
 }
 
 const getMaterialName = (materialId?: number) => {
   if (!materialId) return '-'
-  const found = materialOptions.value.find((m) => m.materialId === materialId)
+  const found = props.materialOptions.find((m) => m.materialId === materialId)
   return found?.name || `物资ID: ${materialId}`
 }
 
 const fetchList = async (): Promise<PurchaseOrder[]> => {
+  if (!props.supplier?.id) return []
   loading.value = true
   loadError.value = ''
   try {
@@ -94,7 +76,7 @@ const fetchList = async (): Promise<PurchaseOrder[]> => {
       pageNum: queryParams.pageNum,
       pageSize: queryParams.pageSize,
       status: queryParams.status || undefined,
-      supplierId: queryParams.supplierId || undefined,
+      supplierId: props.supplier.id,
     })
     list.value = res.items || []
     total.value = Number(res.total || 0)
@@ -111,6 +93,21 @@ const fetchList = async (): Promise<PurchaseOrder[]> => {
   }
 }
 
+watch(() => props.supplier?.id, (newId) => {
+  currentOrder.value = null
+  orderItems.value = []
+  orderPayments.value = []
+  drawerVisible.value = false
+  if (newId) {
+    queryParams.pageNum = 1
+    queryParams.status = ''
+    void fetchList()
+  } else {
+    list.value = []
+    total.value = 0
+  }
+})
+
 const handleQuery = () => {
   queryParams.pageNum = 1
   void fetchList()
@@ -120,7 +117,6 @@ const resetQuery = () => {
   queryParams.pageNum = 1
   queryParams.pageSize = 10
   queryParams.status = ''
-  queryParams.supplierId = null
   void fetchList()
 }
 
@@ -136,19 +132,18 @@ const handleCurrentChange = (page: number) => {
 
 // --- 新增/编辑表单 ---
 
-interface OrderFormItem {
+interface ItemFormRow {
   materialId: number | null
-  purchaseQty: number | null
-  unitPrice: number | null
+  purchaseQty: number
+  unitPrice: number
   lineAmount: number
 }
 
 interface OrderFormModel {
   id?: number
   supplierId: number | null
-  payMethod: string
   remark: string
-  items: OrderFormItem[]
+  items: ItemFormRow[]
 }
 
 const dialogVisible = ref(false)
@@ -158,7 +153,6 @@ const formRef = ref<FormInstance>()
 const form = reactive<OrderFormModel>({
   id: undefined,
   supplierId: null,
-  payMethod: '',
   remark: '',
   items: [],
 })
@@ -167,10 +161,40 @@ const formRules: FormRules<OrderFormModel> = {
   supplierId: [{ required: true, message: '请选择供应商', trigger: 'change' }],
 }
 
+const formTotalAmount = computed(() =>
+  Number(form.items.reduce((sum, row) => sum + (row.lineAmount || 0), 0).toFixed(2))
+)
+const formTotal = computed(() => formTotalAmount.value.toFixed(2))
+
+const calcLineAmount = (row: ItemFormRow) => {
+  row.lineAmount = Number(((row.purchaseQty || 0) * (row.unitPrice || 0)).toFixed(2))
+}
+
+const addItemRow = () => {
+  form.items.push({ materialId: null, purchaseQty: 1, unitPrice: 0, lineAmount: 0 })
+}
+
+const removeItemRow = (index: number) => {
+  form.items.splice(index, 1)
+}
+
+const handleMaterialChange = (row: ItemFormRow) => {
+  if (row.materialId === null) return
+  const existing = form.items.filter(i => i !== row && i.materialId === row.materialId)
+  const duplicate = existing[0]
+  if (duplicate) {
+    duplicate.purchaseQty += row.purchaseQty
+    calcLineAmount(duplicate)
+    form.items.splice(form.items.indexOf(row), 1)
+    ElMessage.info('相同物资已合并数量')
+    return
+  }
+  Object.assign(row, applyMaterialDefaultsToPurchaseItem(row, props.materialOptions))
+}
+
 const resetForm = () => {
   form.id = undefined
-  form.supplierId = null
-  form.payMethod = ''
+  form.supplierId = props.supplier?.id ?? null
   form.remark = ''
   form.items = []
 }
@@ -186,13 +210,12 @@ const handleEdit = async (row: PurchaseOrder) => {
   dialogTitle.value = '编辑采购订单'
   form.id = row.id
   form.supplierId = row.supplierId ?? null
-  form.payMethod = row.payMethod || ''
   form.remark = row.remark || ''
   // 加载已有明细
   if (row.id) {
     try {
       const items = await getPurchaseItemsByOrderId(row.id)
-      form.items = mapPurchaseItemsToEditableItems(items || []) as OrderFormItem[]
+      form.items = mapPurchaseItemsToEditableItems(items || []) as ItemFormRow[]
     } catch {
       form.items = []
     }
@@ -200,50 +223,10 @@ const handleEdit = async (row: PurchaseOrder) => {
   dialogVisible.value = true
 }
 
-const addFormItem = () => {
-  form.items.push({ materialId: null, purchaseQty: null, unitPrice: null, lineAmount: 0 })
-}
-
-const removeFormItem = (index: number) => {
-  form.items.splice(index, 1)
-}
-
-const calcLineAmount = (item: OrderFormItem) => {
-  if (item.purchaseQty && item.unitPrice) {
-    item.lineAmount = parseFloat((item.purchaseQty * item.unitPrice).toFixed(2))
-  } else {
-    item.lineAmount = 0
-  }
-}
-
-const handleMaterialChange = (item: OrderFormItem) => {
-  Object.assign(item, applyMaterialDefaultsToPurchaseItem(item, materialOptions.value))
-}
-
-const formTotalAmount = computed(() =>
-  form.items.reduce((sum, i) => sum + i.lineAmount, 0).toFixed(2)
-)
-
 const submitForm = async () => {
   if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
-
-  if (!form.id) {
-    const missingPrice = form.items.find((item) =>
-      item.materialId != null && item.purchaseQty != null && item.unitPrice == null
-    )
-    if (missingPrice) {
-      ElMessage.warning('\u8bf7\u8865\u5145\u7f3a\u5931\u7684\u6210\u4ea4\u4ef7/\u5355\u4ef7\u540e\u518d\u63d0\u4ea4')
-      return
-    }
-  }
-
-  const itemsPayload = toPurchaseOrderItemPayload(form.items)
-  if (!form.id && itemsPayload.length === 0) {
-    ElMessage.warning('请至少添加一条物资明细')
-    return
-  }
 
   try {
     if (form.id) {
@@ -251,19 +234,21 @@ const submitForm = async () => {
         {
           id: form.id,
           supplierId: form.supplierId,
-          payMethod: form.payMethod,
           remark: form.remark,
           items: form.items,
         },
         { updatePurchase, updatePurchaseItems },
       )
-      // 同步保存明细
       ElMessage.success('更新订单成功')
     } else {
+      const itemsPayload = toPurchaseOrderItemPayload(form.items)
+      if (itemsPayload.length === 0) {
+        ElMessage.warning('请至少添加一条物资明细')
+        return
+      }
       const payload = {
         supplierId: form.supplierId,
-        payMethod: form.payMethod,
-        remark: form.remark,
+        remark: form.remark.trim() || undefined,
         items: itemsPayload,
       }
       await createPurchase(payload as any)
@@ -325,33 +310,6 @@ const handleCancel = (row: PurchaseOrder) => {
       await fetchList()
     })
     .catch(() => {})
-}
-
-const payOrderDialogVisible = ref(false)
-const payMethodSelected = ref('')
-const payingOrderId = ref<number | null>(null)
-
-const handlePay = (row: PurchaseOrder) => {
-  if (!row.id) return
-  payingOrderId.value = row.id as number
-  payMethodSelected.value = ''
-  payOrderDialogVisible.value = true
-}
-
-async function submitPay() {
-  if (!payMethodSelected.value) {
-    ElMessage.warning('请选择付款方式')
-    return
-  }
-  if (!payingOrderId.value) return
-  try {
-    await updatePurchasePay(payingOrderId.value, { payMethod: payMethodSelected.value } as any)
-    ElMessage.success('付款成功')
-    payOrderDialogVisible.value = false
-    await fetchList()
-  } catch (e: any) {
-    ElMessage.error(e.message || '付款失败')
-  }
 }
 
 const handleReceive = (row: PurchaseOrder) => {
@@ -446,7 +404,7 @@ const handleAddItem = () => {
 const handleItemMaterialChange = () => {
   const nextItem = applyMaterialDefaultsToPurchaseItem(
     { ...itemForm, lineAmount: 0 },
-    materialOptions.value,
+    props.materialOptions,
   )
   itemForm.unitPrice = nextItem.unitPrice
 }
@@ -466,9 +424,7 @@ const submitItem = async () => {
     await createPurchaseItems(currentOrder.value.id, payload)
     ElMessage.success('明细添加成功')
     itemDialogVisible.value = false
-    // 刷新子表
     await loadOrderDetail(currentOrder.value.id)
-    // 刷新主表（总金额可能变化）
     await fetchList()
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : '添加明细失败'
@@ -476,62 +432,45 @@ const submitItem = async () => {
   }
 }
 
-// --- 子表弹窗: 新增付款记录 ---
-
-interface PaymentFormModel {
-  payAmount: number | null
-  payMethod: string
-  payTime: string
-}
+// --- 付款弹窗 ---
 
 const payDialogVisible = ref(false)
-const payFormRef = ref<FormInstance>()
-const payForm = reactive<PaymentFormModel>({
-  payAmount: null,
-  payMethod: '',
-  payTime: '',
-})
+const payMethodSelected = ref('')
 
-const payRules: FormRules<PaymentFormModel> = {
-  payAmount: [{ required: true, message: '请输入付款金额', trigger: 'change' }],
-  payMethod: [{ required: true, message: '请输入付款方式', trigger: 'blur' }],
-}
-
-const handleAddPayment = () => {
-  payForm.payAmount = null
-  payForm.payMethod = ''
-  payForm.payTime = ''
+const handlePay = (row: PurchaseOrder) => {
+  if (!row.id) return
+  currentOrder.value = row
+  payMethodSelected.value = ''
   payDialogVisible.value = true
 }
 
-const submitPayment = async () => {
-  if (!payFormRef.value || !currentOrder.value?.id) return
-  const valid = await payFormRef.value.validate().catch(() => false)
-  if (!valid) return
-
-  const payload: PaymentRecord = {
-    payAmount: Number(payForm.payAmount),
-    payMethod: payForm.payMethod.trim(),
-    payTime: payForm.payTime || undefined,
+const submitPay = async () => {
+  if (!currentOrder.value?.id) return
+  if (!payMethodSelected.value) {
+    ElMessage.warning('请选择付款方式')
+    return
   }
-
   try {
-    await createPurchasePayment(currentOrder.value.id, payload)
-    ElMessage.success('付款记录添加成功')
+    await updatePurchasePay(currentOrder.value.id, { payMethod: payMethodSelected.value } as any)
+    ElMessage.success('付款成功')
     payDialogVisible.value = false
-    orderPayments.value = await getPurchasePaymentsByOrderId(currentOrder.value.id)
+    if (drawerVisible.value) {
+      await loadOrderDetail(currentOrder.value.id)
+    }
     void fetchList()
   } catch (error) {
-    const message = error instanceof Error && error.message ? error.message : '添加付款失败'
+    const message = error instanceof Error && error.message ? error.message : '付款失败'
     ElMessage.error(message)
   }
 }
+
+// --- 导出 ---
 
 const { exportToXlsx } = useExport()
 
 const purchaseExportColumns: ExportColumn[] = [
   { header: '订单号', key: 'orderNo' },
-  { header: '供应商ID', key: 'supplierId' },
+  { header: '供应商', key: 'supplierId', formatter: (v) => getSupplierName(v as number) },
   { header: '总金额', key: 'totalAmount' },
   { header: '付款方式', key: 'payMethod' },
   { header: '状态', key: 'status', formatter: (v) => PURCHASE_STATUS_MAP[v as string]?.text || String(v ?? '') },
@@ -540,7 +479,11 @@ const purchaseExportColumns: ExportColumn[] = [
 
 const handleExport = async () => {
   try {
-    const res = await listPurchase({ pageNum: 1, pageSize: 9999 })
+    const res = await listPurchase({
+      pageNum: 1,
+      pageSize: 9999,
+      supplierId: props.supplier?.id || undefined,
+    })
     exportToXlsx(res.items || [], purchaseExportColumns, '采购订单')
     ElMessage.success('导出成功')
   } catch {
@@ -550,70 +493,49 @@ const handleExport = async () => {
 
 // --- 低库存预填充 ---
 
-const route = useRoute()
-
 async function prefillLowStock() {
-  if (route.query.prefill !== 'lowstock') return
+  if (props.prefill !== 'lowstock') return
   try {
+    const { getMaterialInfoLowStock } = await import('@/api/modules/material')
     const lowStockItems = await getMaterialInfoLowStock()
-    if (!lowStockItems?.length) {
-      ElMessage.info('\u5f53\u524d\u6ca1\u6709\u9700\u8981\u91c7\u8d2d\u7684\u9884\u8b66\u7269\u8d44')
-      return
-    }
+    if (!lowStockItems?.length) return
     handleAdd()
-    form.items = mapLowStockMaterialsToPurchaseItems(lowStockItems)
-  } catch {
-    ElMessage.error('\u9884\u8b66\u7269\u8d44\u52a0\u8f7d\u5931\u8d25')
-  }
+  } catch { /* ignore */ }
 }
 
-// --- 初始化 ---
-
-onMounted(async () => {
-  await Promise.all([fetchList(), fetchSuppliers(), fetchMaterials()])
+onMounted(() => {
+  if (props.supplier?.id) {
+    void fetchList()
+  }
   void prefillLowStock()
 })
 </script>
 
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <div class="title">采购管理</div>
-          <div class="subtitle">管理采购订单、明细及付款记录</div>
-        </div>
-      </template>
+  <div class="purchase-panel">
+    <template v-if="supplier">
+      <div class="panel-header">
+        <span class="panel-title">{{ supplier.name }} - 采购订单</span>
+      </div>
 
-      <!-- 筛选表单 -->
-      <el-form :model="queryParams" inline label-width="80px">
-        <el-form-item label="订单状态">
-          <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 180px">
-            <el-option v-for="(val, key) in PURCHASE_STATUS_MAP" :key="key" :label="val.text" :value="key" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="供应商">
-          <el-select v-model="queryParams.supplierId" placeholder="全部供应商" clearable filterable style="width: 220px">
-            <el-option
-              v-for="item in supplierOptions"
-              :key="item.id"
-              :label="item.name || `ID: ${item.id}`"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-row :gutter="10" class="toolbar">
-        <el-col :span="12">
+      <!-- 筛选 -->
+      <div class="panel-toolbar">
+        <el-form :model="queryParams" inline size="default">
+          <el-form-item label="状态">
+            <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px">
+              <el-option v-for="(val, key) in PURCHASE_STATUS_MAP" :key="key" :label="val.text" :value="key" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+        <div style="margin-left: auto; display: flex; gap: 8px">
           <el-button type="primary" plain :icon="Plus" @click="handleAdd">新增订单</el-button>
           <el-button type="success" plain :icon="Download" @click="handleExport">导出</el-button>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
 
       <el-alert v-if="loadError" type="error" :closable="false" style="margin-bottom: 12px">
         <template #title>加载失败：{{ loadError }}</template>
@@ -622,13 +544,7 @@ onMounted(async () => {
 
       <!-- 主表 -->
       <el-table v-loading="loading" :data="list" style="width: 100%">
-        <el-table-column label="ID" prop="id" align="center" width="80" />
         <el-table-column label="订单号" prop="orderNo" width="160" align="center" />
-        <el-table-column label="供应商" min-width="150">
-          <template #default="scope">
-            {{ getSupplierName(scope.row.supplierId) }}
-          </template>
-        </el-table-column>
         <el-table-column label="总金额" prop="totalAmount" width="120" align="right">
           <template #default="scope">
             {{ scope.row.totalAmount != null ? `¥${Number(scope.row.totalAmount).toFixed(2)}` : '-' }}
@@ -669,7 +585,7 @@ onMounted(async () => {
             <el-button
               v-if="scope.row.status === 'confirmed'"
               link
-              type="warning"
+              type="success"
               @click="handlePay(scope.row)"
             >
               付款
@@ -719,13 +635,15 @@ onMounted(async () => {
           @current-change="handleCurrentChange"
         />
       </div>
-    </el-card>
+    </template>
+
+    <el-empty v-else description="请选择左侧供应商查看采购订单" :image-size="120" />
 
     <!-- 新增/编辑订单 Dialog -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="780px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="供应商" prop="supplierId">
-          <el-select v-model="form.supplierId" placeholder="请选择供应商" filterable style="width: 100%">
+          <el-select v-model="form.supplierId" placeholder="请选择供应商" filterable style="width: 100%" disabled>
             <el-option
               v-for="item in supplierOptions"
               :key="item.id"
@@ -737,14 +655,13 @@ onMounted(async () => {
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="订单备注" />
         </el-form-item>
-        <!-- 物资明细 -->
         <el-form-item label="物资明细">
           <div style="width: 100%">
             <div style="margin-bottom: 8px; color: #909399; font-size: 12px; line-height: 1.6">
               选择物资后会自动带出默认采购价，保存时以本次采购成交价为准。
             </div>
             <el-table :data="form.items" size="small" style="width: 100%; margin-bottom: 8px">
-              <el-table-column label="物资" min-width="160">
+              <el-table-column label="物资" min-width="150">
                 <template #default="scope">
                   <el-select
                     v-model="scope.row.materialId"
@@ -779,7 +696,7 @@ onMounted(async () => {
                 <template #default="scope">
                   <el-input-number
                     v-model="scope.row.unitPrice"
-                    :min="0"
+                    :min="0.01"
                     :precision="2"
                     size="small"
                     style="width: 100%"
@@ -789,18 +706,21 @@ onMounted(async () => {
               </el-table-column>
               <el-table-column label="小计" width="90" align="right">
                 <template #default="scope">
-                  ¥{{ scope.row.lineAmount.toFixed(2) }}
+                  {{ scope.row.lineAmount != null ? `¥${Number(scope.row.lineAmount).toFixed(2)}` : '-' }}
                 </template>
               </el-table-column>
-              <el-table-column width="50" align="center">
+              <el-table-column width="48" align="center">
                 <template #default="scope">
-                  <el-button link type="danger" :icon="Delete" @click="removeFormItem(scope.$index)" />
+                  <el-button type="danger" :icon="Delete" link size="small" @click="removeItemRow(scope.$index)" />
                 </template>
               </el-table-column>
+              <template #empty><div style="padding: 8px; color: #909399; text-align: center">暂无明细，请添加物资</div></template>
             </el-table>
             <div style="display: flex; justify-content: space-between; align-items: center">
-              <el-button size="small" :icon="Plus" @click="addFormItem">添加物资</el-button>
-              <span style="font-weight: 600">合计：¥{{ formTotalAmount }}</span>
+              <el-button type="primary" :icon="Plus" size="small" @click="addItemRow">添加物资</el-button>
+              <span style="font-size: 13px; color: #303133">
+                合计：<b>¥{{ formTotal }}</b>
+              </span>
             </div>
           </div>
         </el-form-item>
@@ -814,7 +734,6 @@ onMounted(async () => {
     <!-- 详情 Drawer -->
     <el-drawer v-model="drawerVisible" title="订单详情" size="55%">
       <div v-if="currentOrder" v-loading="detailLoading" class="detail-wrapper">
-        <!-- 基本信息 -->
         <el-descriptions :column="2" border>
           <el-descriptions-item label="订单号">{{ currentOrder.orderNo || '-' }}</el-descriptions-item>
           <el-descriptions-item label="供应商">{{ getSupplierName(currentOrder.supplierId) }}</el-descriptions-item>
@@ -835,25 +754,6 @@ onMounted(async () => {
             {{ currentOrder.remark }}
           </el-descriptions-item>
         </el-descriptions>
-
-        <!-- 状态操作按钮 -->
-        <div style="margin: 12px 0; display: flex; gap: 8px">
-          <el-button
-            v-if="currentOrder.status === 'confirmed'"
-            type="success"
-            @click="handlePay(currentOrder)"
-          >一键付款</el-button>
-          <el-button
-            v-if="currentOrder.status === 'draft'"
-            type="primary"
-            @click="handleConfirm(currentOrder)"
-          >确认订单</el-button>
-          <el-button
-            v-if="currentOrder.status === 'paid' || currentOrder.status === 'partial_received'"
-            type="warning"
-            @click="handleReceive(currentOrder)"
-          >收货</el-button>
-        </div>
 
         <!-- 订单明细 -->
         <div class="sub-section">
@@ -939,33 +839,8 @@ onMounted(async () => {
       </template>
     </el-dialog>
 
-    <!-- 新增付款 Dialog -->
-    <el-dialog v-model="payDialogVisible" title="新增付款记录" width="480px" destroy-on-close>
-      <el-form ref="payFormRef" :model="payForm" :rules="payRules" label-width="100px">
-        <el-form-item label="付款金额" prop="payAmount">
-          <el-input-number v-model="payForm.payAmount" :min="0.01" :precision="2" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="付款方式" prop="payMethod">
-          <el-input v-model="payForm.payMethod" placeholder="例如：银行转账" />
-        </el-form-item>
-        <el-form-item label="付款时间" prop="payTime">
-          <el-date-picker
-            v-model="payForm.payTime"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="请选择付款时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="payDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitPayment">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 付款方式选择 Dialog -->
-    <el-dialog v-model="payOrderDialogVisible" title="选择付款方式" width="420px">
+    <!-- 付款弹窗 -->
+    <el-dialog v-model="payDialogVisible" title="选择付款方式" width="420px">
       <el-form label-width="100px">
         <el-form-item label="付款方式" required>
           <el-select v-model="payMethodSelected" placeholder="请选择付款方式" style="width: 100%">
@@ -974,7 +849,7 @@ onMounted(async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="payOrderDialogVisible = false">取消</el-button>
+        <el-button @click="payDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitPay">确认付款</el-button>
       </template>
     </el-dialog>
@@ -982,28 +857,31 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.app-container {
-  padding: 24px;
+.purchase-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.card-header .title {
-  font-size: 16px;
+.panel-header {
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 15px;
   font-weight: 600;
   color: #303133;
 }
 
-.card-header .subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #909399;
-}
-
-.toolbar {
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 }
 
 .pagination {
-  margin-top: 18px;
+  margin-top: 16px;
   display: flex;
   justify-content: flex-end;
 }

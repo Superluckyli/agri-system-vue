@@ -3250,6 +3250,48 @@
     },
     {
         "tag": "Purchase",
+        "method": "PUT",
+        "path": "/purchase/{orderId}/items",
+        "auth": {
+            "required": true,
+            "roles": [],
+            "header": "Authorization: Bearer <token>"
+        },
+        "summary": "Replace purchase order items (batch)",
+        "request": {
+            "schema": {
+                "query": {},
+                "path": {
+                    "orderId": "number"
+                },
+                "body": "Array<PurchaseOrderItem>"
+            },
+            "example": {
+                "query": {},
+                "path": {},
+                "bodyOpenapiRef": null
+            }
+        },
+        "response": {
+            "schema": "R<Void>",
+            "example": {
+                "success": {
+                    "code": 200,
+                    "msg": "Operation success",
+                    "data": "<see openapi response example>"
+                },
+                "fail": {
+                    "code": 500,
+                    "msg": "Operation failed",
+                    "data": null
+                },
+                "openapiRef": null
+            }
+        },
+        "notes": "Response follows R<T>; success code=200, failure code!=200."
+    },
+    {
+        "tag": "Purchase",
         "method": "GET",
         "path": "/purchase/{orderId}/payments",
         "auth": {
@@ -3349,6 +3391,48 @@
                     "orderId": "number"
                 },
                 "body": null
+            },
+            "example": {
+                "query": {},
+                "path": {},
+                "bodyOpenapiRef": null
+            }
+        },
+        "response": {
+            "schema": "R<Void>",
+            "example": {
+                "success": {
+                    "code": 200,
+                    "msg": "Operation success",
+                    "data": "<see openapi response example>"
+                },
+                "fail": {
+                    "code": 500,
+                    "msg": "Operation failed",
+                    "data": null
+                },
+                "openapiRef": null
+            }
+        },
+        "notes": "Response follows R<T>; success code=200, failure code!=200."
+    },
+    {
+        "tag": "Purchase",
+        "method": "PUT",
+        "path": "/purchase/{id}/pay",
+        "auth": {
+            "required": true,
+            "roles": [],
+            "header": "Authorization: Bearer <token>"
+        },
+        "summary": "Pay purchase order",
+        "request": {
+            "schema": {
+                "query": {},
+                "path": {
+                    "id": "number"
+                },
+                "body": "PurchaseOrder"
             },
             "example": {
                 "query": {},
@@ -3630,6 +3714,45 @@
                     "data": null
                 },
                 "openapiRef": "#/paths/~1report~1dashboard/get/responses/200/content/application~1json/example"
+            }
+        },
+        "notes": "Response follows R<T>; success code=200, failure code!=200."
+    },
+    {
+        "tag": "Report",
+        "method": "GET",
+        "path": "/report/dashboard/v2",
+        "auth": {
+            "required": true,
+            "roles": [],
+            "header": "Authorization: Bearer <token>"
+        },
+        "summary": "Dashboard V2 aggregated data",
+        "request": {
+            "schema": {
+                "query": {},
+                "path": {},
+                "body": null
+            },
+            "example": {
+                "query": {},
+                "path": {},
+                "bodyOpenapiRef": null
+            }
+        },
+        "response": {
+            "schema": "R<DashboardV2Data>",
+            "example": {
+                "success": {
+                    "code": 200,
+                    "msg": "Operation success",
+                    "data": "<see openapi response example>"
+                },
+                "fail": {
+                    "code": 500,
+                    "msg": "Operation failed",
+                    "data": null
+                }
             }
         },
         "notes": "Response follows R<T>; success code=200, failure code!=200."

@@ -49,6 +49,10 @@ export function createPurchaseItems(orderId: number | string, body: PurchaseOrde
   return post<void>(`/purchase/${orderId}/items`, body)
 }
 
+export function updatePurchaseItems(orderId: number | string, body: Array<PurchaseOrderItem>): Promise<void> {
+  return put<void>(`/purchase/${orderId}/items`, body)
+}
+
 export function getPurchasePaymentsByOrderId(orderId: number | string): Promise<PaymentRecord[]> {
   return get<PaymentRecord[]>(`/purchase/${orderId}/payments`)
 }
@@ -59,4 +63,8 @@ export function createPurchasePayment(orderId: number | string, body: PaymentRec
 
 export function receivePurchase(orderId: number | string): Promise<void> {
   return post<void>(`/purchase/${orderId}/receive`)
+}
+
+export function updatePurchasePay(id: number | string, body: PurchaseOrder): Promise<void> {
+  return put<void>(`/purchase/${id}/pay`, body)
 }

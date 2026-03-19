@@ -70,16 +70,18 @@ const router = createRouter({
           component: () => import('@/views/crop/CropVarietyView.vue'),
         },
         {
+          path: 'crop/farmland-batch',
+          name: 'FarmlandBatch',
+          meta: { title: '农田与批次管理', roles: MENU_ACCESS.farmland },
+          component: () => import('@/views/crop/FarmlandBatchView.vue'),
+        },
+        {
           path: 'crop/batch',
-          name: 'CropBatch',
-          meta: { title: '批次管理', roles: MENU_ACCESS.crop },
-          component: () => import('@/views/crop/CropBatchView.vue'),
+          redirect: '/crop/farmland-batch',
         },
         {
           path: 'crop/farmland',
-          name: 'CropFarmland',
-          meta: { title: '农田管理', roles: MENU_ACCESS.farmland },
-          component: () => import('@/views/crop/FarmlandView.vue'),
+          redirect: '/crop/farmland-batch',
         },
         {
           path: 'crop/growth-log/:batchId',
@@ -100,16 +102,26 @@ const router = createRouter({
           component: () => import('@/views/material/MaterialLogView.vue'),
         },
         {
+          path: 'supplier-purchase',
+          name: 'SupplierPurchase',
+          meta: { title: '供应商与采购', roles: MENU_ACCESS.supplier },
+          component: () => import('@/views/supplier/SupplierPurchaseView.vue'),
+        },
+        {
           path: 'supplier',
-          name: 'Supplier',
-          meta: { title: '供应商', roles: MENU_ACCESS.supplier },
-          component: () => import('@/views/supplier/SupplierView.vue'),
+          redirect: '/supplier-purchase',
         },
         {
           path: 'purchase',
           name: 'PurchaseOrder',
-          meta: { title: '采购单', roles: MENU_ACCESS.purchase },
+          meta: { title: '采购管理', roles: MENU_ACCESS.purchase },
           component: () => import('@/views/purchase/PurchaseOrderView.vue'),
+        },
+        {
+          path: 'chat',
+          name: 'ChatRoom',
+          meta: { title: '聊天室', roles: MENU_ACCESS.chat },
+          component: () => import('@/views/chat/ChatView.vue'),
         },
         {
           path: 'iot/monitor',

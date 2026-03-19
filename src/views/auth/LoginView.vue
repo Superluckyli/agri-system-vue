@@ -87,7 +87,7 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <AuthLayout title="欢迎登录" subtitle="使用您的账户登录智慧农事管理平台。">
+  <AuthLayout title="欢迎登录" subtitle="使用您的账户登录农事管理平台。">
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleSubmit">
       <el-form-item label="用户名" prop="username">
         <el-input v-model="form.username" placeholder="请输入用户名" :prefix-icon="User" clearable size="large" />

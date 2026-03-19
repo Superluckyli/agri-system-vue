@@ -19,27 +19,10 @@ defineProps<{
           <div class="brand-logo__leaf"></div>
           <div class="brand-logo__leaf brand-logo__leaf--small"></div>
         </div>
-        <h1 class="brand-title">智慧农事管理平台</h1>
+        <h1 class="brand-title">农事管理平台</h1>
         <p class="brand-slogan">用科技链接土地，赋能现代农业数字化升级</p>
-        <div class="brand-features">
-          <div class="brand-features__item">
-            <span class="brand-features__dot"></span>
-            <span>种植全流程管理</span>
-          </div>
-          <div class="brand-features__item">
-            <span class="brand-features__dot"></span>
-            <span>物联网设备监测</span>
-          </div>
-          <div class="brand-features__item">
-            <span class="brand-features__dot"></span>
-            <span>智能任务调度</span>
-          </div>
-        </div>
       </div>
 
-      <div class="auth-aside__footer">
-        &copy; 2026 智慧农事科技
-      </div>
     </aside>
 
     <!-- 右侧表单面板 -->

@@ -11,6 +11,7 @@ import type { AgriTask, AgriTaskRule } from '@/types/entity'
 interface QueryParams {
   ruleName: string
   sensorType: string
+  createMode: '' | 'MANUAL' | 'AUTO' | 'AUTO_AI'
   isEnable: '' | '1' | '0'
   pageNum: number
   pageSize: number
@@ -24,6 +25,7 @@ interface RuleFormModel {
   maxVal: number | null
   autoTaskType: string
   priority: number
+  createMode: 'MANUAL' | 'AUTO' | 'AUTO_AI'
   isEnable: number
   cooldownMinutes: number
 }
@@ -41,7 +43,12 @@ const SENSOR_OPTIONS = [
   { label: '光照', value: 'light' },
   { label: '土壤水分', value: 'soil_moisture' },
   { label: 'pH', value: 'ph' },
-  { label: 'EC', value: 'ec' },
+]
+
+const CREATE_MODE_OPTIONS = [
+  { label: '手动', value: 'MANUAL' },
+  { label: '自动', value: 'AUTO' },
+  { label: 'AI 协助', value: 'AUTO_AI' },
 ]
 
 const PRIORITY_OPTIONS = [
@@ -58,6 +65,7 @@ const dataTruncated = ref(false)
 const queryParams = reactive<QueryParams>({
   ruleName: '',
   sensorType: '',
+  createMode: '',
   isEnable: '',
   pageNum: 1,
   pageSize: 10,
@@ -75,6 +83,7 @@ const form = reactive<RuleFormModel>({
   maxVal: null,
   autoTaskType: '',
   priority: 2,
+  createMode: 'AUTO',
   isEnable: 1,
   cooldownMinutes: 60,
 })
@@ -115,6 +124,11 @@ function formatSensorLabel(value?: string): string {
   return found?.label || value || '-'
 }
 
+function formatCreateMode(mode?: string): string {
+  const found = CREATE_MODE_OPTIONS.find((item) => item.value === mode)
+  return found?.label || mode || '-'
+}
+
 function formatPriorityTag(value?: number): { label: string; type: string } {
   const found = PRIORITY_OPTIONS.find((item) => item.value === value)
   if (!found) {
@@ -129,7 +143,8 @@ const filteredList = computed(() => {
     const sensorHit = !queryParams.sensorType || item.sensorType === queryParams.sensorType
     const statusHit =
       queryParams.isEnable === '' || String(item.isEnable ?? '') === queryParams.isEnable
-    return nameHit && sensorHit && statusHit
+    const modeHit = !queryParams.createMode || item.createMode === queryParams.createMode
+    return nameHit && sensorHit && statusHit && modeHit
   })
 })
 
@@ -164,6 +179,7 @@ function handleQuery(): void {
 function resetQuery(): void {
   queryParams.ruleName = ''
   queryParams.sensorType = ''
+  queryParams.createMode = ''
   queryParams.isEnable = ''
   queryParams.pageNum = 1
   queryParams.pageSize = 10
@@ -186,6 +202,7 @@ function resetForm(): void {
   form.maxVal = null
   form.autoTaskType = ''
   form.priority = 2
+  form.createMode = 'AUTO'
   form.isEnable = 1
   form.cooldownMinutes = 60
 }
@@ -207,6 +224,7 @@ function handleEdit(row: AgriTaskRule): void {
   form.autoTaskType = row.autoTaskType || ''
   form.priority = row.priority ?? 2
   form.isEnable = row.isEnable ?? 1
+  form.createMode = row.createMode || 'AUTO'
   form.cooldownMinutes = row.cooldownMinutes ?? 60
   dialogVisible.value = true
 }
@@ -228,6 +246,7 @@ async function submitForm(): Promise<void> {
     minVal: parseNumber(form.minVal),
     maxVal: parseNumber(form.maxVal),
     autoTaskType: form.autoTaskType.trim(),
+    createMode: form.createMode,
     priority: parseNumber(form.priority),
     isEnable: parseNumber(form.isEnable),
     cooldownMinutes: parseNumber(form.cooldownMinutes),

@@ -54,6 +54,18 @@ export function reviewTask(id: number | string, body: TaskReviewRequest): Promis
   return put<AgriTask>(`/task/${id}/review`, body)
 }
 
+export function suspendTask(id: number | string): Promise<AgriTask> {
+  return put<AgriTask>(`/task/${id}/suspend`)
+}
+
+export function resumeTask(id: number | string): Promise<AgriTask> {
+  return put<AgriTask>(`/task/${id}/resume`)
+}
+
+export function cancelTask(id: number | string): Promise<AgriTask> {
+  return put<AgriTask>(`/task/${id}/cancel`)
+}
+
 export function reassignTask(id: number | string): Promise<AgriTask> {
   return put<AgriTask>(`/task/${id}/reassign`)
 }

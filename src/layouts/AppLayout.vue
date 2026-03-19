@@ -49,8 +49,7 @@ const navigationGroups: NavGroup[] = [
     label: '种植管理',
     children: [
       { path: '/crop/variety', label: '作物品种', roles: MENU_ACCESS.crop },
-      { path: '/crop/batch', label: '种植批次', roles: MENU_ACCESS.crop },
-      { path: '/crop/farmland', label: '农田管理', roles: MENU_ACCESS.farmland },
+      { path: '/crop/farmland-batch', label: '农田与批次管理', roles: MENU_ACCESS.farmland },
     ],
   },
   {
@@ -58,8 +57,13 @@ const navigationGroups: NavGroup[] = [
     children: [
       { path: '/material/inventory', label: '物资库存', roles: MENU_ACCESS.materialInventory },
       { path: '/material/log', label: '出入库登记', roles: MENU_ACCESS.materialLog },
-      { path: '/supplier', label: '供应商管理', roles: MENU_ACCESS.supplier },
-      { path: '/purchase', label: '采购管理', roles: MENU_ACCESS.purchase },
+      { path: '/supplier-purchase', label: '供应商与采购', roles: MENU_ACCESS.supplier },
+    ],
+  },
+  {
+    label: '沟通协作',
+    children: [
+      { path: '/chat', label: '聊天室', roles: MENU_ACCESS.chat },
     ],
   },
   {

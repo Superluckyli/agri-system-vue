@@ -61,6 +61,7 @@ export const SUPPLIER_STATUS_MAP: Record<number, { text: string; type: '' | 'suc
 export const PURCHASE_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
   draft: { text: '草稿', type: 'info' },
   confirmed: { text: '已确认', type: '' },
+  paid: { text: '已付款', type: 'success' },
   receiving: { text: '收货中', type: 'warning' },
   partial_received: { text: '部分收货', type: 'warning' },
   completed: { text: '已完成', type: 'success' },
@@ -109,3 +110,6 @@ export const MATERIAL_CHANGE_TYPE_MAP: Record<string, { text: string; type: '' |
   [MATERIAL_CHANGE_TYPE.DAMAGE]: { text: '损耗', type: 'danger' },
   [MATERIAL_CHANGE_TYPE.RETURN]: { text: '退货', type: 'info' },
 }
+
+// 付款方式选项
+export const PAY_METHOD_OPTIONS = ['银行转账', '支付宝', '微信支付', '现金', '其他']

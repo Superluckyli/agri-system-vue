@@ -1,31 +1,28 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue'
+import { Delete, Edit, Plus, View } from '@element-plus/icons-vue'
 
 import {
-  createCropBatch,
-  getCropFarmlandAll,
-  getCropVarietyAll,
-  harvestBatch,
   abandonBatch,
+  createCropBatch,
+  harvestBatch,
   listCropBatch,
   removeCropBatchByIds,
   updateCropBatch,
 } from '@/api/modules/crop'
+import { BATCH_STATUS_MAP } from '@/constants/task'
 import type { AgriCropBatch, AgriFarmland, BaseCropVariety } from '@/types/entity'
 
-const router = useRouter()
+const props = defineProps<{
+  farmland: AgriFarmland | null
+  varieties: BaseCropVariety[]
+  farmlandOptions: AgriFarmland[]
+}>()
 
-interface QueryParams {
-  pageNum: number
-  pageSize: number
-  batchNo: string
-  status: string
-  farmlandId: number | null
-}
+const router = useRouter()
 
 interface BatchFormModel {
   id?: number
@@ -36,32 +33,13 @@ interface BatchFormModel {
   estimatedHarvestDate: string
 }
 
-const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
-  draft: { text: '草稿', type: 'info' },
-  growing: { text: '生长中', type: '' },
-  paused: { text: '已暂停', type: 'warning' },
-  harvested: { text: '已收获', type: 'success' },
-  abandoned: { text: '已废弃', type: 'danger' },
-  archived: { text: '已归档', type: 'info' },
-}
-
-const farmlandOptions = ref<AgriFarmland[]>([])
-
 const loading = ref(false)
 const loadError = ref('')
 const list = ref<AgriCropBatch[]>([])
 const total = ref(0)
-
-const queryParams = reactive<QueryParams>({
-  pageNum: 1,
-  pageSize: 10,
-  batchNo: '',
-  status: '',
-  farmlandId: null,
-})
-
-const varieties = ref<BaseCropVariety[]>([])
-const varietyLoading = ref(false)
+const pageNum = ref(1)
+const pageSize = ref(10)
+const statusFilter = ref('')
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
@@ -78,7 +56,6 @@ const form = reactive<BatchFormModel>({
 
 const rules: FormRules<BatchFormModel> = {
   varietyId: [{ required: true, message: '请选择作物品种', trigger: 'change' }],
-  farmlandId: [{ required: true, message: '请选择农田地块', trigger: 'change' }],
   plantingDate: [{ required: true, message: '请选择种植日期', trigger: 'change' }],
   estimatedHarvestDate: [{ required: true, message: '请选择预计收获日期', trigger: 'change' }],
 }
@@ -86,38 +63,16 @@ const rules: FormRules<BatchFormModel> = {
 const detailDrawerVisible = ref(false)
 const currentDetail = ref<AgriCropBatch | null>(null)
 
-const fetchVarieties = async () => {
-  varietyLoading.value = true
-  try {
-    varieties.value = await getCropVarietyAll()
-  } catch (error) {
-    const message = error instanceof Error && error.message ? error.message : '加载品种列表失败'
-    ElMessage.error(message)
-    varieties.value = []
-  } finally {
-    varietyLoading.value = false
-  }
-}
-
-const fetchFarmlands = async () => {
-  try {
-    farmlandOptions.value = await getCropFarmlandAll()
-  } catch (error) {
-    farmlandOptions.value = []
-    console.error('加载农田列表失败', error)
-  }
-}
-
-const fetchList = async () => {
+const fetchBatches = async () => {
+  if (!props.farmland?.id) return
   loading.value = true
   loadError.value = ''
   try {
     const res = await listCropBatch({
-      pageNum: queryParams.pageNum,
-      pageSize: queryParams.pageSize,
-      batchNo: queryParams.batchNo || undefined,
-      status: queryParams.status || undefined,
-      farmlandId: queryParams.farmlandId || undefined,
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      farmlandId: props.farmland.id,
+      status: statusFilter.value || undefined,
     })
     list.value = res.items || []
     total.value = Number(res.total || 0)
@@ -130,52 +85,46 @@ const fetchList = async () => {
   }
 }
 
-const handleQuery = () => {
-  queryParams.pageNum = 1
-  void fetchList()
-}
+watch(
+  () => props.farmland?.id,
+  () => {
+    pageNum.value = 1
+    statusFilter.value = ''
+    void fetchBatches()
+  },
+)
 
-const resetQuery = () => {
-  queryParams.pageNum = 1
-  queryParams.pageSize = 10
-  queryParams.batchNo = ''
-  queryParams.status = ''
-  queryParams.farmlandId = null
-  void fetchList()
+const handleStatusFilter = () => {
+  pageNum.value = 1
+  void fetchBatches()
 }
 
 const handleSizeChange = (size: number) => {
-  queryParams.pageSize = size
-  void fetchList()
+  pageSize.value = size
+  void fetchBatches()
 }
 
 const handleCurrentChange = (page: number) => {
-  queryParams.pageNum = page
-  void fetchList()
+  pageNum.value = page
+  void fetchBatches()
 }
 
 const resetForm = () => {
   form.id = undefined
   form.batchNo = undefined
   form.varietyId = null
-  form.farmlandId = null
+  form.farmlandId = props.farmland?.id ?? null
   form.plantingDate = ''
   form.estimatedHarvestDate = ''
 }
 
-const handleAdd = async () => {
+const handleAdd = () => {
   resetForm()
   dialogTitle.value = '新增种植批次'
   dialogVisible.value = true
-  if (varieties.value.length === 0) {
-    await fetchVarieties()
-  }
-  if (farmlandOptions.value.length === 0) {
-    await fetchFarmlands()
-  }
 }
 
-const handleEdit = async (row: AgriCropBatch) => {
+const handleEdit = (row: AgriCropBatch) => {
   resetForm()
   dialogTitle.value = '编辑种植批次'
   form.id = row.id
@@ -185,12 +134,6 @@ const handleEdit = async (row: AgriCropBatch) => {
   form.plantingDate = row.plantingDate || ''
   form.estimatedHarvestDate = row.estimatedHarvestDate || ''
   dialogVisible.value = true
-  if (varieties.value.length === 0) {
-    await fetchVarieties()
-  }
-  if (farmlandOptions.value.length === 0) {
-    await fetchFarmlands()
-  }
 }
 
 const validateDateRange = () => {
@@ -227,7 +170,7 @@ const submitForm = async () => {
       ElMessage.success('新增批次成功')
     }
     dialogVisible.value = false
-    void fetchList()
+    void fetchBatches()
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : '保存批次失败'
     ElMessage.error(message)
@@ -244,10 +187,10 @@ const handleDelete = (row: AgriCropBatch) => {
     .then(async () => {
       await removeCropBatchByIds({ ids: row.id as number })
       ElMessage.success('删除成功')
-      if (list.value.length === 1 && queryParams.pageNum > 1) {
-        queryParams.pageNum -= 1
+      if (list.value.length === 1 && pageNum.value > 1) {
+        pageNum.value -= 1
       }
-      await fetchList()
+      await fetchBatches()
     })
     .catch(() => {})
 }
@@ -266,7 +209,7 @@ const handleHarvest = (row: AgriCropBatch) => {
     .then(async () => {
       await harvestBatch(row.id as number)
       ElMessage.success('批次已收获')
-      await fetchList()
+      await fetchBatches()
     })
     .catch(() => {})
 }
@@ -281,7 +224,7 @@ const handleAbandon = (row: AgriCropBatch) => {
     .then(async () => {
       await abandonBatch(row.id as number)
       ElMessage.success('批次已废弃')
-      await fetchList()
+      await fetchBatches()
     })
     .catch(() => {})
 }
@@ -301,152 +244,110 @@ const goTaskList = () => {
 }
 
 const getVarietyLabel = (row: AgriCropBatch) => {
-  const found = varieties.value.find((item) => item.varietyId === row.varietyId)
+  const found = props.varieties.find((item) => item.varietyId === row.varietyId)
   return found?.cropName || `品种ID: ${row.varietyId ?? '-'}`
 }
-
-const getFarmlandName = (row: AgriCropBatch) => {
-  const found = farmlandOptions.value.find((item) => item.id === row.farmlandId)
-  return found?.name || `地块ID: ${row.farmlandId ?? '-'}`
-}
-
-onMounted(() => {
-  void Promise.all([fetchList(), fetchVarieties(), fetchFarmlands()])
-})
 </script>
 
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <div class="title">种植批次管理</div>
-          <div class="subtitle">管理批次生命周期、阶段进度及关联记录</div>
-        </div>
-      </template>
+  <div class="batch-panel">
+    <template v-if="!farmland">
+      <el-empty description="请选择左侧农田查看批次" :image-size="120" />
+    </template>
 
-      <el-form :model="queryParams" inline label-width="90px">
-        <el-form-item label="批次编号">
-          <el-input
-            v-model="queryParams.batchNo"
-            placeholder="请输入批次编号"
-            clearable
-            style="width: 220px"
-            @keyup.enter="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item label="批次状态">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 180px">
-            <el-option v-for="(val, key) in BATCH_STATUS_MAP" :key="key" :label="val.text" :value="key" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="农田地块">
-          <el-select v-model="queryParams.farmlandId" placeholder="全部地块" clearable filterable style="width: 220px">
-            <el-option
-              v-for="item in farmlandOptions"
-              :key="item.id"
-              :label="item.name || `地块ID: ${item.id}`"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleQuery">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+    <template v-else>
+      <div class="panel-header">
+        <span class="panel-title">{{ farmland.name }} - 批次履历</span>
+      </div>
 
-      <el-row :gutter="10" class="toolbar">
-        <el-col :span="6">
-          <el-button type="primary" plain :icon="Plus" @click="handleAdd">新增批次</el-button>
-        </el-col>
-      </el-row>
+      <div class="panel-toolbar">
+        <el-button type="primary" plain :icon="Plus" size="small" @click="handleAdd">新增批次</el-button>
+        <el-select
+          v-model="statusFilter"
+          placeholder="全部状态"
+          clearable
+          size="small"
+          style="width: 140px; margin-left: 12px"
+          @change="handleStatusFilter"
+        >
+          <el-option v-for="(val, key) in BATCH_STATUS_MAP" :key="key" :label="val.text" :value="key" />
+        </el-select>
+      </div>
 
       <el-alert v-if="loadError" type="error" :closable="false" style="margin-bottom: 12px">
         <template #title>加载失败：{{ loadError }}</template>
-        <el-button text type="primary" @click="fetchList">点击重试</el-button>
+        <el-button text type="primary" @click="fetchBatches">点击重试</el-button>
       </el-alert>
 
-      <el-table v-loading="loading" :data="list" style="width: 100%">
-        <el-table-column label="ID" prop="id" width="80" align="center" />
+      <el-table v-loading="loading" :data="list" style="width: 100%" size="default">
         <el-table-column label="批次编号" prop="batchNo" width="140" align="center" />
-        <el-table-column label="作物品种" min-width="150">
+        <el-table-column label="作物品种" min-width="120">
           <template #default="scope">
             {{ getVarietyLabel(scope.row) }}
           </template>
         </el-table-column>
-        <el-table-column label="农田地块" min-width="140">
-          <template #default="scope">
-            {{ getFarmlandName(scope.row) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="种植日期" prop="plantingDate" width="130" align="center" />
-        <el-table-column label="预计收获" prop="estimatedHarvestDate" width="130" align="center" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column label="种植日期" prop="plantingDate" width="120" align="center" />
+        <el-table-column label="预计收获" prop="estimatedHarvestDate" width="120" align="center" />
+        <el-table-column label="状态" width="90" align="center">
           <template #default="scope">
             <el-tag
               v-if="scope.row.status && BATCH_STATUS_MAP[scope.row.status]"
               :type="BATCH_STATUS_MAP[scope.row.status]?.type"
+              size="small"
             >
               {{ BATCH_STATUS_MAP[scope.row.status]?.text }}
             </el-tag>
-            <el-tag v-else type="info">未知</el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" min-width="300" align="center" fixed="right">
+        <el-table-column label="操作" min-width="260" align="center" fixed="right">
           <template #default="scope">
-            <el-button link type="primary" :icon="View" @click="handleView(scope.row)">详情</el-button>
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button link type="success" @click="goGrowthLog(scope.row.id)">生长日志</el-button>
+            <el-button link type="primary" :icon="View" size="small" @click="handleView(scope.row)">详情</el-button>
+            <el-button link type="primary" :icon="Edit" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link type="success" size="small" @click="goGrowthLog(scope.row.id)">日志</el-button>
             <el-button
               v-if="scope.row.status === 'growing'"
               link
               type="warning"
+              size="small"
               @click="handleHarvest(scope.row)"
-            >
-              收获
-            </el-button>
+            >收获</el-button>
             <el-button
               v-if="scope.row.status === 'growing' || scope.row.status === 'draft'"
               link
               type="danger"
+              size="small"
               @click="handleAbandon(scope.row)"
-            >
-              废弃
-            </el-button>
-            <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+            >废弃</el-button>
+            <el-button link type="danger" :icon="Delete" size="small" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty description="暂无种植批次数据" />
+          <el-empty description="该农田暂无批次数据" :image-size="80" />
         </template>
       </el-table>
 
       <div class="pagination">
         <el-pagination
           v-show="total > 0"
-          v-model:current-page="queryParams.pageNum"
-          v-model:page-size="queryParams.pageSize"
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
           :page-sizes="[10, 20, 30, 50]"
           :total="total"
           background
-          layout="total, sizes, prev, pager, next, jumper"
+          size="small"
+          layout="total, sizes, prev, pager, next"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
       </div>
-    </el-card>
+    </template>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="620px" destroy-on-close>
+    <!-- Batch form dialog -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="580px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="作物品种" prop="varietyId">
-          <el-select
-            v-model="form.varietyId"
-            placeholder="请选择作物品种"
-            :loading="varietyLoading"
-            filterable
-            style="width: 100%"
-          >
+          <el-select v-model="form.varietyId" placeholder="请选择作物品种" filterable style="width: 100%">
             <el-option
               v-for="item in varieties"
               :key="item.varietyId"
@@ -455,8 +356,8 @@ onMounted(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="农田地块" prop="farmlandId">
-          <el-select v-model="form.farmlandId" placeholder="请选择农田地块" filterable style="width: 100%">
+        <el-form-item label="农田地块">
+          <el-select v-model="form.farmlandId" disabled style="width: 100%">
             <el-option
               v-for="item in farmlandOptions"
               :key="item.id"
@@ -490,13 +391,13 @@ onMounted(() => {
       </template>
     </el-dialog>
 
+    <!-- Detail drawer -->
     <el-drawer v-model="detailDrawerVisible" title="批次详情" size="42%">
       <div v-if="currentDetail" class="detail-wrapper">
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="ID">{{ currentDetail.id }}</el-descriptions-item>
           <el-descriptions-item label="批次编号">{{ currentDetail.batchNo || '-' }}</el-descriptions-item>
           <el-descriptions-item label="作物品种">{{ getVarietyLabel(currentDetail) }}</el-descriptions-item>
-          <el-descriptions-item label="农田地块">{{ getFarmlandName(currentDetail) }}</el-descriptions-item>
+          <el-descriptions-item label="农田地块">{{ farmland?.name || '-' }}</el-descriptions-item>
           <el-descriptions-item label="种植日期">{{ currentDetail.plantingDate || '-' }}</el-descriptions-item>
           <el-descriptions-item label="预计收获">{{ currentDetail.estimatedHarvestDate || '-' }}</el-descriptions-item>
           <el-descriptions-item label="实际收获">{{ currentDetail.actualHarvestDate || '-' }}</el-descriptions-item>
@@ -524,28 +425,30 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.app-container {
-  padding: 24px;
+.batch-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.card-header .title {
-  font-size: 16px;
+.panel-header {
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 15px;
   font-weight: 600;
   color: #303133;
 }
 
-.card-header .subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #909399;
-}
-
-.toolbar {
+.panel-toolbar {
+  display: flex;
+  align-items: center;
   margin-bottom: 12px;
 }
 
 .pagination {
-  margin-top: 18px;
+  margin-top: 16px;
   display: flex;
   justify-content: flex-end;
 }

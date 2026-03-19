@@ -8,6 +8,7 @@ import BaseChart from '@/components/BaseChart.vue'
 import { listIotData } from '@/api/modules/iot'
 import { useIotSse } from '@/composables/useIotSse'
 import type { IotSensorData } from '@/types/entity'
+import { filterSupportedIotSensorRecords, normalizeIotSensorType } from './iotSensorShared'
 
 type TimeRange = '24h' | '7d'
 
@@ -32,7 +33,6 @@ const SENSOR_META: SensorMeta[] = [
   { key: 'light', label: '光照', unit: 'lx', color: '#e6a23c' },
   { key: 'soil_moisture', label: '土壤水分', unit: '%', color: '#67c23a' },
   { key: 'ph', label: 'pH', unit: '', color: '#909399' },
-  { key: 'ec', label: 'EC', unit: 'mS/cm', color: '#8e44ad' },
 ]
 
 const SENSOR_LABEL_MAP = SENSOR_META.reduce<Record<string, string>>((acc, item) => {
@@ -68,6 +68,7 @@ const MAX_RECORDS = 1000
 
 watch(sseLatestData, (newData) => {
   if (!newData) return
+  if (filterSupportedIotSensorRecords([newData]).length === 0) return
   // 追加到 overview 和 table，保持最大记录数限制
   overviewRecords.value = [newData, ...overviewRecords.value].slice(0, MAX_RECORDS)
   const matchesFilter =
@@ -79,14 +80,7 @@ watch(sseLatestData, (newData) => {
 })
 
 function normalizeSensorType(sensorType?: string): string {
-  const raw = (sensorType || '').toLowerCase().trim()
-  if (raw === 'temperature' || raw === 'temp') return 'temperature'
-  if (raw === 'humidity' || raw === 'air_humidity') return 'humidity'
-  if (raw === 'light' || raw === 'illumination') return 'light'
-  if (raw === 'soil_moisture' || raw === 'soilmoisture' || raw === 'moisture') return 'soil_moisture'
-  if (raw === 'ph') return 'ph'
-  if (raw === 'ec') return 'ec'
-  return raw || 'unknown'
+  return normalizeIotSensorType(sensorType)
 }
 
 function parseTime(value?: string): number {
@@ -127,8 +121,6 @@ function makeMockData(plotId: string): IotSensorData[] {
             return 30 + Math.random() * 25
           case 'ph':
             return 5.8 + Math.random() * 1.2
-          case 'ec':
-            return 0.8 + Math.random() * 1.4
           default:
             return Math.random() * 100
         }
@@ -169,8 +161,8 @@ async function fetchIotData(): Promise<void> {
       }),
     ])
 
-    overviewRecords.value = overviewRes.items || []
-    tableRecords.value = tableRes.items || []
+    overviewRecords.value = filterSupportedIotSensorRecords(overviewRes.items || [])
+    tableRecords.value = filterSupportedIotSensorRecords(tableRes.items || [])
 
     dataTruncated.value =
       Number(overviewRes.total || 0) > overviewRecords.value.length ||
@@ -180,10 +172,10 @@ async function fetchIotData(): Promise<void> {
   } catch (error) {
     if (import.meta.env.DEV) {
       const mock = makeMockData(queryParams.plotId)
-      overviewRecords.value = mock
+      overviewRecords.value = filterSupportedIotSensorRecords(mock)
       tableRecords.value = queryParams.sensorType
-        ? mock.filter((item) => normalizeSensorType(item.sensorType) === queryParams.sensorType)
-        : mock
+        ? filterSupportedIotSensorRecords(mock).filter((item) => normalizeSensorType(item.sensorType) === queryParams.sensorType)
+        : filterSupportedIotSensorRecords(mock)
       usingMock.value = true
       queryParams.pageNum = 1
       ElMessage.warning('IoT接口不可用，已切换为开发环境Mock数据')

@@ -103,7 +103,7 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <AuthLayout title="创建账户" subtitle="加入智慧农事管理平台，开始管理您的农业生产。">
+  <AuthLayout title="创建账户" subtitle="加入农事管理平台，开始管理您的农业生产。">
     <el-form
       ref="formRef"
       :model="form"
