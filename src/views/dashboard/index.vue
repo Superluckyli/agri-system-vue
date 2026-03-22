@@ -112,14 +112,17 @@ function goToBatchManage() {
   router.push('/crop/batch')
 }
 
+// 去物料管理
 function goToMaterial() {
   router.push({ path: '/material/inventory', query: { lowStock: '1' } })
 }
 
+// 去采购
 function goToPurchase() {
   router.push({ path: '/purchase', query: { prefill: 'lowstock' } })
 }
 
+// 加载数据
 async function loadData() {
   loading.value = true
   loadError.value = ''
@@ -127,10 +130,11 @@ async function loadData() {
   try {
     data.value = await getReportDashboardV2()
     try {
+      // 获取低库存物料
       const lowStockMaterials = await getMaterialInfoLowStock()
       lowStockList.value = (lowStockMaterials || []).map(buildLowStockItem)
     } catch (error) {
-      lowStockLoadError.value = error instanceof Error ? error.message : 'Low stock materials failed to load'
+      lowStockLoadError.value = error instanceof Error ? error.message : '缺乏物资加载错误'
       lowStockList.value = []
     }
   } catch (e: any) {

@@ -234,7 +234,7 @@ const submitForm = async () => {
       item.materialId != null && item.purchaseQty != null && item.unitPrice == null
     )
     if (missingPrice) {
-      ElMessage.warning('\u8bf7\u8865\u5145\u7f3a\u5931\u7684\u6210\u4ea4\u4ef7/\u5355\u4ef7\u540e\u518d\u63d0\u4ea4')
+      ElMessage.warning('请补充缺失的成交价/单价后再提交')
       return
     }
   }
@@ -552,18 +552,23 @@ const handleExport = async () => {
 
 const route = useRoute()
 
+// 页面加载时，如果路由中包含 prefill=lowstock 参数，则预填充低库存物资
 async function prefillLowStock() {
   if (route.query.prefill !== 'lowstock') return
   try {
+    //获取低库存物资
     const lowStockItems = await getMaterialInfoLowStock()
     if (!lowStockItems?.length) {
-      ElMessage.info('\u5f53\u524d\u6ca1\u6709\u9700\u8981\u91c7\u8d2d\u7684\u9884\u8b66\u7269\u8d44')
+      //如果没有低库存物资，则不预填充
+      ElMessage.info('当前没有需要采购的预警物资')
       return
     }
+    //打开新增表单
     handleAdd()
+    //预填充低库存物资
     form.items = mapLowStockMaterialsToPurchaseItems(lowStockItems)
   } catch {
-    ElMessage.error('\u9884\u8b66\u7269\u8d44\u52a0\u8f7d\u5931\u8d25')
+    ElMessage.error('预警物资加载失败')
   }
 }
 

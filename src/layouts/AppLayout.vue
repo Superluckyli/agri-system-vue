@@ -6,7 +6,6 @@ import { MENU_ACCESS, type AppRole } from '@/constants/permission'
 import { hasAnyRole, resolveUserRoles } from '@/utils/permission'
 import { useAuthStore } from '@/stores/auth'
 import AppBreadcrumb from '@/components/layout/AppBreadcrumb.vue'
-import TagsView from '@/components/layout/TagsView.vue'
 
 interface NavItem {
   path: string
@@ -142,8 +141,6 @@ function handleLogout(): void {
         <span class="header-user">{{ authStore.user?.realName || authStore.user?.username || 'User' }}</span>
         <el-button type="danger" plain size="small" @click="handleLogout">Logout</el-button>
       </header>
-
-      <TagsView />
 
       <main class="app-layout__main">
         <router-view :key="route.fullPath" />

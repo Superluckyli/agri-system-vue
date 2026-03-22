@@ -71,19 +71,25 @@ export function getLowStockPurchaseQuantity(
   return Math.max(1, shortage)
 }
 
+
+//计算低库存物资的采购数量
 export function mapLowStockMaterialsToPurchaseItems(
   items: MaterialInfo[],
 ): EditablePurchaseItem[] {
   return items
     .filter((item) => item.materialId != null)
     .map((item) => {
+      //获取低库存物资的采购数量
       const purchaseQty = getLowStockPurchaseQuantity(item)
+      //获取低库存物资的单价
       const unitPrice = item.unitPrice != null ? Number(item.unitPrice) : null
+      //计算低库存物资的行金额
+      const lineAmount = calculateLineAmount(purchaseQty, unitPrice)
       return {
         materialId: Number(item.materialId),
         purchaseQty,
         unitPrice,
-        lineAmount: calculateLineAmount(purchaseQty, unitPrice),
+        lineAmount,
       }
     })
 }

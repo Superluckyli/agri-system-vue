@@ -144,6 +144,7 @@ const isAssignableUser = (user: SysUser): boolean => {
   return roles.includes(ROLE_WORKER)
 }
 
+// 获取可派单人员
 const getAssignableUsers = async () => {
   try {
     const res = await listSystemUser({ pageNum: 1, pageSize: 500, status: 1 })
@@ -296,19 +297,22 @@ const handleAssign = (row: AgriTask) => {
   }
 }
 
+
+// 提交派单
 const submitAssign = async () => {
+  // 表单验证
   if (!assignFormRef.value) return
   const valid = await assignFormRef.value.validate().catch(() => false)
   if (!valid) return
 
   const taskId = Number(assignForm.value.taskId)
   const assigneeId = Number(assignForm.value.assigneeId)
-
+  // 验证 taskId 和 assigneeId 是否有效
   if (!Number.isFinite(taskId) || taskId <= 0 || !Number.isFinite(assigneeId) || assigneeId <= 0) {
     ElMessage.error('taskId 和 assigneeId 不能为空')
     return
   }
-
+  // 准备派单请求参数
   const payload: TaskAssignRequest = {
     taskId,
     assigneeId,
@@ -316,6 +320,7 @@ const submitAssign = async () => {
   }
 
   try {
+    // 调用派单接口
     await assignTask(payload)
     ElMessage.success('派单成功')
     assignDialogVisible.value = false

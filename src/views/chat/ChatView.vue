@@ -18,6 +18,7 @@ defineOptions({ name: 'ChatView' })
 const authStore = useAuthStore()
 
 const availableUsers = ref<ChatUser[]>([])
+// 会话列表 每条会话中有未读消息数量，进行渲染
 const conversationList = ref<ChatConversationSummary[]>([])
 const activeConversationId = ref<number | null>(null)
 const activeMessages = ref<ChatMessage[]>([])
@@ -33,13 +34,18 @@ let reconnectTimer: number | null = null
 let reconnectAttempts = 0
 const MAX_RECONNECT_ATTEMPTS = 5
 
+// 当前用户ID
 const currentUserId = computed(() => Number(authStore.user?.userId || 0))
 
+// 过滤后的用户
 const filteredUsers = computed(() => {
+  // 获取用户关键词
   const keyword = userKeyword.value.trim().toLowerCase()
   if (!keyword) {
+    // 如果没有关键词，返回所有用户
     return availableUsers.value
   }
+  // 过滤用户
   return availableUsers.value.filter((user) => {
     const username = user.username?.toLowerCase() || ''
     const realName = user.realName?.toLowerCase() || ''
@@ -47,10 +53,12 @@ const filteredUsers = computed(() => {
   })
 })
 
+// 激活的会话
 const activeConversation = computed(() =>
   conversationList.value.find((item) => item.conversationId === activeConversationId.value) ?? null,
 )
 
+// WebSocket状态标签
 const socketStatusLabel = computed(() => {
   if (socketStatus.value === 'connected') return '实时已连接'
   if (socketStatus.value === 'connecting') return '连接中'
@@ -58,17 +66,27 @@ const socketStatusLabel = computed(() => {
   return '未连接'
 })
 
+
+// 构建WebSocket URL
+// 构建 WebSocket 连接地址（带上 Token 鉴权参数）
+// 构建 WebSocket 连接地址（带上 Token 鉴权参数）
 function buildChatWsUrl(token: string): string {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   return `${protocol}://${window.location.host}/api/ws/chat?token=${encodeURIComponent(token)}`
 }
 
+// 重连后同步数据
 async function resyncAfterReconnect() {
+  // 加载会话
   await loadConversations()
+  // 如果有激活的会话
   if (activeConversationId.value != null) {
+    // 加载消息
     await loadMessages(activeConversationId.value)
     try {
+      // 更新已读状态
       await markChatConversationRead(activeConversationId.value)
+      // 更新会话列表
       conversationList.value = markConversationAsRead(conversationList.value, activeConversationId.value)
     } catch {
       ElMessage.error('更新已读状态失败')
@@ -78,6 +96,7 @@ async function resyncAfterReconnect() {
   }
 }
 
+// 调度重连
 function scheduleReconnect() {
   if (!authStore.token) {
     socketStatus.value = 'disconnected'
@@ -86,21 +105,29 @@ function scheduleReconnect() {
   if (reconnectTimer != null) {
     return
   }
+  // 如果重试次数过多
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     socketStatus.value = 'disconnected'
     ElMessage.error('聊天连接已断开，请重新登录后重试')
     return
   }
-
   socketStatus.value = 'reconnecting'
+
+  //实现了一套带指数退避算法的重连机制。如果断开，尝试5次重连，且间隔时间会逐渐增加（2s, 4s, 8s
+  // 计算重试延迟
   const delay = Math.min(2000 * (reconnectAttempts + 1), 10000)
+  // 增加重试次数
   reconnectAttempts += 1
+  // 设置定时器
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null
+    // 尝试重连
     connectSocket()
   }, delay)
 }
 
+
+// 加载用户列表
 async function loadUsers() {
   loadingUsers.value = true
   try {
@@ -112,6 +139,7 @@ async function loadUsers() {
   }
 }
 
+// 加载会话列表
 async function loadConversations() {
   loadingConversations.value = true
   try {
@@ -123,6 +151,7 @@ async function loadConversations() {
   }
 }
 
+// 加载消息列表
 async function loadMessages(conversationId: number) {
   loadingMessages.value = true
   try {
@@ -136,67 +165,89 @@ async function loadMessages(conversationId: number) {
   }
 }
 
+// 打开会话
 async function openConversation(conversation: ChatConversationSummary, shouldMarkRead = true) {
+  // 设置当前会话ID
   activeConversationId.value = conversation.conversationId
   await loadMessages(conversation.conversationId)
+  // 如果需要标记已读
   if (shouldMarkRead) {
     try {
+      // 调用接口更新已读状态，将信息标记为已读
       await markChatConversationRead(conversation.conversationId)
     } catch {
       ElMessage.error('更新已读状态失败')
     }
   }
+  // 更新会话列表
   conversationList.value = markConversationAsRead(conversationList.value, conversation.conversationId)
 }
 
+// 开始会话
 async function startConversation(user: ChatUser) {
   try {
+    // 创建或获取会话
     const conversation = await createOrGetDirectConversation(user.userId)
     conversationList.value = upsertConversationSummary(conversationList.value, conversation)
+    // 清空搜索框
     userKeyword.value = ''
+
+    // 点击窗口打开会话
     await openConversation(conversation, false)
   } catch {
     ElMessage.error('创建会话失败')
   }
 }
 
+// 连接WebSocket
 function connectSocket() {
+  // 获取token
   const token = authStore.token
   if (!token) return
-
   if (reconnectTimer != null) {
     window.clearTimeout(reconnectTimer)
     reconnectTimer = null
   }
-
   socketStatus.value = socketStatus.value === 'connected' ? 'connected' : 'connecting'
+  // 浏览器原生 WebSocket 构造函数
   socket = new WebSocket(buildChatWsUrl(token))
+
 
   socket.onopen = async () => {
     const shouldResync = reconnectAttempts > 0
     reconnectAttempts = 0
     socketStatus.value = 'connected'
     if (shouldResync) {
-      await resyncAfterReconnect()
+      await resyncAfterReconnect() // 断线重连后，重新拉取离线期间的消息
     }
   }
 
+  // 前端接收后端的消息
   socket.onmessage = async (event) => {
+    // 解析消息
     const envelope = JSON.parse(event.data) as ChatWsEnvelope<any>
 
+    // 消息类型
     if (envelope.type === 'chat.message') {
       const message = envelope.payload as ChatMessage
+      // 更新会话列表
       conversationList.value = applyIncomingMessage(
         conversationList.value,
         message,
         activeConversationId.value,
         currentUserId.value,
       )
+
+      // 如果是当前会话
       if (activeConversationId.value === message.conversationId) {
+        // 添加消息
         activeMessages.value = appendMessage(activeMessages.value, message)
+        // 如果是对方发来的消息
         if (message.senderId !== currentUserId.value) {
           try {
+            // 标记已读
             await markChatConversationRead(message.conversationId)
+            // 更新会话列表,将未读消息数量置为0,将最后一条消息置为已读
             conversationList.value = markConversationAsRead(conversationList.value, message.conversationId)
           } catch {
             ElMessage.error('更新已读状态失败')
@@ -206,20 +257,25 @@ function connectSocket() {
       return
     }
 
+    // 会话更新通知
     if (envelope.type === 'chat.conversation.update') {
       const summary = envelope.payload as ChatConversationSummary
       conversationList.value = upsertConversationSummary(conversationList.value, summary)
       return
     }
 
+    // 已读同步通知
     if (envelope.type === 'chat.read.sync') {
+      // 获取会话ID
       const conversationId = Number(envelope.payload?.conversationId || 0)
       if (conversationId > 0) {
+        // 更新会话列表,将未读消息数量置为0,将最后一条消息置为已读
         conversationList.value = markConversationAsRead(conversationList.value, conversationId)
       }
       return
     }
 
+    // 错误通知
     if (envelope.type === 'chat.error') {
       ElMessage.error(String(envelope.payload?.message || '聊天操作失败'))
     }
@@ -236,6 +292,7 @@ function connectSocket() {
   }
 }
 
+// 断开 WebSocket 连接
 function disconnectSocket() {
   if (reconnectTimer != null) {
     window.clearTimeout(reconnectTimer)
@@ -250,6 +307,7 @@ function disconnectSocket() {
   socketStatus.value = 'disconnected'
 }
 
+// 客户端向服务器发送消息
 function sendMessage() {
   const content = draftText.value.trim()
   if (!content) return
@@ -257,11 +315,13 @@ function sendMessage() {
     ElMessage.warning('请先选择会话')
     return
   }
+  // 必须确保连接已建立且已开启
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     ElMessage.warning('聊天连接未建立')
     return
   }
 
+  // 通过长连接发送 JSON 信封包
   socket.send(JSON.stringify({
     type: 'chat.send',
     payload: {
@@ -272,6 +332,7 @@ function sendMessage() {
   draftText.value = ''
 }
 
+// 页面加载时，加载用户列表和会话列表，并连接 WebSocket
 onMounted(async () => {
   await Promise.all([loadUsers(), loadConversations()])
   connectSocket()
@@ -280,6 +341,7 @@ onMounted(async () => {
   }
 })
 
+// 页面卸载时，断开 WebSocket 连接
 onUnmounted(() => {
   disconnectSocket()
 })
