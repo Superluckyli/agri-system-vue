@@ -16,12 +16,12 @@ describe('TASK_STATUS_MAP', () => {
     statusValues.forEach((status) => {
       expect(TASK_STATUS_MAP[status]).toBeDefined()
       expect(TASK_STATUS_MAP[status].text).toBeTruthy()
-      expect(typeof TASK_STATUS_MAP[status].type).toBe('string')
+      expect(TASK_STATUS_MAP[status].type === undefined || typeof TASK_STATUS_MAP[status].type === 'string').toBe(true)
     })
   })
 
-  it('should cover 9 statuses', () => {
-    expect(Object.keys(TASK_STATUS_MAP)).toHaveLength(9)
+  it('should cover all current statuses', () => {
+    expect(Object.keys(TASK_STATUS_MAP)).toHaveLength(Object.keys(TASK_STATUS_V2).length)
   })
 })
 
@@ -53,8 +53,8 @@ describe('SUPPLIER_STATUS_MAP', () => {
 })
 
 describe('PURCHASE_STATUS_MAP', () => {
-  it('should have 6 statuses', () => {
-    expect(Object.keys(PURCHASE_STATUS_MAP)).toHaveLength(6)
+  it('should have 7 statuses', () => {
+    expect(Object.keys(PURCHASE_STATUS_MAP)).toHaveLength(7)
   })
 
   it('should include draft, confirmed, receiving, completed, cancelled', () => {

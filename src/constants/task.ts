@@ -1,3 +1,8 @@
+import type { TagProps } from 'element-plus'
+
+type StatusTagType = NonNullable<TagProps['type']>
+type StatusMeta = { text: string; type?: StatusTagType }
+
 // V1 任务状态常量 (status_v2 VARCHAR)
 export const TASK_STATUS_V2 = {
   CREATED: 'created',
@@ -10,11 +15,11 @@ export const TASK_STATUS_V2 = {
   OVERDUE: 'overdue',
 } as const
 
-export const TASK_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const TASK_STATUS_MAP: Record<string, StatusMeta> = {
   [TASK_STATUS_V2.CREATED]: { text: '已创建', type: 'info' },
   [TASK_STATUS_V2.PENDING_REVIEW]: { text: '待复核', type: 'warning' },
   [TASK_STATUS_V2.PENDING_ACCEPT]: { text: '待接单', type: 'info' },
-  [TASK_STATUS_V2.IN_PROGRESS]: { text: '执行中', type: '' },
+  [TASK_STATUS_V2.IN_PROGRESS]: { text: '执行中' },
   [TASK_STATUS_V2.COMPLETED]: { text: '已完成', type: 'success' },
   [TASK_STATUS_V2.REJECTED_REASSIGN]: { text: '已拒单(重派)', type: 'danger' },
   [TASK_STATUS_V2.REJECTED_REVIEW]: { text: '已拒单(复核)', type: 'danger' },
@@ -28,16 +33,16 @@ export const TASK_PRIORITY = {
   LOW: 3,
 } as const
 
-export const TASK_PRIORITY_MAP: Record<number, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const TASK_PRIORITY_MAP: Record<number, StatusMeta> = {
   [TASK_PRIORITY.HIGH]: { text: '高', type: 'danger' },
   [TASK_PRIORITY.MEDIUM]: { text: '中', type: 'warning' },
   [TASK_PRIORITY.LOW]: { text: '低', type: 'info' },
 }
 
 // 批次状态（后端初始值为 not_started）
-export const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const BATCH_STATUS_MAP: Record<string, StatusMeta> = {
   not_started: { text: '未开始', type: 'info' },
-  in_progress: { text: '生长中', type: '' },
+  in_progress: { text: '生长中' },
   paused: { text: '已暂停', type: 'warning' },
   harvested: { text: '已收获', type: 'success' },
   abandoned: { text: '已废弃', type: 'danger' },
@@ -45,22 +50,22 @@ export const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'succes
 }
 
 // 农田状态
-export const FARMLAND_STATUS_MAP: Record<number, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const FARMLAND_STATUS_MAP: Record<number, StatusMeta> = {
   0: { text: '闲置', type: 'info' },
   1: { text: '使用中', type: 'success' },
   2: { text: '已停用', type: 'danger' },
 }
 
 // 供应商状态
-export const SUPPLIER_STATUS_MAP: Record<number, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const SUPPLIER_STATUS_MAP: Record<number, StatusMeta> = {
   0: { text: '禁用', type: 'danger' },
   1: { text: '正常', type: 'success' },
 }
 
 // 采购单状态
-export const PURCHASE_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const PURCHASE_STATUS_MAP: Record<string, StatusMeta> = {
   draft: { text: '草稿', type: 'info' },
-  confirmed: { text: '已确认', type: '' },
+  confirmed: { text: '已确认' },
   paid: { text: '已付款', type: 'success' },
   receiving: { text: '收货中', type: 'warning' },
   partial_received: { text: '部分收货', type: 'warning' },
@@ -75,7 +80,7 @@ export const RISK_LEVEL = {
   HIGH: 'high',
 } as const
 
-export const RISK_LEVEL_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const RISK_LEVEL_MAP: Record<string, StatusMeta> = {
   [RISK_LEVEL.LOW]: { text: '低', type: 'success' },
   [RISK_LEVEL.MEDIUM]: { text: '中', type: 'warning' },
   [RISK_LEVEL.HIGH]: { text: '高', type: 'danger' },
@@ -88,8 +93,8 @@ export const TASK_SOURCE = {
   AI: 'ai',
 } as const
 
-export const TASK_SOURCE_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
-  [TASK_SOURCE.MANUAL]: { text: '手动创建', type: '' },
+export const TASK_SOURCE_MAP: Record<string, StatusMeta> = {
+  [TASK_SOURCE.MANUAL]: { text: '手动创建' },
   [TASK_SOURCE.RULE]: { text: '规则触发', type: 'warning' },
   [TASK_SOURCE.AI]: { text: 'AI 推荐', type: 'info' },
 }
@@ -103,7 +108,7 @@ export const MATERIAL_CHANGE_TYPE = {
   RETURN: 'RETURN',
 } as const
 
-export const MATERIAL_CHANGE_TYPE_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+export const MATERIAL_CHANGE_TYPE_MAP: Record<string, StatusMeta> = {
   [MATERIAL_CHANGE_TYPE.OUT]: { text: '出库', type: 'danger' },
   [MATERIAL_CHANGE_TYPE.IN]: { text: '入库', type: 'success' },
   [MATERIAL_CHANGE_TYPE.ADJUST]: { text: '盘点调整', type: 'warning' },

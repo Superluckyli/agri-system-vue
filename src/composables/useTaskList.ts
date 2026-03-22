@@ -223,8 +223,20 @@ export function useTaskCreate(onSuccess: () => void) {
     const valid = await createFormRef.value.validate().catch(() => false)
     if (!valid) return
 
+    const batchId = Number(createForm.value.batchId)
+    const payload: AgriTask = {
+      taskName: createForm.value.taskName.trim(),
+      taskType: createForm.value.taskType.trim(),
+      priority: Number(createForm.value.priority || 2),
+      planTime: createForm.value.planTime,
+    }
+
+    if (Number.isFinite(batchId) && batchId > 0) {
+      payload.batchId = batchId
+    }
+
     try {
-      await createTask(createForm.value)
+      await createTask(payload)
       ElMessage.success('创建成功')
       createDialogVisible.value = false
       onSuccess()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, TagProps } from 'element-plus'
 import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { createIotRule, listIotRule, removeIotRuleById, updateIotRule } from '@/api/modules/iot'
@@ -51,7 +51,9 @@ const CREATE_MODE_OPTIONS = [
   { label: 'AI 协助', value: 'AUTO_AI' },
 ]
 
-const PRIORITY_OPTIONS = [
+type PriorityTagType = NonNullable<TagProps['type']>
+
+const PRIORITY_OPTIONS: Array<{ label: string; value: number; tag: PriorityTagType }> = [
   { label: '高', value: 1, tag: 'danger' },
   { label: '中', value: 2, tag: 'warning' },
   { label: '低', value: 3, tag: 'info' },
@@ -129,7 +131,7 @@ function formatCreateMode(mode?: string): string {
   return found?.label || mode || '-'
 }
 
-function formatPriorityTag(value?: number): { label: string; type: string } {
+function formatPriorityTag(value?: number): { label: string; type: PriorityTagType } {
   const found = PRIORITY_OPTIONS.find((item) => item.value === value)
   if (!found) {
     return { label: '未知', type: 'info' }

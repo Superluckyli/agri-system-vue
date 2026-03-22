@@ -83,7 +83,8 @@ const fetchSuppliers = async () => {
   try {
     suppliers.value = await getSupplierAll()
     if (suppliers.value.length > 0 && selectedId.value == null) {
-      selectedId.value = suppliers.value[0].id ?? null
+      const [firstSupplier] = suppliers.value
+      selectedId.value = firstSupplier?.id ?? null
     }
   } catch {
     suppliers.value = []

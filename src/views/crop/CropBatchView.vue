@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, TagProps } from 'element-plus'
 import { Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue'
 
 import {
@@ -36,9 +36,11 @@ interface BatchFormModel {
   estimatedHarvestDate: string
 }
 
-const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+type BatchStatusTagType = NonNullable<TagProps['type']>
+
+const BATCH_STATUS_MAP: Record<string, { text: string; type?: BatchStatusTagType }> = {
   draft: { text: '草稿', type: 'info' },
-  growing: { text: '生长中', type: '' },
+  growing: { text: '生长中' },
   paused: { text: '已暂停', type: 'warning' },
   harvested: { text: '已收获', type: 'success' },
   abandoned: { text: '已废弃', type: 'danger' },
@@ -46,6 +48,9 @@ const BATCH_STATUS_MAP: Record<string, { text: string; type: '' | 'success' | 'w
 }
 
 const farmlandOptions = ref<AgriFarmland[]>([])
+const farmlandOptionsWithId = computed(() =>
+  farmlandOptions.value.filter((item): item is AgriFarmland & { id: number } => item.id != null),
+)
 
 const loading = ref(false)
 const loadError = ref('')
@@ -61,6 +66,9 @@ const queryParams = reactive<QueryParams>({
 })
 
 const varieties = ref<BaseCropVariety[]>([])
+const varietiesWithId = computed(() =>
+  varieties.value.filter((item): item is BaseCropVariety & { varietyId: number } => item.varietyId != null),
+)
 const varietyLoading = ref(false)
 
 const dialogVisible = ref(false)
@@ -343,7 +351,7 @@ onMounted(() => {
         <el-form-item label="农田地块">
           <el-select v-model="queryParams.farmlandId" placeholder="全部地块" clearable filterable style="width: 220px">
             <el-option
-              v-for="item in farmlandOptions"
+              v-for="item in farmlandOptionsWithId"
               :key="item.id"
               :label="item.name || `地块ID: ${item.id}`"
               :value="item.id"
@@ -448,7 +456,7 @@ onMounted(() => {
             style="width: 100%"
           >
             <el-option
-              v-for="item in varieties"
+              v-for="item in varietiesWithId"
               :key="item.varietyId"
               :label="item.cropName || `品种ID: ${item.varietyId}`"
               :value="item.varietyId"
@@ -458,7 +466,7 @@ onMounted(() => {
         <el-form-item label="农田地块" prop="farmlandId">
           <el-select v-model="form.farmlandId" placeholder="请选择农田地块" filterable style="width: 100%">
             <el-option
-              v-for="item in farmlandOptions"
+              v-for="item in farmlandOptionsWithId"
               :key="item.id"
               :label="item.name || `地块ID: ${item.id}`"
               :value="item.id"

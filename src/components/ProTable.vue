@@ -75,7 +75,7 @@ const props = withDefaults(
 // ======================== 状态 ========================
 
 const loading = ref(false)
-const list = ref<T[]>([]) as { value: T[] }
+const list = ref<T[]>([])
 const total = ref(0)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const queryParams = reactive<Record<string, any>>({

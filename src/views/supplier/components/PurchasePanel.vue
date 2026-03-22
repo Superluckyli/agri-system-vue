@@ -55,6 +55,13 @@ const queryParams = reactive<QueryParams>({
   status: '',
 })
 
+const supplierOptionsWithId = computed(() =>
+  props.supplierOptions.filter((item): item is SupplierInfo & { id: number } => item.id != null),
+)
+const materialOptionsWithId = computed(() =>
+  props.materialOptions.filter((item): item is MaterialInfo & { materialId: number } => item.materialId != null),
+)
+
 const getSupplierName = (supplierId?: number) => {
   if (!supplierId) return '-'
   const found = props.supplierOptions.find((s) => s.id === supplierId)
@@ -645,7 +652,7 @@ onMounted(() => {
         <el-form-item label="供应商" prop="supplierId">
           <el-select v-model="form.supplierId" placeholder="请选择供应商" filterable style="width: 100%" disabled>
             <el-option
-              v-for="item in supplierOptions"
+              v-for="item in supplierOptionsWithId"
               :key="item.id"
               :label="item.name || `ID: ${item.id}`"
               :value="item.id"
@@ -672,7 +679,7 @@ onMounted(() => {
                     @change="handleMaterialChange(scope.row)"
                   >
                     <el-option
-                      v-for="m in materialOptions"
+                      v-for="m in materialOptionsWithId"
                       :key="m.materialId"
                       :label="m.name || `ID: ${m.materialId}`"
                       :value="m.materialId"
@@ -819,7 +826,7 @@ onMounted(() => {
             @change="handleItemMaterialChange"
           >
             <el-option
-              v-for="item in materialOptions"
+              v-for="item in materialOptionsWithId"
               :key="item.materialId"
               :label="item.name || `ID: ${item.materialId}`"
               :value="item.materialId"

@@ -34,6 +34,9 @@ const farmlandLoading = ref(false)
 const selectedId = ref<number | null>(null)
 const userMap = ref<Map<number, string>>(new Map())
 const managerOptions = ref<SysUser[]>([])
+const managerOptionsWithId = computed(() =>
+  managerOptions.value.filter((u): u is SysUser & { userId: number } => u.userId != null),
+)
 const varieties = ref<BaseCropVariety[]>([])
 
 const selectedFarmland = computed(() =>
@@ -65,7 +68,8 @@ const fetchFarmlands = async () => {
   try {
     farmlands.value = await getCropFarmlandAll()
     if (farmlands.value.length > 0 && selectedId.value == null) {
-      selectedId.value = farmlands.value[0].id ?? null
+      const [firstFarmland] = farmlands.value
+      selectedId.value = firstFarmland?.id ?? null
     }
   } catch {
     farmlands.value = []
@@ -251,7 +255,7 @@ onMounted(() => {
         <el-form-item label="负责人" prop="managerUserId">
           <el-select v-model="form.managerUserId" placeholder="请选择负责人" clearable style="width: 100%">
             <el-option
-              v-for="u in managerOptions"
+              v-for="u in managerOptionsWithId"
               :key="u.userId"
               :label="u.realName || u.username || `用户${u.userId}`"
               :value="u.userId"

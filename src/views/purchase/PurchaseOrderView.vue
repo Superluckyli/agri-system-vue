@@ -57,6 +57,12 @@ const queryParams = reactive<QueryParams>({
 
 const supplierOptions = ref<SupplierInfo[]>([])
 const materialOptions = ref<MaterialInfo[]>([])
+const supplierOptionsWithId = computed(() =>
+  supplierOptions.value.filter((item): item is SupplierInfo & { id: number } => item.id != null),
+)
+const materialOptionsWithId = computed(() =>
+  materialOptions.value.filter((item): item is MaterialInfo & { materialId: number } => item.materialId != null),
+)
 
 const fetchSuppliers = async () => {
   try {
@@ -600,7 +606,7 @@ onMounted(async () => {
         <el-form-item label="供应商">
           <el-select v-model="queryParams.supplierId" placeholder="全部供应商" clearable filterable style="width: 220px">
             <el-option
-              v-for="item in supplierOptions"
+              v-for="item in supplierOptionsWithId"
               :key="item.id"
               :label="item.name || `ID: ${item.id}`"
               :value="item.id"
@@ -732,7 +738,7 @@ onMounted(async () => {
         <el-form-item label="供应商" prop="supplierId">
           <el-select v-model="form.supplierId" placeholder="请选择供应商" filterable style="width: 100%">
             <el-option
-              v-for="item in supplierOptions"
+              v-for="item in supplierOptionsWithId"
               :key="item.id"
               :label="item.name || `ID: ${item.id}`"
               :value="item.id"
@@ -760,7 +766,7 @@ onMounted(async () => {
                     @change="handleMaterialChange(scope.row)"
                   >
                     <el-option
-                      v-for="m in materialOptions"
+                      v-for="m in materialOptionsWithId"
                       :key="m.materialId"
                       :label="m.name || `ID: ${m.materialId}`"
                       :value="m.materialId"
@@ -924,7 +930,7 @@ onMounted(async () => {
             @change="handleItemMaterialChange"
           >
             <el-option
-              v-for="item in materialOptions"
+              v-for="item in materialOptionsWithId"
               :key="item.materialId"
               :label="item.name || `ID: ${item.materialId}`"
               :value="item.materialId"

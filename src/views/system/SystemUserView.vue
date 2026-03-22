@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, TagProps } from 'element-plus'
 import { Plus, Search, Refresh, Edit, Delete, UserFilled } from '@element-plus/icons-vue'
 
 import {
@@ -16,11 +16,14 @@ import { put } from '@/api/http'
 import type { SysUser, SysRole } from '@/types/entity'
 
 // ==== 角色颜色映射 ====
-const ROLE_TAG_TYPE: Record<string, string> = {
+type RoleTagType = NonNullable<TagProps['type']>
+
+const ROLE_TAG_TYPE: Record<string, RoleTagType> = {
   ADMIN: 'danger',
   FARM_OWNER: 'success',
   MANAGER: 'warning',
-  FARMER: '',
+  FARMER: 'primary',
+  TECHNICIAN: 'primary',
   WORKER: 'info',
   DEMO: 'info',
 }
@@ -32,7 +35,7 @@ const ROLE_LABEL: Record<string, string> = {
   WORKER: '工人'
 }
 
-function getRoleTagType(roleKey: string): string {
+function getRoleTagType(roleKey: string): RoleTagType {
   return ROLE_TAG_TYPE[roleKey] || 'info'
 }
 

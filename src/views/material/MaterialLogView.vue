@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { TagProps } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 
 import { listMaterialInfo, listMaterialStockLog } from '@/api/modules/material'
@@ -21,6 +22,9 @@ const loadError = ref('')
 const dataTruncated = ref(false)
 
 const materialOptions = ref<MaterialInfo[]>([])
+const materialOptionsWithId = computed(() =>
+  materialOptions.value.filter((item): item is MaterialInfo & { materialId: number } => item.materialId != null),
+)
 const logs = ref<MaterialStockLog[]>([])
 
 const queryParams = reactive<QueryParams>({
@@ -92,7 +96,9 @@ const pagedLogs = computed(() => {
   return filteredLogs.value.slice(start, start + queryParams.pageSize)
 })
 
-const CHANGE_TYPE_MAP: Record<string, { label: string; tag: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+type ChangeTypeTag = NonNullable<TagProps['type']>
+
+const CHANGE_TYPE_MAP: Record<string, { label: string; tag: ChangeTypeTag }> = {
   purchase_in: { label: '采购入库', tag: 'success' },
   task_out: { label: '任务出库', tag: 'warning' },
   manual_in: { label: '手动入库', tag: 'success' },
@@ -100,7 +106,7 @@ const CHANGE_TYPE_MAP: Record<string, { label: string; tag: '' | 'success' | 'wa
   adjust: { label: '库存调整', tag: 'info' },
 }
 
-function formatChangeType(changeType?: string): { label: string; tag: string } {
+function formatChangeType(changeType?: string): { label: string; tag: ChangeTypeTag } {
   if (!changeType) return { label: '未知', tag: 'info' }
   return CHANGE_TYPE_MAP[changeType] ?? { label: changeType, tag: 'info' }
 }
@@ -152,7 +158,7 @@ onMounted(() => {
         <el-form-item label="物料">
           <el-select v-model="queryParams.materialId" placeholder="全部物料" clearable filterable style="width: 220px">
             <el-option
-              v-for="item in materialOptions"
+              v-for="item in materialOptionsWithId"
               :key="item.materialId"
               :label="item.name || `物料ID: ${item.materialId}`"
               :value="item.materialId"

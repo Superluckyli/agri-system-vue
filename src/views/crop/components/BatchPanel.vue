@@ -22,6 +22,14 @@ const props = defineProps<{
   farmlandOptions: AgriFarmland[]
 }>()
 
+const varietiesWithId = computed(() =>
+  props.varieties.filter((item): item is BaseCropVariety & { varietyId: number } => item.varietyId != null),
+)
+
+const farmlandOptionsWithId = computed(() =>
+  props.farmlandOptions.filter((item): item is AgriFarmland & { id: number } => item.id != null),
+)
+
 const router = useRouter()
 
 interface BatchFormModel {
@@ -349,7 +357,7 @@ const getVarietyLabel = (row: AgriCropBatch) => {
         <el-form-item label="作物品种" prop="varietyId">
           <el-select v-model="form.varietyId" placeholder="请选择作物品种" filterable style="width: 100%">
             <el-option
-              v-for="item in varieties"
+              v-for="item in varietiesWithId"
               :key="item.varietyId"
               :label="item.cropName || `品种ID: ${item.varietyId}`"
               :value="item.varietyId"
@@ -359,7 +367,7 @@ const getVarietyLabel = (row: AgriCropBatch) => {
         <el-form-item label="农田地块">
           <el-select v-model="form.farmlandId" disabled style="width: 100%">
             <el-option
-              v-for="item in farmlandOptions"
+              v-for="item in farmlandOptionsWithId"
               :key="item.id"
               :label="item.name || `地块ID: ${item.id}`"
               :value="item.id"

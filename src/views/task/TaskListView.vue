@@ -346,7 +346,8 @@ const exportColumns: ExportColumn[] = [
 const handleExport = async () => {
   try {
     const res = await listTask({ pageNum: 1, pageSize: 9999 })
-    exportToXlsx(res.items || [], exportColumns, '任务列表')
+    const exportRows = (res.items || []).map((item) => ({ ...item }))
+    exportToXlsx(exportRows, exportColumns, '任务列表')
     ElMessage.success('导出成功')
   } catch {
     ElMessage.error('导出失败')

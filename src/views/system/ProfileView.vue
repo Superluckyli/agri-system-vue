@@ -41,7 +41,7 @@ async function handleProfileSave() {
       phone: profileForm.phone,
       deptName: profileForm.deptName,
     })
-    authStore.setUser({ ...authStore.user, ...updated })
+    authStore.setAuth({ user: { ...(authStore.user ?? {}), ...updated } })
     ElMessage.success('资料更新成功')
   } catch (e: unknown) {
     ElMessage.error((e as Error).message || '更新失败')
