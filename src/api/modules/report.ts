@@ -12,3 +12,55 @@ export function getReportDashboard(): Promise<DashboardData> {
 export function getReportDashboardV2(): Promise<DashboardV2Data> {
   return get<DashboardV2Data>('/report/dashboard/v2')
 }
+
+export interface GetReportAnalyticsOverviewParams {
+  startDate?: string | number
+  endDate?: string | number
+  granularity?: string | number
+  farmlandId?: number | string
+  varietyId?: number | string
+  assigneeId?: number | string
+  materialCategory?: string | number
+  supplierId?: number | string
+}
+
+export function getReportAnalyticsOverview(params: GetReportAnalyticsOverviewParams): Promise<unknown> {
+  return get<unknown>('/report/analytics/overview', { params: { startDate: params.startDate, endDate: params.endDate, granularity: params.granularity, farmlandId: params.farmlandId, varietyId: params.varietyId, assigneeId: params.assigneeId, materialCategory: params.materialCategory, supplierId: params.supplierId } })
+}
+
+export interface GetReportAnalyticsTaskParams {
+  startDate?: string | number
+  endDate?: string | number
+  granularity?: string | number
+  farmlandId?: number | string
+  varietyId?: number | string
+  assigneeId?: number | string
+}
+
+export function getReportAnalyticsTask(params: GetReportAnalyticsTaskParams): Promise<unknown> {
+  return get<unknown>('/report/analytics/task', { params: { startDate: params.startDate, endDate: params.endDate, granularity: params.granularity, farmlandId: params.farmlandId, varietyId: params.varietyId, assigneeId: params.assigneeId } })
+}
+
+export interface GetReportAnalyticsProductionParams {
+  startDate?: string | number
+  endDate?: string | number
+  granularity?: string | number
+  farmlandId?: number | string
+  varietyId?: number | string
+}
+
+export function getReportAnalyticsProduction(params: GetReportAnalyticsProductionParams): Promise<unknown> {
+  return get<unknown>('/report/analytics/production', { params: { startDate: params.startDate, endDate: params.endDate, granularity: params.granularity, farmlandId: params.farmlandId, varietyId: params.varietyId } })
+}
+
+export interface GetReportAnalyticsCostParams {
+  startDate?: string | number
+  endDate?: string | number
+  granularity?: string | number
+  materialCategory?: string | number
+  supplierId?: number | string
+}
+
+export function getReportAnalyticsCost(params: GetReportAnalyticsCostParams): Promise<unknown> {
+  return get<unknown>('/report/analytics/cost', { params: { startDate: params.startDate, endDate: params.endDate, granularity: params.granularity, materialCategory: params.materialCategory, supplierId: params.supplierId } })
+}
