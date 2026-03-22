@@ -10,6 +10,11 @@ export default mergeConfig(
       pool: 'threads',
       root: fileURLToPath(new URL('./', import.meta.url)),
       include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
+      server: {
+        deps: {
+          inline: ['element-plus'],
+        },
+      },
     },
   }),
 )
