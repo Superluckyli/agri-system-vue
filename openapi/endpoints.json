@@ -3852,7 +3852,7 @@
       }
     },
     "response": {
-      "schema": "R<unknown>",
+      "schema": "R<ReportAnalyticsOverviewData>",
       "example": {
         "success": {
           "code": 200,
@@ -3902,7 +3902,7 @@
       }
     },
     "response": {
-      "schema": "R<unknown>",
+      "schema": "R<TaskAnalyticsData>",
       "example": {
         "success": {
           "code": 200,
@@ -3951,7 +3951,7 @@
       }
     },
     "response": {
-      "schema": "R<unknown>",
+      "schema": "R<ProductionAnalyticsData>",
       "example": {
         "success": {
           "code": 200,
@@ -4000,7 +4000,7 @@
       }
     },
     "response": {
-      "schema": "R<unknown>",
+      "schema": "R<CostAnalyticsData>",
       "example": {
         "success": {
           "code": 200,

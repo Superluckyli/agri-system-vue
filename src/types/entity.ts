@@ -373,6 +373,157 @@ export interface DashboardV2Data {
   lowStockMaterials?: LowStockItem[]
 }
 
+export interface ReportAnalyticsFilter {
+  startDate: string
+  endDate: string
+  granularity?: 'day' | 'week' | 'month'
+  farmlandId?: number
+  varietyId?: number
+  assigneeId?: number
+  materialCategory?: string
+  supplierId?: number
+}
+
+export interface ReportAnalyticsOverviewKpis {
+  taskCompletionRate: number
+  onTimeExecutionRate: number
+  overdueTaskCount: number
+  activeBatchCount: number
+  outputAchievementRate: number
+  purchaseAmount: number
+  materialCost: number
+  updatedAt?: string
+}
+
+export interface ReportAnalyticsOverviewData {
+  filterContext: ReportAnalyticsFilter
+  kpis: ReportAnalyticsOverviewKpis
+}
+
+export interface TaskTrendData {
+  labels: string[]
+  created: number[]
+  completed: number[]
+  overdue: number[]
+}
+
+export interface TaskStatusSeriesItem {
+  name: string
+  data: number[]
+}
+
+export interface TaskStatusDistributionData {
+  labels: string[]
+  series: TaskStatusSeriesItem[]
+}
+
+export interface TaskAssigneeRankingItem {
+  assigneeId?: number
+  assigneeName: string
+  assignedCount: number
+  completedCount: number
+  completionRate: number
+  onTimeRate: number
+  overdueRate: number
+}
+
+export interface TaskAbnormalItem {
+  taskId: number
+  taskName: string
+  assigneeName?: string
+  statusV2?: string
+  deadlineAt?: string
+  riskLevel?: string
+  overdueDays?: number
+}
+
+export interface TaskAnalyticsData {
+  filterContext: ReportAnalyticsFilter
+  trend: TaskTrendData
+  statusDistribution: TaskStatusDistributionData
+  assigneeRanking: TaskAssigneeRankingItem[]
+  abnormalTasks: TaskAbnormalItem[]
+}
+
+export interface CropDistributionItem {
+  varietyId?: number
+  cropVariety: string
+  batchCount: number
+}
+
+export interface OutputComparisonItem {
+  batchId: number
+  batchNo: string
+  cropVariety: string
+  targetOutput: number
+  actualOutput: number
+  achievementRate: number
+}
+
+export interface HarvestTrendData {
+  labels: string[]
+  batchCount: number[]
+  estimatedOutput: number[]
+}
+
+export interface ProductionRiskBatchItem {
+  batchId: number
+  batchNo: string
+  cropVariety?: string
+  farmlandName?: string
+  targetOutput?: number
+  actualOutput?: number
+  achievementRate?: number
+  estimatedHarvestDate?: string
+  stage?: string
+}
+
+export interface ProductionAnalyticsData {
+  filterContext: ReportAnalyticsFilter
+  cropDistribution: CropDistributionItem[]
+  outputComparison: OutputComparisonItem[]
+  harvestTrend: HarvestTrendData
+  riskBatches: ProductionRiskBatchItem[]
+}
+
+export interface PurchaseTrendData {
+  labels: string[]
+  amount: number[]
+  orderCount: number[]
+}
+
+export interface MaterialCostTopItem {
+  materialId: number
+  name: string
+  category?: string
+  consumedQty: number
+  cost: number
+}
+
+export interface CategoryCostShareItem {
+  category: string
+  cost: number
+  percent: number
+}
+
+export interface AbnormalCostItem {
+  materialId?: number
+  materialName?: string
+  category?: string
+  cost?: number
+  consumedQty?: number
+  supplierName?: string
+  note?: string
+}
+
+export interface CostAnalyticsData {
+  filterContext: ReportAnalyticsFilter
+  purchaseTrend: PurchaseTrendData
+  materialCostTopN: MaterialCostTopItem[]
+  categoryCostShare: CategoryCostShareItem[]
+  abnormalCostItems: AbnormalCostItem[]
+}
+
 export interface PasswordChangeRequest {
   oldPassword: string
   newPassword: string
