@@ -66,6 +66,36 @@ describe('reduceReportAiEvent', () => {
     expect(state.status).toBe('streaming')
   })
 
+  it('resets a section to a fresh skeleton when section-start repeats', () => {
+    const dirtyState = reduceReportAiEvent(
+      reduceReportAiEvent(initialReportAiState(), {
+        type: 'evidence',
+        section: 'conclusion',
+        evidence: [{ label: '完成率', value: 91, unit: '%' }],
+      }),
+      {
+        type: 'section-chunk',
+        section: 'conclusion',
+        delta: '上一轮内容',
+      },
+    )
+
+    const resetState = reduceReportAiEvent(dirtyState, {
+      type: 'section-start',
+      section: 'conclusion',
+    })
+
+    expect(resetState.sections.conclusion).toEqual({
+      key: 'conclusion',
+      label: '结论',
+      text: '',
+      completed: false,
+      evidence: [],
+    })
+    expect(resetState.cachedResult).toBeNull()
+    expect(resetState.status).toBe('streaming')
+  })
+
   it('caches only the backend done payload', () => {
     const state = reduceReportAiEvent(initialReportAiState(), {
       type: 'done',
@@ -106,7 +136,108 @@ describe('streamReportAiSummary', () => {
     vi.restoreAllMocks()
   })
 
-  it('sends auth, parses backend SSE data lines into callback events, and aborts cleanly', async () => {
+  it('sends auth, parses multiple backend SSE frames, and completes cleanly', async () => {
+    const seenEvents: ReportAiSummaryEvent[] = []
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(input).toBe('/api/report/analytics/ai-summary/stream')
+      expect(init?.method).toBe('POST')
+      expect(init?.headers).toMatchObject({
+        Authorization: 'Bearer test-token',
+        Accept: 'text/event-stream',
+        'Content-Type': 'application/json',
+      })
+
+      return new Response(createEventStream([
+        'data: {"type":"section-chunk","section":"conclusion","delta":"稳定。"}\n\n',
+        'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n',
+        'data: {"type":"done","result":{"summary":"完成","sections":{"conclusion":{"text":"稳定。","completed":true},"reason":{"text":"执行稳定","completed":true},"risk":{"text":"风险可控","completed":true},"attention":{"text":"关注天气","completed":true}}}}\n\n',
+      ]), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      })
+    }) as typeof fetch
+
+    await streamReportAiSummary(
+      {
+        currentTab: 'task',
+        filters: { startDate: '2026-03-01', endDate: '2026-03-31' },
+      },
+      {
+        onEvent(event) {
+          seenEvents.push(event)
+        },
+      },
+    )
+
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(seenEvents).toEqual([
+      {
+        type: 'section-chunk',
+        section: 'conclusion',
+        delta: '稳定。',
+      },
+      {
+        type: 'evidence',
+        section: 'reason',
+        evidence: [{ label: '完成率', value: 91, unit: '%' }],
+      },
+      {
+        type: 'done',
+        result: {
+          summary: '完成',
+          sections: {
+            conclusion: { text: '稳定。', completed: true },
+            reason: { text: '执行稳定', completed: true },
+            risk: { text: '风险可控', completed: true },
+            attention: { text: '关注天气', completed: true },
+          },
+        },
+      },
+    ])
+  })
+
+  it('parses a data payload split across multiple chunks', async () => {
+    const seenEvents: ReportAiSummaryEvent[] = []
+
+    global.fetch = vi.fn(async () => {
+      return new Response(createEventStream([
+        'data: {"type":"section-chunk","section":"concl',
+        'usion","delta":"稳',
+        '定。"}\n\n',
+        'data: {"type":"done","result":{"summary":"完成"}}\n\n',
+      ]), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      })
+    }) as typeof fetch
+
+    await streamReportAiSummary(
+      {
+        currentTab: 'task',
+        filters: { startDate: '2026-03-01', endDate: '2026-03-31' },
+      },
+      {
+        onEvent(event) {
+          seenEvents.push(event)
+        },
+      },
+    )
+
+    expect(seenEvents).toEqual([
+      {
+        type: 'section-chunk',
+        section: 'conclusion',
+        delta: '稳定。',
+      },
+      {
+        type: 'done',
+        result: { summary: '完成' },
+      },
+    ])
+  })
+
+  it('aborts cleanly after receiving the first event', async () => {
     const abortController = new AbortController()
     const seenEvents: ReportAiSummaryEvent[] = []
 
@@ -123,7 +254,7 @@ describe('streamReportAiSummary', () => {
       return new Response(createEventStream([
         'data: {"type":"section-start","section":"conclusion"}\n\n',
         'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n',
-        'data: {"type":"done","result":{"summary":"完成","sections":{"conclusion":{"text":"稳定。","completed":true},"reason":{"text":"执行稳定","completed":true},"risk":{"text":"风险可控","completed":true},"attention":{"text":"关注天气","completed":true}}}}\n\n',
+        'data: {"type":"done","result":{"summary":"完成"}}\n\n',
       ]), {
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },

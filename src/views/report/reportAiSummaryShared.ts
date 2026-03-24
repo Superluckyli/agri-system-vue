@@ -8,7 +8,7 @@ import type {
   ReportAnalyticsFilter,
 } from '@/types/entity'
 
-import { normalizeAnalyticsFilter } from './reportAnalyticsShared'
+import { normalizeReportAiFilter } from '@/api/reportAiShared'
 
 export interface ReportAiDrawerSectionState {
   key: ReportAiSummarySection
@@ -94,7 +94,7 @@ export function buildReportAiCacheKey(
 ): string {
   return JSON.stringify({
     currentTab,
-    filters: normalizeAnalyticsFilter(filters, now),
+    filters: normalizeReportAiFilter(filters, now),
   })
 }
 
@@ -144,10 +144,7 @@ export function reduceReportAiEvent(
       error: '',
       sections: {
         ...state.sections,
-        [event.section]: {
-          ...state.sections[event.section],
-          completed: false,
-        },
+        [event.section]: createEmptySectionState(event.section),
       },
       cachedResult: null,
     }

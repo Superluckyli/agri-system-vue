@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/auth'
 import type { ReportAiSummaryEvent, ReportAiSummaryRequest } from '@/types/entity'
 
-import { normalizeAnalyticsFilter } from '@/views/report/reportAnalyticsShared'
+import { normalizeReportAiFilter } from './reportAiShared'
 
 export interface StreamReportAiSummaryOptions {
   signal?: AbortSignal
@@ -62,7 +62,7 @@ export async function streamReportAiSummary(
     },
     body: JSON.stringify({
       currentTab: request.currentTab,
-      filters: normalizeAnalyticsFilter(request.filters),
+      filters: normalizeReportAiFilter(request.filters),
     }),
     signal: options.signal,
   })
