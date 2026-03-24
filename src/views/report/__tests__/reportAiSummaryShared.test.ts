@@ -11,6 +11,7 @@ vi.mock('@/stores/auth', () => ({
 }))
 
 import { streamReportAiSummary } from '@/api/reportAi'
+import { normalizeAnalyticsFilter } from '@/utils/reportFilter'
 import {
   REPORT_AI_SECTION_ORDER,
   buildReportAiCacheKey,
@@ -138,6 +139,10 @@ describe('streamReportAiSummary', () => {
 
   it('sends auth, parses multiple backend SSE frames, and completes cleanly', async () => {
     const seenEvents: ReportAiSummaryEvent[] = []
+    const expectedPayload = {
+      currentTab: 'task',
+      filters: normalizeAnalyticsFilter({ startDate: '2026-03-01', endDate: '2026-03-31' }),
+    }
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(input).toBe('/api/report/analytics/ai-summary/stream')
@@ -147,6 +152,7 @@ describe('streamReportAiSummary', () => {
         Accept: 'text/event-stream',
         'Content-Type': 'application/json',
       })
+      expect(JSON.parse(String(init?.body))).toEqual(expectedPayload)
 
       return new Response(createEventStream([
         'data: {"type":"section-chunk","section":"conclusion","delta":"稳定。"}\n\n',
@@ -263,7 +269,11 @@ describe('streamReportAiSummary', () => {
               async read() {
                 return {
                   done: false,
-                  value: encoder.encode('data: {"type":"section-start","section":"conclusion"}\n\n'),
+                  value: encoder.encode(
+                    'data: {"type":"section-start","section":"conclusion"}\n\n'
+                    + 'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n'
+                    + 'data: {"type":"done","result":{"summary":"完成"}}\n\n',
+                  ),
                 }
               },
               cancel: cancelSpy,

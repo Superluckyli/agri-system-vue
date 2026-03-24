@@ -32,6 +32,7 @@ function parseEventBlock(block: string): ReportAiSummaryEvent | null {
 
 function flushEventBuffer(
   buffer: string,
+  signal?: AbortSignal,
   onEvent?: (event: ReportAiSummaryEvent) => void,
 ): string {
   const normalized = buffer.replace(/\r\n/g, '\n')
@@ -39,6 +40,10 @@ function flushEventBuffer(
   const remainder = blocks.pop() ?? ''
 
   for (const block of blocks) {
+    if (signal?.aborted) {
+      break
+    }
+
     const parsed = parseEventBlock(block)
     if (parsed) {
       onEvent?.(parsed)
@@ -105,12 +110,12 @@ export async function streamReportAiSummary(
       }
 
       buffer += decoder.decode(value, { stream: true })
-      buffer = flushEventBuffer(buffer, options.onEvent)
+      buffer = flushEventBuffer(buffer, options.signal, options.onEvent)
     }
 
     if (!options.signal?.aborted) {
       buffer += decoder.decode()
-      flushEventBuffer(buffer, options.onEvent)
+      flushEventBuffer(buffer, options.signal, options.onEvent)
     }
   } catch (error) {
     if (!options.signal?.aborted && !isAbortLikeError(error)) {
