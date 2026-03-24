@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/auth'
 import type { ReportAiSummaryEvent, ReportAiSummaryRequest } from '@/types/entity'
 
-import { normalizeReportAiFilter } from './reportAiShared'
+import { normalizeAnalyticsFilter } from '@/utils/reportFilter'
 
 export interface StreamReportAiSummaryOptions {
   signal?: AbortSignal
@@ -53,19 +53,31 @@ export async function streamReportAiSummary(
   options: StreamReportAiSummaryOptions = {},
 ): Promise<void> {
   const authStore = useAuthStore()
-  const response = await fetch(REPORT_AI_STREAM_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Accept: 'text/event-stream',
-      'Content-Type': 'application/json',
-      ...(authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}),
-    },
-    body: JSON.stringify({
-      currentTab: request.currentTab,
-      filters: normalizeReportAiFilter(request.filters),
-    }),
-    signal: options.signal,
-  })
+  if (options.signal?.aborted) {
+    return
+  }
+
+  let response: Response
+  try {
+    response = await fetch(REPORT_AI_STREAM_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Accept: 'text/event-stream',
+        'Content-Type': 'application/json',
+        ...(authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}),
+      },
+      body: JSON.stringify({
+        currentTab: request.currentTab,
+        filters: normalizeAnalyticsFilter(request.filters),
+      }),
+      signal: options.signal,
+    })
+  } catch (error) {
+    if (options.signal?.aborted || isAbortLikeError(error)) {
+      return
+    }
+    throw error
+  }
 
   if (!response.ok) {
     throw new Error(`AI summary stream request failed: ${response.status}`)

@@ -240,6 +240,9 @@ describe('streamReportAiSummary', () => {
   it('aborts cleanly after receiving the first event', async () => {
     const abortController = new AbortController()
     const seenEvents: ReportAiSummaryEvent[] = []
+    const cancelSpy = vi.fn().mockResolvedValue(undefined)
+    const releaseLockSpy = vi.fn()
+    const encoder = new TextEncoder()
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(input).toBe('/api/report/analytics/ai-summary/stream')
@@ -251,14 +254,24 @@ describe('streamReportAiSummary', () => {
       })
       expect(init?.signal).toBe(abortController.signal)
 
-      return new Response(createEventStream([
-        'data: {"type":"section-start","section":"conclusion"}\n\n',
-        'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n',
-        'data: {"type":"done","result":{"summary":"完成"}}\n\n',
-      ]), {
+      return {
+        ok: true,
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      })
+        body: {
+          getReader() {
+            return {
+              async read() {
+                return {
+                  done: false,
+                  value: encoder.encode('data: {"type":"section-start","section":"conclusion"}\n\n'),
+                }
+              },
+              cancel: cancelSpy,
+              releaseLock: releaseLockSpy,
+            }
+          },
+        },
+      } as Response
     }) as typeof fetch
 
     await streamReportAiSummary(
@@ -282,5 +295,40 @@ describe('streamReportAiSummary', () => {
         section: 'conclusion',
       },
     ])
+    expect(cancelSpy).toHaveBeenCalledTimes(1)
+    expect(releaseLockSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('treats abort before fetch resolves as a clean cancel', async () => {
+    const abortController = new AbortController()
+
+    global.fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
+
+      return await new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          'abort',
+          () => reject(new DOMException('Aborted', 'AbortError')),
+          { once: true },
+        )
+      })
+    }) as typeof fetch
+
+    const promise = streamReportAiSummary(
+      {
+        currentTab: 'task',
+        filters: { startDate: '2026-03-01', endDate: '2026-03-31' },
+      },
+      {
+        signal: abortController.signal,
+      },
+    )
+
+    abortController.abort()
+
+    await expect(promise).resolves.toBeUndefined()
+    expect(global.fetch).toHaveBeenCalledTimes(1)
   })
 })

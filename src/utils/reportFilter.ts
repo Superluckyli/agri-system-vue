@@ -8,7 +8,7 @@ function formatDate(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
-export function createDefaultReportAiFilter(now = new Date()): ReportAnalyticsFilter {
+export function createDefaultReportAnalyticsFilter(now = new Date()): ReportAnalyticsFilter {
   const endDate = new Date(now)
   const startDate = new Date(now)
   startDate.setDate(startDate.getDate() - 29)
@@ -20,11 +20,11 @@ export function createDefaultReportAiFilter(now = new Date()): ReportAnalyticsFi
   }
 }
 
-export function normalizeReportAiFilter(
+export function normalizeAnalyticsFilter(
   filter?: Partial<ReportAnalyticsFilter> | null,
   now = new Date(),
 ): ReportAnalyticsFilter {
-  const defaults = createDefaultReportAiFilter(now)
+  const defaults = createDefaultReportAnalyticsFilter(now)
 
   return {
     startDate: filter?.startDate || defaults.startDate,

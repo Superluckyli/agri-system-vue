@@ -8,7 +8,7 @@ import type {
   ReportAnalyticsFilter,
 } from '@/types/entity'
 
-import { normalizeReportAiFilter } from '@/api/reportAiShared'
+import { normalizeAnalyticsFilter } from '@/utils/reportFilter'
 
 export interface ReportAiDrawerSectionState {
   key: ReportAiSummarySection
@@ -94,7 +94,7 @@ export function buildReportAiCacheKey(
 ): string {
   return JSON.stringify({
     currentTab,
-    filters: normalizeReportAiFilter(filters, now),
+    filters: normalizeAnalyticsFilter(filters, now),
   })
 }
 
