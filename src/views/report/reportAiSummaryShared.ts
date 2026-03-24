@@ -27,19 +27,17 @@ export interface ReportAiDrawerState {
 }
 
 export const REPORT_AI_SECTION_ORDER: ReportAiSummarySection[] = [
-  'overview',
-  'keyFindings',
-  'risks',
-  'recommendations',
   'conclusion',
+  'reason',
+  'risk',
+  'attention',
 ]
 
 export const REPORT_AI_SECTION_LABELS: Record<ReportAiSummarySection, string> = {
-  overview: '概览',
-  keyFindings: '关键发现',
-  risks: '风险提示',
-  recommendations: '行动建议',
-  conclusion: '总结',
+  conclusion: '结论',
+  reason: '原因分析',
+  risk: '风险提示',
+  attention: '关注事项',
 }
 
 function createEmptySectionState(section: ReportAiSummarySection): ReportAiDrawerSectionState {
@@ -70,7 +68,7 @@ function mergeSectionResult(
   return {
     ...current,
     text: incoming.text ?? current.text,
-    completed: incoming.completed ?? current.completed,
+    completed: incoming.completed ?? true,
     evidence: incoming.evidence ?? current.evidence,
   }
 }
@@ -104,13 +102,6 @@ export function reduceReportAiEvent(
   state: ReportAiDrawerState,
   event: ReportAiSummaryEvent,
 ): ReportAiDrawerState {
-  if (event.type === 'start') {
-    return {
-      ...initialReportAiState(),
-      status: 'streaming',
-    }
-  }
-
   if (event.type === 'error') {
     return {
       ...state,
@@ -146,41 +137,38 @@ export function reduceReportAiEvent(
     }
   }
 
-  if ('section' in event) {
-    const current = state.sections[event.section]
-    const nextSection: ReportAiDrawerSectionState = {
-      ...current,
-      completed: event.type === 'section-done' ? true : current.completed,
-      text:
-        event.type === 'section-chunk'
-          ? `${current.text}${event.delta}`
-          : event.type === 'section-done' && event.text !== undefined
-            ? event.text
-            : current.text,
-      evidence:
-        event.type === 'section-evidence'
-          ? [...current.evidence, ...event.evidence]
-          : event.type === 'section-done' && event.evidence
-            ? event.evidence
-            : current.evidence,
-    }
-
+  if (event.type === 'section-start') {
     return {
       ...state,
       status: 'streaming',
       error: '',
       sections: {
         ...state.sections,
-        [event.section]: nextSection,
+        [event.section]: {
+          ...state.sections[event.section],
+          completed: false,
+        },
       },
       cachedResult: null,
     }
+  }
+
+  const current = state.sections[event.section]
+  const nextSection: ReportAiDrawerSectionState = {
+    ...current,
+    completed: current.completed,
+    text: event.type === 'section-chunk' ? `${current.text}${event.delta}` : current.text,
+    evidence: event.type === 'evidence' ? [...current.evidence, ...event.evidence] : current.evidence,
   }
 
   return {
     ...state,
     status: 'streaming',
     error: '',
+    sections: {
+      ...state.sections,
+      [event.section]: nextSection,
+    },
     cachedResult: null,
   }
 }

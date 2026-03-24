@@ -570,12 +570,7 @@ export interface CostAnalyticsData {
 
 export type ReportAiSummaryTab = 'task' | 'production' | 'cost'
 
-export type ReportAiSummarySection =
-  | 'overview'
-  | 'keyFindings'
-  | 'risks'
-  | 'recommendations'
-  | 'conclusion'
+export type ReportAiSummarySection = 'conclusion' | 'reason' | 'risk' | 'attention'
 
 export interface ReportAiSummaryRequest {
   currentTab: ReportAiSummaryTab
@@ -601,20 +596,9 @@ export interface ReportAiSummaryResult extends UnknownRecord {
 }
 
 export type ReportAiSummaryEvent =
-  | { type: 'start' }
   | { type: 'section-start'; section: ReportAiSummarySection }
   | { type: 'section-chunk'; section: ReportAiSummarySection; delta: string }
-  | {
-      type: 'section-evidence'
-      section: ReportAiSummarySection
-      evidence: ReportAiSummaryEvidenceItem[]
-    }
-  | {
-      type: 'section-done'
-      section: ReportAiSummarySection
-      text?: string
-      evidence?: ReportAiSummaryEvidenceItem[]
-    }
+  | { type: 'evidence'; section: ReportAiSummarySection; evidence: ReportAiSummaryEvidenceItem[] }
   | { type: 'done'; result: ReportAiSummaryResult }
   | { type: 'error'; message: string }
 
