@@ -75,11 +75,20 @@ const costFixture: CostAnalyticsData = {
 
 const ReportFilterBarStub = {
   name: 'ReportFilterBar',
+  props: ['modelValue'],
   emits: ['search', 'reset'],
+  methods: {
+    mutateDraft() {
+      this.modelValue.startDate = '2026-04-01'
+      this.modelValue.endDate = '2026-04-30'
+      this.modelValue.granularity = 'week'
+    },
+  },
   template: `
     <div class="filter-bar-stub">
       <button data-testid="report-search" @click="$emit('search')">搜索</button>
       <button data-testid="report-reset" @click="$emit('reset')">重置</button>
+      <button data-testid="report-draft-change" @click="mutateDraft">修改草稿筛选</button>
     </div>
   `,
 }
@@ -152,6 +161,30 @@ afterEach(() => {
 })
 
 describe('ReportAnalyticsView AI flow', () => {
+
+  it('uses applied filters instead of unsaved draft edits', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const appliedFilters = mockGetReportAnalyticsOverview.mock.calls[0]?.[0]
+
+    await wrapper.find('[data-testid="report-draft-change"]').trigger('click')
+    await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
+    await flushPromises()
+
+    expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(1)
+    expect(mockStreamReportAiSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentTab: 'task',
+        filters: appliedFilters,
+      }),
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+        onEvent: expect.any(Function),
+      }),
+    )
+  })
+
   it('clicking the floating button opens the drawer and starts the stream for the active tab', async () => {
     const wrapper = mountView()
     await flushPromises()

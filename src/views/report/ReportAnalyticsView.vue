@@ -21,6 +21,7 @@ import {
 import type {
   CostAnalyticsData,
   ProductionAnalyticsData,
+  ReportAnalyticsFilter,
   ReportAnalyticsOverviewKpis,
   TaskAnalyticsData,
 } from '@/types/entity'
@@ -30,6 +31,7 @@ import { useReportAiSummary } from './useReportAiSummary'
 type TabKey = 'task' | 'production' | 'cost'
 
 const filter = reactive(createDefaultReportAnalyticsFilter())
+const appliedFilters = ref<ReportAnalyticsFilter>(normalizeAnalyticsFilter(filter))
 const activeTab = ref<TabKey>('task')
 
 const overviewLoading = ref(false)
@@ -68,11 +70,15 @@ const {
   clearCache: clearReportAiCache,
 } = useReportAiSummary({
   getCurrentTab: () => activeTab.value,
-  getFilters: requestParams,
+  getFilters: appliedRequestParams,
 })
 
-function requestParams() {
-  return normalizeAnalyticsFilter(filter)
+function requestParams(source: Partial<ReportAnalyticsFilter> = filter) {
+  return normalizeAnalyticsFilter(source)
+}
+
+function appliedRequestParams() {
+  return requestParams(appliedFilters.value)
 }
 
 function resetLoadedTabs(): void {
@@ -81,11 +87,11 @@ function resetLoadedTabs(): void {
   loadedTabs.cost = false
 }
 
-async function loadOverview(): Promise<void> {
+async function loadOverview(filters: ReportAnalyticsFilter = appliedRequestParams()): Promise<void> {
   overviewLoading.value = true
   overviewError.value = ''
   try {
-    const response = await getReportAnalyticsOverview(requestParams())
+    const response = await getReportAnalyticsOverview(filters)
     kpis.value = response.kpis
   } catch (error) {
     overviewError.value = error instanceof Error ? error.message : '加载统计总览失败'
@@ -95,12 +101,12 @@ async function loadOverview(): Promise<void> {
   }
 }
 
-async function loadTaskData(force = false): Promise<void> {
+async function loadTaskData(filters: ReportAnalyticsFilter = appliedRequestParams(), force = false): Promise<void> {
   if (loadedTabs.task && !force) return
   tabLoading.task = true
   tabError.task = ''
   try {
-    taskData.value = await getReportAnalyticsTask(requestParams())
+    taskData.value = await getReportAnalyticsTask(filters)
     loadedTabs.task = true
   } catch (error) {
     tabError.task = error instanceof Error ? error.message : '加载任务运营分析失败'
@@ -109,12 +115,12 @@ async function loadTaskData(force = false): Promise<void> {
   }
 }
 
-async function loadProductionData(force = false): Promise<void> {
+async function loadProductionData(filters: ReportAnalyticsFilter = appliedRequestParams(), force = false): Promise<void> {
   if (loadedTabs.production && !force) return
   tabLoading.production = true
   tabError.production = ''
   try {
-    productionData.value = await getReportAnalyticsProduction(requestParams())
+    productionData.value = await getReportAnalyticsProduction(filters)
     loadedTabs.production = true
   } catch (error) {
     tabError.production = error instanceof Error ? error.message : '加载种植产出分析失败'
@@ -123,12 +129,12 @@ async function loadProductionData(force = false): Promise<void> {
   }
 }
 
-async function loadCostData(force = false): Promise<void> {
+async function loadCostData(filters: ReportAnalyticsFilter = appliedRequestParams(), force = false): Promise<void> {
   if (loadedTabs.cost && !force) return
   tabLoading.cost = true
   tabError.cost = ''
   try {
-    costData.value = await getReportAnalyticsCost(requestParams())
+    costData.value = await getReportAnalyticsCost(filters)
     loadedTabs.cost = true
   } catch (error) {
     tabError.cost = error instanceof Error ? error.message : '加载成本采购分析失败'
@@ -137,22 +143,29 @@ async function loadCostData(force = false): Promise<void> {
   }
 }
 
-async function loadActiveTab(force = false): Promise<void> {
+async function loadActiveTab(filters: ReportAnalyticsFilter = appliedRequestParams(), force = false): Promise<void> {
   if (activeTab.value === 'task') {
-    await loadTaskData(force)
+    await loadTaskData(filters, force)
     return
   }
   if (activeTab.value === 'production') {
-    await loadProductionData(force)
+    await loadProductionData(filters, force)
     return
   }
-  await loadCostData(force)
+  await loadCostData(filters, force)
 }
 
-async function refreshCurrentView(force = false): Promise<void> {
-  await loadOverview()
+async function refreshCurrentView(
+  force = false,
+  filters: ReportAnalyticsFilter = appliedRequestParams(),
+  commitFilters = false,
+): Promise<void> {
+  await loadOverview(filters)
   if (!overviewError.value) {
-    await loadActiveTab(force)
+    if (commitFilters) {
+      appliedFilters.value = filters
+    }
+    await loadActiveTab(filters, force)
   }
 }
 
@@ -161,7 +174,8 @@ async function handleSearch(): Promise<void> {
   abortReportAi()
   clearReportAiCache()
   resetLoadedTabs()
-  await refreshCurrentView(true)
+  const nextFilters = requestParams()
+  await refreshCurrentView(true, nextFilters, true)
 }
 
 async function handleReset(): Promise<void> {
@@ -170,7 +184,17 @@ async function handleReset(): Promise<void> {
   clearReportAiCache()
   Object.assign(filter, createDefaultReportAnalyticsFilter())
   resetLoadedTabs()
-  await refreshCurrentView(true)
+  const nextFilters = requestParams()
+  await refreshCurrentView(true, nextFilters, true)
+}
+
+async function handleRefreshRetry(): Promise<void> {
+  closeReportAi()
+  abortReportAi()
+  clearReportAiCache()
+  resetLoadedTabs()
+  const nextFilters = requestParams()
+  await refreshCurrentView(true, nextFilters, true)
 }
 
 watch(activeTab, async () => {
@@ -180,7 +204,8 @@ watch(activeTab, async () => {
 })
 
 onMounted(async () => {
-  await refreshCurrentView()
+  const nextFilters = requestParams()
+  await refreshCurrentView(false, nextFilters, true)
 })
 </script>
 
@@ -190,7 +215,7 @@ onMounted(async () => {
 
     <el-alert v-if="overviewError" type="error" :closable="false" style="margin-bottom: 16px">
       <template #title>总览加载失败：{{ overviewError }}</template>
-      <el-button text type="primary" @click="refreshCurrentView(true)">点击重试</el-button>
+      <el-button text type="primary" @click="handleRefreshRetry">点击重试</el-button>
     </el-alert>
 
     <div class="report-header">
@@ -208,7 +233,7 @@ onMounted(async () => {
             :error-message="tabError.task"
             :empty="!taskData"
             empty-description="暂无任务运营分析数据"
-            @retry="loadTaskData(true)"
+            @retry="loadTaskData(appliedRequestParams(), true)"
           >
             <TaskAnalyticsPanel v-if="taskData" :data="taskData" />
           </PageState>
@@ -219,7 +244,7 @@ onMounted(async () => {
             :error-message="tabError.production"
             :empty="!productionData"
             empty-description="暂无种植产出分析数据"
-            @retry="loadProductionData(true)"
+            @retry="loadProductionData(appliedRequestParams(), true)"
           >
             <ProductionAnalyticsPanel v-if="productionData" :data="productionData" />
           </PageState>
@@ -230,7 +255,7 @@ onMounted(async () => {
             :error-message="tabError.cost"
             :empty="!costData"
             empty-description="暂无成本采购分析数据"
-            @retry="loadCostData(true)"
+            @retry="loadCostData(appliedRequestParams(), true)"
           >
             <CostAnalyticsPanel v-if="costData" :data="costData" />
           </PageState>
