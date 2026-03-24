@@ -27,6 +27,14 @@ const emit = defineEmits<{
 
 const orderedSections = computed(() => REPORT_AI_SECTION_ORDER.map(section => props.sections[section]))
 
+function shouldShowLoading(section: ReportAiDrawerSectionState): boolean {
+  if (props.status !== 'streaming') {
+    return false
+  }
+
+  return !section.text && section.evidence.length === 0
+}
+
 function handleVisibleChange(value: boolean): void {
   emit('update:visible', value)
   if (!value) {
@@ -71,7 +79,7 @@ function handleClose(): void {
         v-for="section in orderedSections"
         :key="section.key"
         :section="section"
-        :streaming="props.status === 'streaming'"
+        :loading="shouldShowLoading(section)"
       />
     </div>
   </el-drawer>

@@ -39,6 +39,18 @@ const successFixture = {
   } satisfies Record<ReportAiSummarySection, ReportAiDrawerSectionState>,
 }
 
+const streamingFixture = {
+  sections: {
+    conclusion: createSection('conclusion'),
+    reason: createSection('reason', {
+      text: '已输出原因分析。',
+      evidence: [{ label: '任务完成率', value: 91, unit: '%' }],
+    }),
+    risk: createSection('risk'),
+    attention: createSection('attention'),
+  } satisfies Record<ReportAiSummarySection, ReportAiDrawerSectionState>,
+}
+
 type DrawerProps = InstanceType<typeof ReportAiDrawer>['$props']
 
 function mountDrawer(props: Partial<DrawerProps> = {}) {
@@ -74,6 +86,12 @@ describe('ReportAiDrawer', () => {
   it('renders the four fixed sections as streaming skeletons', () => {
     const wrapper = mountDrawer({
       status: 'streaming',
+      sections: {
+        conclusion: createSection('conclusion'),
+        reason: createSection('reason'),
+        risk: createSection('risk'),
+        attention: createSection('attention'),
+      },
     })
 
     expect(wrapper.text()).toContain('结论')
@@ -83,16 +101,35 @@ describe('ReportAiDrawer', () => {
     expect(wrapper.findAll('[data-testid="report-ai-section-skeleton"]').length).toBe(4)
   })
 
-  it('renders the four fixed sections and evidence rows', () => {
+  it('keeps streamed content visible while empty sections still show loading skeletons', () => {
+    const wrapper = mountDrawer({
+      status: 'streaming',
+      sections: streamingFixture.sections,
+    })
+
+    const reasonSection = wrapper.get('[data-testid="report-ai-section-reason"]')
+    const conclusionSection = wrapper.get('[data-testid="report-ai-section-conclusion"]')
+
+    expect(reasonSection.text()).toContain('已输出原因分析。')
+    expect(reasonSection.text()).toContain('任务完成率')
+    expect(reasonSection.find('[data-testid="report-ai-section-skeleton"]').exists()).toBe(false)
+    expect(conclusionSection.find('[data-testid="report-ai-section-skeleton"]').exists()).toBe(true)
+  })
+
+  it('renders evidence under the matching section container', () => {
     const wrapper = mountDrawer({
       status: 'done',
     })
+
+    const reasonSection = wrapper.get('[data-testid="report-ai-section-reason"]')
+    const riskSection = wrapper.get('[data-testid="report-ai-section-risk"]')
 
     expect(wrapper.text()).toContain('结论')
     expect(wrapper.text()).toContain('原因分析')
     expect(wrapper.text()).toContain('风险提示')
     expect(wrapper.text()).toContain('关注建议')
-    expect(wrapper.text()).toContain('任务完成率')
+    expect(reasonSection.text()).toContain('任务完成率')
+    expect(riskSection.text()).not.toContain('任务完成率')
   })
 
   it('shows a retry button in the error state', () => {

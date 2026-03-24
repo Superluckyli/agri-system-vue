@@ -3,9 +3,9 @@ import type { ReportAiDrawerSectionState } from '@/views/report/reportAiSummaryS
 
 const props = withDefaults(defineProps<{
   section: ReportAiDrawerSectionState
-  streaming?: boolean
+  loading?: boolean
 }>(), {
-  streaming: false,
+  loading: false,
 })
 
 function formatEvidenceValue(value?: string | number, unit?: string): string {
@@ -17,12 +17,12 @@ function formatEvidenceValue(value?: string | number, unit?: string): string {
 </script>
 
 <template>
-  <section class="report-ai-section">
+  <section :data-testid="`report-ai-section-${props.section.key}`" class="report-ai-section">
     <div class="report-ai-section__header">
       <h3 class="report-ai-section__title">{{ props.section.label }}</h3>
     </div>
 
-    <div v-if="props.streaming" data-testid="report-ai-section-skeleton" class="report-ai-section__skeleton">
+    <div v-if="props.loading" data-testid="report-ai-section-skeleton" class="report-ai-section__skeleton">
       <el-skeleton animated :rows="3" />
     </div>
 
