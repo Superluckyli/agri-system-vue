@@ -24,6 +24,7 @@ function stateFromResult(result: ReportAiSummaryResult) {
 export function useReportAiSummary(options: UseReportAiSummaryOptions) {
   const visible = ref(false)
   const state = ref(initialReportAiState())
+  // 只缓存“已完整完成”的结果；中途流式内容不入缓存。
   const cache = new Map<string, ReportAiSummaryResult>()
   const activeKey = ref<string | null>(null)
   const activeController = ref<AbortController | null>(null)
@@ -71,6 +72,7 @@ export function useReportAiSummary(options: UseReportAiSummaryOptions) {
 
             state.value = reduceReportAiEvent(state.value, event)
             if (event.type === 'done' && state.value.cachedResult) {
+              // 只有 done 后 reducer 才会产出可复用结果。
               cache.set(key, state.value.cachedResult)
             }
           },
@@ -100,6 +102,7 @@ export function useReportAiSummary(options: UseReportAiSummaryOptions) {
     const cached = cache.get(key)
 
     if (cached) {
+      // 同 tab + 同 applied filters 命中时，直接回放缓存，不重复请求。
       state.value = stateFromResult(cached)
       return
     }

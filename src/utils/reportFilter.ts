@@ -13,6 +13,7 @@ export function createDefaultReportAnalyticsFilter(now = new Date()): ReportAnal
   const startDate = new Date(now)
   startDate.setDate(startDate.getDate() - 29)
 
+  // 默认口径统一为最近 30 天，避免图表、AI、缓存各自用不同的初始时间窗。
   return {
     startDate: formatDate(startDate),
     endDate: formatDate(endDate),
@@ -26,6 +27,7 @@ export function normalizeAnalyticsFilter(
 ): ReportAnalyticsFilter {
   const defaults = createDefaultReportAnalyticsFilter(now)
 
+  // 所有请求都先走同一份归一化逻辑，确保页面查询、AI 请求和缓存 key 使用同一口径。
   return {
     startDate: filter?.startDate || defaults.startDate,
     endDate: filter?.endDate || defaults.endDate,

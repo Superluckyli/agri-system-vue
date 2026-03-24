@@ -35,6 +35,8 @@ function flushEventBuffer(
   signal?: AbortSignal,
   onEvent?: (event: ReportAiSummaryEvent) => void,
 ): string {
+  // 一个网络 chunk 里可能包含多条 SSE 事件，
+  // 所以需要逐块拆开并在派发前再次检查 abort。
   const normalized = buffer.replace(/\r\n/g, '\n')
   const blocks = normalized.split('\n\n')
   const remainder = blocks.pop() ?? ''
@@ -58,6 +60,7 @@ export async function streamReportAiSummary(
   options: StreamReportAiSummaryOptions = {},
 ): Promise<void> {
   const authStore = useAuthStore()
+  // 如果外部在真正发请求前就取消了，这里直接静默返回。
   if (options.signal?.aborted) {
     return
   }
@@ -95,6 +98,7 @@ export async function streamReportAiSummary(
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   const abortListener = () => {
+    // 取消时显式通知底层 reader，避免继续读取未消费数据。
     void reader.cancel().catch(() => {})
   }
 

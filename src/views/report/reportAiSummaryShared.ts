@@ -92,6 +92,7 @@ export function buildReportAiCacheKey(
   filters?: Partial<ReportAnalyticsFilter> | null,
   now = new Date(),
 ): string {
+  // cache key 必须和真正发给后端的筛选口径一致，否则会出现“同一页看似同条件，实则命中错缓存”的问题。
   return JSON.stringify({
     currentTab,
     filters: normalizeAnalyticsFilter(filters, now),
@@ -143,6 +144,7 @@ export function reduceReportAiEvent(
       status: 'streaming',
       error: '',
       sections: {
+        // section 重启时必须清空旧文本和旧证据，避免重试/重流时把旧内容拼上去。
         ...state.sections,
         [event.section]: createEmptySectionState(event.section),
       },
