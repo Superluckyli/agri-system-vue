@@ -43,6 +43,10 @@ export function useReportAiSummary(options: UseReportAiSummaryOptions) {
     state.value = initialReportAiState()
   }
 
+  function clearCache(): void {
+    cache.clear()
+  }
+
   async function startStream(key: string): Promise<void> {
     const controller = new AbortController()
     activeController.value = controller
@@ -131,5 +135,6 @@ export function useReportAiSummary(options: UseReportAiSummaryOptions) {
     close,
     setVisible,
     abort,
+    clearCache,
   }
 }

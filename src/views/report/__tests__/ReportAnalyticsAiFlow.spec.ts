@@ -8,6 +8,7 @@ import type {
   ReportAnalyticsOverviewData,
   TaskAnalyticsData,
 } from '@/types/entity'
+import ReportAnalyticsView from '../ReportAnalyticsView.vue'
 
 const {
   mockGetReportAnalyticsOverview,
@@ -103,10 +104,8 @@ const ProductionAnalyticsPanelStub = { name: 'ProductionAnalyticsPanel', templat
 const CostAnalyticsPanelStub = { name: 'CostAnalyticsPanel', template: '<div class="cost-panel-stub">成本采购面板</div>' }
 const PageStateStub = { name: 'PageState', template: '<div class="page-state-stub"><slot /></div>' }
 
-let ReportAnalyticsView: unknown
-
 function mountView() {
-  return mount(ReportAnalyticsView as never, {
+  return mount(ReportAnalyticsView, {
     global: {
       stubs: {
         'el-card': { template: '<div class="el-card-stub"><slot /></div>' },
@@ -139,15 +138,13 @@ function mountView() {
   })
 }
 
-beforeEach(async () => {
+beforeEach(() => {
   vi.clearAllMocks()
   mockGetReportAnalyticsOverview.mockResolvedValue(overviewFixture)
   mockGetReportAnalyticsTask.mockResolvedValue(taskFixture)
   mockGetReportAnalyticsProduction.mockResolvedValue(productionFixture)
   mockGetReportAnalyticsCost.mockResolvedValue(costFixture)
   mockStreamReportAiSummary.mockResolvedValue(undefined)
-
-  ReportAnalyticsView = (await import('../ReportAnalyticsView.vue')).default
 })
 
 afterEach(() => {
@@ -202,6 +199,7 @@ describe('ReportAnalyticsView AI flow', () => {
 
     await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
     await flushPromises()
+    expect(wrapper.text()).toContain('任务稳定。')
     expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(1)
 
     await wrapper.find('[data-testid="report-ai-close"]').trigger('click')
@@ -211,6 +209,7 @@ describe('ReportAnalyticsView AI flow', () => {
     await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('任务稳定。')
     expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(1)
 
     await wrapper.find('[data-testid="tab-production"]').trigger('click')
@@ -242,36 +241,75 @@ describe('ReportAnalyticsView AI flow', () => {
     expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(false)
   })
 
-  it('handleSearch and handleReset close the drawer and clear the active stream', async () => {
+  it('handleSearch and handleReset close the drawer, abort the active stream, and invalidate cached results', async () => {
     let activeSignal: AbortSignal | undefined
-    mockStreamReportAiSummary.mockImplementation(async (_request: unknown, options?: { signal?: AbortSignal }) => {
-      activeSignal = options?.signal
-      return new Promise<void>((resolve) => {
-        activeSignal?.addEventListener('abort', () => resolve(), { once: true })
+    mockStreamReportAiSummary
+      .mockImplementationOnce(async (_request: unknown, options?: { onEvent?: (event: ReportAiSummaryEvent) => void }) => {
+        options?.onEvent?.({ type: 'section-start', section: 'conclusion' })
+        options?.onEvent?.({ type: 'section-chunk', section: 'conclusion', delta: '旧摘要。' })
+        options?.onEvent?.({
+          type: 'done',
+          result: {
+            summary: '旧完成',
+            sections: {
+              conclusion: { text: '旧摘要。', completed: true },
+            },
+          },
+        })
       })
-    })
+      .mockImplementationOnce(async (_request: unknown, options?: { signal?: AbortSignal }) => {
+        activeSignal = options?.signal
+        return new Promise<void>((resolve) => {
+          activeSignal?.addEventListener('abort', () => resolve(), { once: true })
+        })
+      })
+      .mockImplementation(async (_request: unknown, options?: { onEvent?: (event: ReportAiSummaryEvent) => void }) => {
+        options?.onEvent?.({ type: 'section-start', section: 'conclusion' })
+        options?.onEvent?.({ type: 'section-chunk', section: 'conclusion', delta: '新摘要。' })
+        options?.onEvent?.({
+          type: 'done',
+          result: {
+            summary: '新完成',
+            sections: {
+              conclusion: { text: '新摘要。', completed: true },
+            },
+          },
+        })
+      })
 
     const wrapper = mountView()
     await flushPromises()
 
     await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
     await flushPromises()
-    expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(true)
-    expect(activeSignal?.aborted).toBe(false)
+    expect(wrapper.text()).toContain('旧摘要。')
+    expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(1)
+
+    await wrapper.find('[data-testid="report-ai-close"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('旧摘要。')
+    expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(1)
 
     await wrapper.find('[data-testid="report-search"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
+    await flushPromises()
+    expect(activeSignal?.aborted).toBe(false)
+    expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(2)
+
+    await wrapper.find('[data-testid="report-reset"]').trigger('click')
     await flushPromises()
     expect(activeSignal?.aborted).toBe(true)
     expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(false)
 
     await wrapper.find('[data-testid="report-ai-fab"]').trigger('click')
     await flushPromises()
-    const resetSignal = mockStreamReportAiSummary.mock.calls[1]?.[1]?.signal as AbortSignal
-    expect(resetSignal.aborted).toBe(false)
-
-    await wrapper.find('[data-testid="report-reset"]').trigger('click')
-    await flushPromises()
-    expect(resetSignal.aborted).toBe(true)
-    expect(wrapper.find('[data-testid="report-ai-drawer"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('新摘要。')
+    expect(mockStreamReportAiSummary).toHaveBeenCalledTimes(3)
   })
 })

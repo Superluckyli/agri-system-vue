@@ -65,6 +65,7 @@ const {
   close: closeReportAi,
   setVisible: setReportAiVisible,
   abort: abortReportAi,
+  clearCache: clearReportAiCache,
 } = useReportAiSummary({
   getCurrentTab: () => activeTab.value,
   getFilters: requestParams,
@@ -158,6 +159,7 @@ async function refreshCurrentView(force = false): Promise<void> {
 async function handleSearch(): Promise<void> {
   closeReportAi()
   abortReportAi()
+  clearReportAiCache()
   resetLoadedTabs()
   await refreshCurrentView(true)
 }
@@ -165,6 +167,7 @@ async function handleSearch(): Promise<void> {
 async function handleReset(): Promise<void> {
   closeReportAi()
   abortReportAi()
+  clearReportAiCache()
   Object.assign(filter, createDefaultReportAnalyticsFilter())
   resetLoadedTabs()
   await refreshCurrentView(true)
