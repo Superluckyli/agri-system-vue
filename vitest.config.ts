@@ -8,6 +8,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       pool: 'threads',
+      maxWorkers: 1,
       root: fileURLToPath(new URL('./', import.meta.url)),
       include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
       server: {

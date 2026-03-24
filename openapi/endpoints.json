@@ -2469,6 +2469,49 @@
     "notes": "Response follows R<T>; success code=200, failure code!=200."
   },
   {
+    "tag": "TaskLog",
+    "method": "POST",
+    "path": "/task/log/upload-image",
+    "auth": {
+      "required": true,
+      "roles": [],
+      "header": "Authorization: Bearer <token>"
+    },
+    "summary": "Upload task log image",
+    "request": {
+      "schema": {
+        "query": {},
+        "path": {},
+        "body": null,
+        "formData": {
+          "file": "File"
+        }
+      },
+      "example": {
+        "query": {},
+        "path": {},
+        "bodyOpenapiRef": null
+      }
+    },
+    "response": {
+      "schema": "R<TaskLogImageUploadResponse>",
+      "example": {
+        "success": {
+          "code": 200,
+          "msg": "Operation success",
+          "data": "<see openapi response example>"
+        },
+        "fail": {
+          "code": 500,
+          "msg": "Operation failed",
+          "data": null
+        },
+        "openapiRef": null
+      }
+    },
+    "notes": "Multipart form upload; build FormData with the file field before POSTing. Response follows R<T>; success code=200, failure code!=200."
+  },
+  {
     "tag": "MaterialInfo",
     "method": "GET",
     "path": "/material/info/list",
@@ -3567,6 +3610,52 @@
       }
     },
     "notes": "Pagination response data fields: current, size, total, records."
+  },
+  {
+    "tag": "IotData",
+    "method": "GET",
+    "path": "/iot/monitor/current",
+    "auth": {
+      "required": true,
+      "roles": [],
+      "header": "Authorization: Bearer <token>"
+    },
+    "summary": "Get current farmland monitor data",
+    "request": {
+      "schema": {
+        "query": {
+          "farmlandId": "string|number",
+          "timeRange": "string"
+        },
+        "path": {},
+        "body": null
+      },
+      "example": {
+        "query": {
+          "farmlandId": "1",
+          "timeRange": "24h"
+        },
+        "path": {},
+        "bodyOpenapiRef": null
+      }
+    },
+    "response": {
+      "schema": "R<IotLandMonitorData>",
+      "example": {
+        "success": {
+          "code": 200,
+          "msg": "Operation success",
+          "data": "<see openapi response example>"
+        },
+        "fail": {
+          "code": 500,
+          "msg": "Operation failed",
+          "data": null
+        },
+        "openapiRef": "#/paths/~1iot~1monitor~1current/get/responses/200/content/application~1json/example"
+      }
+    },
+    "notes": "Returns farmland + active batch + current monitor records for the selected time range."
   },
   {
     "tag": "IotRule",

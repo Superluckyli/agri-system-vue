@@ -7,7 +7,9 @@ import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { listMaterialInfo } from '@/api/modules/material'
 import { createTaskMaterials, createTaskLog, completeTask, listTask, listTaskLog } from '@/api/modules/task'
-import type { AgriTask, AgriTaskLog, MaterialInfo } from '@/types/entity'
+import LogImageUploader from '@/components/task/LogImageUploader.vue'
+import { canSubmitWithImages, parseUploadedImageUrls, serializeUploadedImageUrls } from '@/components/task/logImageUploadShared'
+import type { AgriTask, AgriTaskLog, MaterialInfo, UploadedImageItem } from '@/types/entity'
 import { ROLE_ADMIN, ROLE_FARM_OWNER } from '@/constants/permission'
 import { TASK_STATUS_V2, TASK_STATUS_MAP } from '@/constants/task'
 import { useAuthStore } from '@/stores/auth'
@@ -53,6 +55,7 @@ const queryParams = reactive<QueryParams>({
 const executeDialogVisible = ref(false)
 const executeSubmitting = ref(false)
 const executeFormRef = ref<FormInstance>()
+const executeUploadItems = ref<UploadedImageItem[]>([])
 const executeForm = reactive<ExecuteFormModel>({
   taskId: null,
   growthNote: '',
@@ -73,6 +76,7 @@ const isExecutableStatus = (statusV2: string | undefined): boolean => {
 const executableOwnTaskOptions = computed(() => {
   return ownTaskOptions.value.filter((task) => isExecutableStatus(task.statusV2))
 })
+const canSubmitExecuteImages = computed(() => canSubmitWithImages(executeUploadItems.value))
 
 const executeRules = reactive<FormRules<ExecuteFormModel>>({
   taskId: [{ required: true, message: '请选择任务', trigger: 'change' }],
@@ -216,12 +220,15 @@ const handleCurrentChange = (page: number): void => {
   void fetchList()
 }
 
+const getLogImageUrls = (imageUrls?: string | null) => parseUploadedImageUrls(imageUrls)
+
 const resetExecuteForm = (defaultTaskId: number | null = null) => {
   executeForm.taskId = defaultTaskId
   executeForm.growthNote = ''
   executeForm.abnormalNote = ''
   executeForm.statusSnapshot = TASK_STATUS_V2.COMPLETED
   executeForm.imageUrls = ''
+  executeUploadItems.value = []
   executeForm.materialItems = [{ materialId: null, quantity: null }]
   executeFormRef.value?.clearValidate()
 }
@@ -300,7 +307,13 @@ const submitExecuteLog = async () => {
     }
   }
 
+  if (!canSubmitExecuteImages.value) {
+    ElMessage.warning('请等待图片上传完成或移除失败图片后再提交')
+    return
+  }
+
   const materialUsage = normalizeMaterialUsage()
+  executeForm.imageUrls = serializeUploadedImageUrls(executeUploadItems.value)
 
   executeSubmitting.value = true
   try {
@@ -356,6 +369,15 @@ onMounted(async () => {
 
   void fetchList()
 })
+
+watch(
+  executeDialogVisible,
+  (visible) => {
+    if (!visible) {
+      resetExecuteForm()
+    }
+  },
+)
 
 watch(
   () => route.query.taskId,
@@ -455,9 +477,9 @@ watch(
         <el-table-column label="图片" min-width="120" align="center">
           <template #default="scope">
             <el-image
-              v-if="scope.row.imageUrls"
-              :src="scope.row.imageUrls.split(',')[0]"
-              :preview-src-list="scope.row.imageUrls.split(',')"
+              v-if="getLogImageUrls(scope.row.imageUrls).length"
+              :src="getLogImageUrls(scope.row.imageUrls)[0]"
+              :preview-src-list="getLogImageUrls(scope.row.imageUrls)"
               fit="cover"
               style="width: 56px; height: 56px; border-radius: 4px"
             />
@@ -512,12 +534,10 @@ watch(
           </el-select>
         </el-form-item>
 
-        <el-form-item label="图片URL">
-          <el-input
-            v-model="executeForm.imageUrls"
-            maxlength="500"
-            show-word-limit
-            placeholder="多张图片用逗号分隔"
+        <el-form-item label="现场图片">
+          <LogImageUploader
+            v-model="executeUploadItems"
+            :disabled="executeSubmitting"
           />
         </el-form-item>
 
@@ -563,7 +583,15 @@ watch(
 
       <template #footer>
         <el-button @click="executeDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="executeSubmitting" @click="submitExecuteLog">提交执行结果</el-button>
+        <el-button
+          data-testid="execute-submit"
+          type="primary"
+          :disabled="!canSubmitExecuteImages"
+          :loading="executeSubmitting"
+          @click="submitExecuteLog"
+        >
+          提交执行结果
+        </el-button>
       </template>
     </el-dialog>
   </div>

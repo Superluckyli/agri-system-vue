@@ -6,7 +6,9 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Refresh } from '@element-plus/icons-vue'
 
 import { createTaskLog, listTaskLog } from '@/api/modules/task'
-import type { AgriTaskLog } from '@/types/entity'
+import LogImageUploader from '@/components/task/LogImageUploader.vue'
+import { canSubmitWithImages, parseUploadedImageUrls, serializeUploadedImageUrls } from '@/components/task/logImageUploadShared'
+import type { AgriTaskLog, UploadedImageItem } from '@/types/entity'
 
 interface GrowthLogFormModel {
   growthNote: string
@@ -28,6 +30,7 @@ const total = ref(0)
 
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
+const uploadItems = ref<UploadedImageItem[]>([])
 
 const form = ref<GrowthLogFormModel>({
   growthNote: '',
@@ -47,9 +50,14 @@ const sortedLogs = computed(() => {
   })
 })
 
+const canSubmitGrowthImages = computed(() => canSubmitWithImages(uploadItems.value))
+
 const resetForm = () => {
   form.value = { growthNote: '', abnormalNote: '', imageUrls: '' }
+  uploadItems.value = []
 }
+
+const getLogImageUrls = (imageUrls?: string | null) => parseUploadedImageUrls(imageUrls)
 
 const fetchLogs = async () => {
   if (!validBatchId.value) {
@@ -83,6 +91,13 @@ const submitForm = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
+  if (!canSubmitGrowthImages.value) {
+    ElMessage.warning('请等待图片上传完成或移除失败图片后再提交')
+    return
+  }
+
+  form.value.imageUrls = serializeUploadedImageUrls(uploadItems.value)
+
   const payload: AgriTaskLog = {
     batchId: batchId.value,
     action: 'growth_record',
@@ -115,6 +130,12 @@ watch(
     void fetchLogs()
   },
 )
+
+watch(dialogVisible, (visible) => {
+  if (!visible) {
+    resetForm()
+  }
+})
 
 onMounted(() => {
   void fetchLogs()
@@ -163,12 +184,12 @@ onMounted(() => {
                 <div v-if="item.abnormalNote" class="timeline-text" style="color: #e6a23c">
                   异常说明：{{ item.abnormalNote }}
                 </div>
-                <div v-if="item.imageUrls" class="timeline-link">
+                <div v-if="getLogImageUrls(item.imageUrls).length" class="timeline-link">
                   <el-image
-                    v-for="(url, idx) in item.imageUrls.split(',')"
+                    v-for="(url, idx) in getLogImageUrls(item.imageUrls)"
                     :key="idx"
                     :src="url"
-                    :preview-src-list="item.imageUrls.split(',')"
+                    :preview-src-list="getLogImageUrls(item.imageUrls)"
                     fit="cover"
                     style="width: 56px; height: 56px; border-radius: 4px; margin-right: 6px"
                   />
@@ -191,13 +212,24 @@ onMounted(() => {
         <el-form-item label="异常说明">
           <el-input v-model="form.abnormalNote" type="textarea" :rows="2" placeholder="可选：填写异常情况" />
         </el-form-item>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.imageUrls" placeholder="多张图片用逗号分隔" maxlength="500" show-word-limit />
+        <el-form-item label="现场图片">
+          <LogImageUploader
+            v-model="uploadItems"
+            :disabled="submitLoading"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="submitForm">提交</el-button>
+        <el-button
+          data-testid="growth-log-submit"
+          type="primary"
+          :loading="submitLoading"
+          :disabled="!canSubmitGrowthImages"
+          @click="submitForm"
+        >
+          提交
+        </el-button>
       </template>
     </el-dialog>
   </div>

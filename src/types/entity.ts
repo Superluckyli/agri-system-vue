@@ -96,11 +96,41 @@ export interface BaseCropVariety extends UnknownRecord {
 
 export interface IotSensorData extends UnknownRecord {
   dataId?: number
+  deviceId?: number
+  farmlandId?: number
+  batchId?: number
   plotId?: string
   sensorType?: string
   value?: number
   unit?: string
+  sourceType?: string
+  qualityStatus?: string
   createTime?: string
+}
+
+export interface IotLandMonitorFarmland {
+  id?: number
+  name?: string
+  code?: string
+  location?: string
+}
+
+export interface IotLandMonitorActiveBatch {
+  batchId?: number
+  batchNo?: string
+  cropVariety?: string
+  status?: string
+  stage?: string
+  plantingDate?: string
+  estimatedHarvestDate?: string
+}
+
+export interface IotLandMonitorData {
+  farmland?: IotLandMonitorFarmland | null
+  activeBatch?: IotLandMonitorActiveBatch | null
+  empty?: boolean
+  emptyReason?: string
+  records?: IotSensorData[]
 }
 
 export interface AgriTaskRule extends UnknownRecord {
@@ -210,6 +240,20 @@ export interface TaskRejectDTO {
 export interface TaskReviewRequest {
   approved: boolean
   comment?: string
+}
+
+export type UploadedImageStatus = 'uploading' | 'success' | 'error'
+
+export interface UploadedImageItem extends UnknownRecord {
+  name: string
+  url: string
+  status: UploadedImageStatus
+  errorMessage?: string
+}
+
+export interface TaskLogImageUploadResponse extends UnknownRecord {
+  url: string
+  name: string
 }
 
 export interface AgriTaskLog extends UnknownRecord {

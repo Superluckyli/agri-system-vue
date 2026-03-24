@@ -98,7 +98,14 @@ function parseRequest(requestObj, pathname) {
   const rawBody = requestObj?.schema?.body
   const bodyType = typeof rawBody === 'string' && rawBody ? rawBody : null
 
-  return { bodyType, queryKeys, pathKeys }
+  // formData fields: from schema.formData
+  const schemaFormData = requestObj?.schema?.formData ?? {}
+  const formDataFields = Object.entries(schemaFormData).map(([key, type]) => ({
+    key,
+    type: typeof type === 'string' && type ? type : 'unknown',
+  }))
+
+  return { bodyType, formDataFields, queryKeys, pathKeys }
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +164,12 @@ function buildFunctionName(method, pathname, schemaPathKeys) {
   if (method === 'get' && lastStatic === 'low-stock') {
     const target = staticSegments.slice(0, -1).join(' ')
     return `get${toPascalCase(target)}LowStock`
+  }
+
+  // POST .../upload-image → uploadXxxImage
+  if (method === 'post' && lastStatic === 'upload-image') {
+    const target = staticSegments.slice(0, -1).join(' ')
+    return `upload${toPascalCase(target)}Image`
   }
 
   // Action verb endpoint: /task/{id}/complete → completeTask
@@ -361,8 +374,9 @@ for (const moduleName of moduleOrder) {
     }
     usedNames.add(functionName)
 
-    const { bodyType, queryKeys, pathKeys } = parsedRequest
+    const { bodyType, formDataFields, queryKeys, pathKeys } = parsedRequest
     const hasBody = Boolean(bodyType)
+    const hasFormData = formDataFields.length > 0
     const httpFn = httpFunctionName(method)
     httpFns.add(httpFn)
 
@@ -407,6 +421,10 @@ for (const moduleName of moduleOrder) {
       }
       if (hasBody) {
         signatureParts.push(`body: ${bodyType}`)
+      } else if (hasFormData) {
+        for (const field of formDataFields) {
+          signatureParts.push(`${field.key}: ${field.type}`)
+        }
       }
     } else {
       if (needsParamsInterface) {
@@ -414,6 +432,10 @@ for (const moduleName of moduleOrder) {
       }
       if (hasBody) {
         signatureParts.push(`body: ${bodyType}`)
+      } else if (hasFormData) {
+        for (const field of formDataFields) {
+          signatureParts.push(`${field.key}: ${field.type}`)
+        }
       }
     }
 
@@ -435,6 +457,18 @@ for (const moduleName of moduleOrder) {
         bodyLines.push(`  return ${httpFn}<${returnType}>(${urlExpression}, { params: ${queryLiteral} })`)
       } else {
         bodyLines.push(`  return ${httpFn}<${returnType}>(${urlExpression})`)
+      }
+    } else if (hasFormData) {
+      bodyLines.push('  const formData = new FormData()')
+      for (const field of formDataFields) {
+        bodyLines.push(`  formData.append('${field.key}', ${field.key})`)
+      }
+      if (queryKeys.length > 0) {
+        bodyLines.push(
+          `  return ${httpFn}<${returnType}>(${urlExpression}, formData, { params: ${queryLiteral} })`,
+        )
+      } else {
+        bodyLines.push(`  return ${httpFn}<${returnType}>(${urlExpression}, formData)`)
       }
     } else if (hasBody) {
       if (queryKeys.length > 0) {
