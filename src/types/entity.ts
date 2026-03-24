@@ -568,6 +568,56 @@ export interface CostAnalyticsData {
   abnormalCostItems: AbnormalCostItem[]
 }
 
+export type ReportAiSummaryTab = 'task' | 'production' | 'cost'
+
+export type ReportAiSummarySection =
+  | 'overview'
+  | 'keyFindings'
+  | 'risks'
+  | 'recommendations'
+  | 'conclusion'
+
+export interface ReportAiSummaryRequest {
+  currentTab: ReportAiSummaryTab
+  filters: Partial<ReportAnalyticsFilter>
+}
+
+export interface ReportAiSummaryEvidenceItem extends UnknownRecord {
+  label?: string
+  value?: string | number
+  unit?: string
+  detail?: string
+}
+
+export interface ReportAiSummarySectionResult extends UnknownRecord {
+  text: string
+  completed?: boolean
+  evidence?: ReportAiSummaryEvidenceItem[]
+}
+
+export interface ReportAiSummaryResult extends UnknownRecord {
+  summary?: string
+  sections?: Partial<Record<ReportAiSummarySection, ReportAiSummarySectionResult>>
+}
+
+export type ReportAiSummaryEvent =
+  | { type: 'start' }
+  | { type: 'section-start'; section: ReportAiSummarySection }
+  | { type: 'section-chunk'; section: ReportAiSummarySection; delta: string }
+  | {
+      type: 'section-evidence'
+      section: ReportAiSummarySection
+      evidence: ReportAiSummaryEvidenceItem[]
+    }
+  | {
+      type: 'section-done'
+      section: ReportAiSummarySection
+      text?: string
+      evidence?: ReportAiSummaryEvidenceItem[]
+    }
+  | { type: 'done'; result: ReportAiSummaryResult }
+  | { type: 'error'; message: string }
+
 export interface PasswordChangeRequest {
   oldPassword: string
   newPassword: string
