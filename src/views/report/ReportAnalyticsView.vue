@@ -3,6 +3,9 @@ defineOptions({ name: 'ReportAnalyticsView' })
 
 import { onMounted, reactive, ref, watch } from 'vue'
 
+import ReportAiDrawer from '@/components/report/ReportAiDrawer.vue'
+import ReportAiFab from '@/components/report/ReportAiFab.vue'
+
 import PageState from '@/components/page/PageState.vue'
 import CostAnalyticsPanel from '@/components/report/CostAnalyticsPanel.vue'
 import ProductionAnalyticsPanel from '@/components/report/ProductionAnalyticsPanel.vue'
@@ -22,6 +25,7 @@ import type {
   TaskAnalyticsData,
 } from '@/types/entity'
 import { createDefaultReportAnalyticsFilter, normalizeAnalyticsFilter } from './reportAnalyticsShared'
+import { useReportAiSummary } from './useReportAiSummary'
 
 type TabKey = 'task' | 'production' | 'cost'
 
@@ -54,8 +58,17 @@ const loadedTabs = reactive<Record<TabKey, boolean>>({
   cost: false,
 })
 
-// V2/V3 will mount the floating AI entry and drawer.
-const aiEntryEnabled = false
+const {
+  fabProps,
+  drawerProps,
+  open: openReportAi,
+  close: closeReportAi,
+  setVisible: setReportAiVisible,
+  abort: abortReportAi,
+} = useReportAiSummary({
+  getCurrentTab: () => activeTab.value,
+  getFilters: requestParams,
+})
 
 function requestParams() {
   return normalizeAnalyticsFilter(filter)
@@ -143,17 +156,23 @@ async function refreshCurrentView(force = false): Promise<void> {
 }
 
 async function handleSearch(): Promise<void> {
+  closeReportAi()
+  abortReportAi()
   resetLoadedTabs()
   await refreshCurrentView(true)
 }
 
 async function handleReset(): Promise<void> {
+  closeReportAi()
+  abortReportAi()
   Object.assign(filter, createDefaultReportAnalyticsFilter())
   resetLoadedTabs()
   await refreshCurrentView(true)
 }
 
 watch(activeTab, async () => {
+  closeReportAi()
+  abortReportAi()
   await loadActiveTab()
 })
 
@@ -164,8 +183,6 @@ onMounted(async () => {
 
 <template>
   <div class="app-container">
-    <div v-if="aiEntryEnabled" class="report-ai-placeholder" aria-hidden="true" />
-
     <ReportFilterBar :model-value="filter" :loading="overviewLoading" @search="handleSearch" @reset="handleReset" />
 
     <el-alert v-if="overviewError" type="error" :closable="false" style="margin-bottom: 16px">
@@ -217,6 +234,21 @@ onMounted(async () => {
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+    <ReportAiDrawer
+      :visible="drawerProps.visible"
+      :status="drawerProps.status"
+      :sections="drawerProps.sections"
+      :error="drawerProps.error"
+      @close="closeReportAi"
+      @retry="openReportAi"
+      @update:visible="setReportAiVisible"
+    />
+    <ReportAiFab
+      :usable="fabProps.usable"
+      :loading="fabProps.loading"
+      @click="openReportAi"
+    />
   </div>
 </template>
 
