@@ -597,7 +597,7 @@ export interface ReportAiSummaryResult extends UnknownRecord {
 
 export type ReportAiSummaryEvent =
   | { type: 'section-start'; section: ReportAiSummarySection }
-  | { type: 'section-chunk'; section: ReportAiSummarySection; delta: string }
+  | { type: 'section-chunk'; section: ReportAiSummarySection; delta?: string; summary?: string }
   | { type: 'evidence'; section: ReportAiSummarySection; evidence: ReportAiSummaryEvidenceItem[] }
   | { type: 'done'; result?: ReportAiSummaryResult }
   | { type: 'error'; message: string }

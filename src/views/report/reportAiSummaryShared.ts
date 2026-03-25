@@ -154,10 +154,11 @@ export function reduceReportAiEvent(
   }
 
   const current = state.sections[event.section]
+  const nextChunk = event.type === 'section-chunk' ? (event.delta ?? event.summary ?? '') : ''
   const nextSection: ReportAiDrawerSectionState = {
     ...current,
     completed: current.completed,
-    text: event.type === 'section-chunk' ? `${current.text}${event.delta}` : current.text,
+    text: event.type === 'section-chunk' ? `${current.text}${nextChunk}` : current.text,
     evidence: event.type === 'evidence' ? [...current.evidence, ...event.evidence] : current.evidence,
   }
 

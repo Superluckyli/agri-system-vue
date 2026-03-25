@@ -50,7 +50,7 @@ describe('reduceReportAiEvent', () => {
     const afterChunk = reduceReportAiEvent(initialReportAiState(), {
       type: 'section-chunk',
       section: 'conclusion',
-      delta: '稳定。',
+      summary: '稳定。',
     })
 
     const state = reduceReportAiEvent(afterChunk, {
@@ -77,7 +77,7 @@ describe('reduceReportAiEvent', () => {
       {
         type: 'section-chunk',
         section: 'conclusion',
-        delta: '上一轮内容',
+        summary: '上一轮内容',
       },
     )
 
@@ -129,7 +129,7 @@ describe('reduceReportAiEvent', () => {
       reduceReportAiEvent(initialReportAiState(), {
         type: 'section-chunk',
         section: 'conclusion',
-        delta: '稳定。',
+        summary: '稳定。',
       }),
       {
         type: 'evidence',
@@ -186,7 +186,7 @@ describe('streamReportAiSummary', () => {
       expect(JSON.parse(String(init?.body))).toEqual(expectedPayload)
 
       return new Response(createEventStream([
-        'data: {"type":"section-chunk","section":"conclusion","delta":"稳定。"}\n\n',
+        'data: {"type":"section-chunk","section":"conclusion","summary":"稳定。"}\n\n',
         'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n',
         'data: {"type":"done","result":{"summary":"完成","sections":{"conclusion":{"text":"稳定。","completed":true},"reason":{"text":"执行稳定","completed":true},"risk":{"text":"风险可控","completed":true},"attention":{"text":"关注天气","completed":true}}}}\n\n',
       ]), {
@@ -212,7 +212,7 @@ describe('streamReportAiSummary', () => {
       {
         type: 'section-chunk',
         section: 'conclusion',
-        delta: '稳定。',
+        summary: '稳定。',
       },
       {
         type: 'evidence',
@@ -240,7 +240,7 @@ describe('streamReportAiSummary', () => {
     global.fetch = vi.fn(async () => {
       return new Response(createEventStream([
         'data: {"type":"section-chunk","section":"concl',
-        'usion","delta":"稳',
+        'usion","summary":"稳',
         '定。"}\n\n',
         'data: {"type":"done","result":{"summary":"完成"}}\n\n',
       ]), {
@@ -265,7 +265,7 @@ describe('streamReportAiSummary', () => {
       {
         type: 'section-chunk',
         section: 'conclusion',
-        delta: '稳定。',
+        summary: '稳定。',
       },
       {
         type: 'done',
