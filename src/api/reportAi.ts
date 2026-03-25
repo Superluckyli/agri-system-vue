@@ -30,11 +30,21 @@ function parseEventBlock(block: string): ReportAiSummaryEvent | null {
   return JSON.parse(payload) as ReportAiSummaryEvent
 }
 
-function flushEventBuffer(
+function waitForVisualFlush(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => resolve())
+      return
+    }
+    setTimeout(resolve, 0)
+  })
+}
+
+async function flushEventBuffer(
   buffer: string,
   signal?: AbortSignal,
   onEvent?: (event: ReportAiSummaryEvent) => void,
-): string {
+): Promise<string> {
   // 一个网络 chunk 里可能包含多条 SSE 事件，
   // 所以需要逐块拆开并在派发前再次检查 abort。
   const normalized = buffer.replace(/\r\n/g, '\n')
@@ -49,6 +59,8 @@ function flushEventBuffer(
     const parsed = parseEventBlock(block)
     if (parsed) {
       onEvent?.(parsed)
+      // 主动让出一次渲染机会，避免同一个网络块里的多条事件被 Vue 一次性批处理后整段落屏。
+      await waitForVisualFlush()
     }
   }
 
@@ -114,12 +126,12 @@ export async function streamReportAiSummary(
       }
 
       buffer += decoder.decode(value, { stream: true })
-      buffer = flushEventBuffer(buffer, options.signal, options.onEvent)
+      buffer = await flushEventBuffer(buffer, options.signal, options.onEvent)
     }
 
     if (!options.signal?.aborted) {
       buffer += decoder.decode()
-      flushEventBuffer(buffer, options.signal, options.onEvent)
+      await flushEventBuffer(buffer, options.signal, options.onEvent)
     }
   } catch (error) {
     if (!options.signal?.aborted && !isAbortLikeError(error)) {
