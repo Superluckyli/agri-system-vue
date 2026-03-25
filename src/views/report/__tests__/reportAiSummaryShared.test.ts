@@ -123,6 +123,37 @@ describe('reduceReportAiEvent', () => {
       },
     })
   })
+
+  it('treats a backend done event without result as a pure stream-finished signal', () => {
+    const inFlight = reduceReportAiEvent(
+      reduceReportAiEvent(initialReportAiState(), {
+        type: 'section-chunk',
+        section: 'conclusion',
+        delta: '稳定。',
+      }),
+      {
+        type: 'evidence',
+        section: 'reason',
+        evidence: [{ label: '完成率', value: 91, unit: '%' }],
+      },
+    )
+
+    const state = reduceReportAiEvent(inFlight, { type: 'done' })
+
+    expect(state.status).toBe('done')
+    expect(state.summary).toBe('')
+    expect(state.sections.conclusion.text).toBe('稳定。')
+    expect(state.sections.reason.evidence).toEqual([{ label: '完成率', value: 91, unit: '%' }])
+    expect(state.cachedResult).toEqual({
+      summary: '',
+      sections: {
+        conclusion: { text: '稳定。', completed: false, evidence: [] },
+        reason: { text: '', completed: false, evidence: [{ label: '完成率', value: 91, unit: '%' }] },
+        risk: { text: '', completed: false, evidence: [] },
+        attention: { text: '', completed: false, evidence: [] },
+      },
+    })
+  })
 })
 
 describe('streamReportAiSummary', () => {
@@ -270,9 +301,9 @@ describe('streamReportAiSummary', () => {
                 return {
                   done: false,
                   value: encoder.encode(
-                    'data: {"type":"section-start","section":"conclusion"}\n\n'
+                  'data: {"type":"section-start","section":"conclusion"}\n\n'
                     + 'data: {"type":"evidence","section":"reason","evidence":[{"label":"完成率","value":91,"unit":"%"}]}\n\n'
-                    + 'data: {"type":"done","result":{"summary":"完成"}}\n\n',
+                    + 'data: {"type":"done"}\n\n',
                   ),
                 }
               },

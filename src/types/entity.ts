@@ -599,7 +599,7 @@ export type ReportAiSummaryEvent =
   | { type: 'section-start'; section: ReportAiSummarySection }
   | { type: 'section-chunk'; section: ReportAiSummarySection; delta: string }
   | { type: 'evidence'; section: ReportAiSummarySection; evidence: ReportAiSummaryEvidenceItem[] }
-  | { type: 'done'; result: ReportAiSummaryResult }
+  | { type: 'done'; result?: ReportAiSummaryResult }
   | { type: 'error'; message: string }
 
 export interface PasswordChangeRequest {

@@ -113,19 +113,20 @@ export function reduceReportAiEvent(
   }
 
   if (event.type === 'done') {
+    const result = event.result ?? {}
     const sections = { ...state.sections }
     for (const section of REPORT_AI_SECTION_ORDER) {
-      sections[section] = mergeSectionResult(sections[section], event.result.sections?.[section])
+      sections[section] = mergeSectionResult(sections[section], result.sections?.[section])
     }
 
     return {
       ...state,
       status: 'done',
       error: '',
-      summary: event.result.summary ?? state.summary,
+      summary: result.summary ?? state.summary,
       sections,
       cachedResult: {
-        summary: event.result.summary ?? state.summary,
+        summary: result.summary ?? state.summary,
         sections: REPORT_AI_SECTION_ORDER.reduce((acc, section) => {
           acc[section] = {
             text: sections[section].text,
